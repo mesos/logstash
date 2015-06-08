@@ -11,5 +11,8 @@ repositories {
 
 dependencies {
     compile 'org.apache.mesos:mesos:0.21.1'
+    compile "commons-cli:commons-cli:1.0"
+    compile "log4j:log4j:1.2.16"
+
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
