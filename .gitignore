@@ -1,0 +1,12 @@
+*.class
+
+#gradle
+.gradle/
+build/
+target/
+
+# Package Files #
+*.war
+*.ear
+
+*.pem
