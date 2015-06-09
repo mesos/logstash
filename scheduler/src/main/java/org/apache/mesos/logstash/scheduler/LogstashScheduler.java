@@ -13,6 +13,7 @@ import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -90,7 +91,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     @Override
     public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
-
+        LOGGER.info("RESOURCE OFFER");
     }
 
     @Override
@@ -100,7 +101,11 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Protos.Offer> list) {
-
+        LOGGER.info("RESOURCE OFFER");
+        for (Protos.Offer offer : list) {
+            schedulerDriver.declineOffer(offer.getId());
+            LOGGER.info("Declined offer: Offer is not sufficient");
+        }
     }
 
     @Override

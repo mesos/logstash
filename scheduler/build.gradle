@@ -2,8 +2,14 @@ apply plugin: 'application'
 
 mainClassName = "org.apache.mesos.logstash.scheduler.LogstashScheduler"
 
+
 sourceCompatibility = 1.8
 version = '1.0'
+
+run {
+    args "-m", "192.168.50.10:5050"
+    jvmArgs "-Djava.library.path=/usr/local/lib"
+}
 
 repositories {
     mavenCentral()
@@ -16,3 +22,11 @@ dependencies {
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
+
+jar {
+    baseName = "logstash-scheduler"
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.scheduler.LogstashScheduler' }
+}
+
+
