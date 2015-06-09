@@ -1,5 +1,7 @@
 *.class
 
+.vagrant/
+
 #gradle
 .gradle/
 build/
