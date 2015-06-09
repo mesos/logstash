@@ -13,8 +13,10 @@ import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 
-import java.util.Collections;
-import java.util.List;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * Created by ero on 08/06/15.
@@ -24,30 +26,37 @@ public class LogstashScheduler implements Scheduler, Runnable {
     public static final Logger LOGGER = Logger.getLogger(LogstashScheduler.class.toString());
     private static final int MESOS_PORT = 5050;
     private static final String FRAMEWORK_NAME = "LOGSTASH";
+    public static final String TASK_DATE_FORMAT = "yyyyMMdd'T'HHmmss.SSS'Z'";
 
+    private Clock clock = new Clock();
+    private Set<Task> tasks = new HashSet<>();
     private String master;
+    private String[] elasticNodes;
 
     // As per the DCOS Service Specification, setting the failover timeout to a large value;
     private static final double FAILOVER_TIMEOUT = 86400000;
 
-    public LogstashScheduler(String master) {
+    public LogstashScheduler(String master, String[] elasticNodes) {
         this.master = master;
+        this.elasticNodes = elasticNodes;
     }
 
     public static void main(String[] args) {
         Options options = new Options();
         options.addOption("m", "master host or IP", true, "master host or IP");
+        options.addOption("esnodes", "comma separated list of elastic nodes", true, "comma separated list of elastic nodes");
         CommandLineParser parser = new BasicParser();
         try {
             CommandLine cmd = parser.parse(options, args);
             String masterHost = cmd.getOptionValue("m");
+//            String[] elsasticNodes = cmd.getOptionValue("esnodes").split(",");
             if (masterHost == null) {
                 printUsage(options);
                 return;
             }
 
-            LOGGER.info("Starting ElasticSearch on Mesos");
-            final LogstashScheduler scheduler = new LogstashScheduler(masterHost);
+            LOGGER.info("Starting Logstash on Mesos");
+            final LogstashScheduler scheduler = new LogstashScheduler(masterHost, null);
 
             final Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder();
             frameworkBuilder.setUser("jclouds");
@@ -103,8 +112,16 @@ public class LogstashScheduler implements Scheduler, Runnable {
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Protos.Offer> list) {
         LOGGER.info("RESOURCE OFFER");
         for (Protos.Offer offer : list) {
-            schedulerDriver.declineOffer(offer.getId());
-            LOGGER.info("Declined offer: Offer is not sufficient");
+
+            if(tasks.size() == 0) {
+                String id = taskId(offer);
+                Protos.TaskInfo taskInfo = buildTask(schedulerDriver, offer.getResourcesList(), offer, id);
+                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
+                tasks.add(new Task(offer.getHostname(), id));
+                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
+            }else {
+                schedulerDriver.declineOffer(offer.getId());
+            }
         }
     }
 
@@ -141,5 +158,88 @@ public class LogstashScheduler implements Scheduler, Runnable {
     @Override
     public void error(SchedulerDriver schedulerDriver, String s) {
 
+    }
+
+    private String taskId(Protos.Offer offer) {
+        String date = new SimpleDateFormat(TASK_DATE_FORMAT).format(clock.now());
+        return String.format("elasticsearch_%s_%s", offer.getHostname(), date);
+    }
+
+    private Integer selectFirstPort(List<Protos.Resource> offeredResources) {
+        for (Protos.Resource resource : offeredResources) {
+            if (resource.getType().equals(Protos.Value.Type.RANGES)) {
+                return Integer.valueOf((int) resource.getRanges().getRangeList().get(0).getBegin());
+            }
+        }
+        return null;
+    }
+
+    private void addAllScalarResources(List<Protos.Resource> offeredResources, List<Protos.Resource> acceptedResources) {
+        for (Protos.Resource resource : offeredResources) {
+            if (resource.getType().equals(Protos.Value.Type.SCALAR)) {
+                acceptedResources.add(resource);
+            }
+        }
+    }
+
+    private Protos.TaskInfo buildTask(SchedulerDriver driver, List<Protos.Resource> offeredResources, Protos.Offer offer, String id) {
+
+
+        List<Protos.Resource> acceptedResources = new ArrayList<>();
+
+        addAllScalarResources(offeredResources, acceptedResources);
+
+        Integer port = selectFirstPort(offeredResources);
+
+        if (port == null) {
+            LOGGER.info("Declined offer: Offer did not contain 1 port");
+            driver.declineOffer(offer.getId());
+        } else {
+            LOGGER.info("Logstash transport port " + port);
+            acceptedResources.add(Resources.singlePortRange(port));
+        }
+
+        Protos.TaskInfo.Builder taskInfoBuilder = Protos.TaskInfo.newBuilder()
+                .setName(Configuration.TASK_NAME)
+                .setTaskId(Protos.TaskID.newBuilder().setValue(id))
+                .setSlaveId(offer.getSlaveId())
+                .addAllResources(acceptedResources);
+
+
+        LOGGER.info("Using Docker to start Logstash cloud mesos on slaves");
+        Protos.ContainerInfo.Builder containerInfo = Protos.ContainerInfo.newBuilder();
+        PortMapping transportPortMapping = PortMapping.newBuilder().setContainerPort(Configuration.LOGSTASH_TRANSPORT_PORT).setHostPort(port).build();
+
+
+        Protos.ContainerInfo.DockerInfo.Builder docker = Protos.ContainerInfo.DockerInfo.newBuilder()
+                .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
+                .setImage("library/logstash")
+                .addPortMappings(transportPortMapping);
+
+        containerInfo.setDocker(docker.build());
+        containerInfo.setType(Protos.ContainerInfo.Type.DOCKER);
+        taskInfoBuilder.setContainer(containerInfo);
+        taskInfoBuilder
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addArguments("logstash")
+                        .addArguments("-e")
+                        .addArguments("input { file {\n" +
+                                "    path => \"/etc/hosts\"\n" +
+                                "    type => \"raw\"\n" +
+                                "  } } output { stdout { } }")
+                        .setShell(false))
+                .build();
+
+        LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
+        return taskInfoBuilder.build();
+    }
+
+    private InetAddress resolveHost(InetAddress masterAddress, String host) {
+        try {
+            masterAddress = InetAddress.getByName(host);
+        } catch (UnknownHostException e) {
+            LOGGER.error("Could not resolve IP address for hostname " + host);
+        }
+        return masterAddress;
     }
 }
