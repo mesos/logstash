@@ -233,13 +233,4 @@ public class LogstashScheduler implements Scheduler, Runnable {
         LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
         return taskInfoBuilder.build();
     }
-
-    private InetAddress resolveHost(InetAddress masterAddress, String host) {
-        try {
-            masterAddress = InetAddress.getByName(host);
-        } catch (UnknownHostException e) {
-            LOGGER.error("Could not resolve IP address for hostname " + host);
-        }
-        return masterAddress;
-    }
 }
