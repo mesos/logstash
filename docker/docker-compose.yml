@@ -45,7 +45,7 @@ slave3:
    - mesosmaster
 scheduler:
   image: mesos/logstash-scheduler
-  command: "-m mesosmaster"
+  command: "-m mesosmaster -f /tmp/conf.conf"
   links:
    - mesosmaster
    - slave1

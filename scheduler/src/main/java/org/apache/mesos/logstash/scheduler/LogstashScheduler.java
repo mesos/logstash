@@ -6,6 +6,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
@@ -13,6 +14,8 @@ import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -21,6 +24,8 @@ import java.util.*;
  */
 public class LogstashScheduler implements Scheduler, Runnable {
 
+    public static final double RESOURCE_FACTOR = 0.1;
+
     public static final Logger LOGGER = Logger.getLogger(LogstashScheduler.class.toString());
     private static final int MESOS_PORT = 5050;
     private static final String FRAMEWORK_NAME = "logstash";
@@ -28,41 +33,39 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     private Clock clock = new Clock();
     private Set<Task> tasks = new HashSet<>();
-    private String master;
-    private String[] elasticNodes;
+    private String master; // the URL of the mesos master
+    private String configFilePath;
 
     // As per the DCOS Service Specification, setting the failover timeout to a large value;
     private static final double FAILOVER_TIMEOUT = 86400000;
 
-    public LogstashScheduler(String master, String[] elasticNodes) {
+    public LogstashScheduler(String master, String configFilePath) {
         this.master = master;
-        this.elasticNodes = elasticNodes;
+        this.configFilePath = configFilePath;
     }
 
     public static void main(String[] args) {
         Options options = new Options();
+        options.addOption("f", "logstash config file", true, "logstash config file");
         options.addOption("m", "master host or IP", true, "master host or IP");
-        options.addOption("esnodes", "comma separated list of elastic nodes", true, "comma separated list of elastic nodes");
+
         CommandLineParser parser = new BasicParser();
         try {
             CommandLine cmd = parser.parse(options, args);
             String masterHost = cmd.getOptionValue("m");
-//            String[] elsasticNodes = cmd.getOptionValue("esnodes").split(",");
+            String configPath = cmd.getOptionValue("f");
+
             if (masterHost == null) {
                 printUsage(options);
                 return;
             }
 
             LOGGER.info("Starting Logstash on Mesos");
-            final LogstashScheduler scheduler = new LogstashScheduler(masterHost, null);
+            LOGGER.info("Config path: " + configPath);
 
-            final Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder();
-            frameworkBuilder.setUser("jclouds");
-            frameworkBuilder.setName(FRAMEWORK_NAME);
-            frameworkBuilder.setCheckpoint(true);
-            frameworkBuilder.setFailoverTimeout(FAILOVER_TIMEOUT);
+            final LogstashScheduler scheduler = new LogstashScheduler(masterHost, configPath);
 
-            final MesosSchedulerDriver driver = new MesosSchedulerDriver(scheduler, frameworkBuilder.build(), masterHost + ":" + MESOS_PORT);
+            final MesosSchedulerDriver driver = scheduler.buildSchedulerDriver();
 
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
@@ -72,11 +75,25 @@ public class LogstashScheduler implements Scheduler, Runnable {
                 }
             }));
 
-            Thread schedThred = new Thread(scheduler);
-            schedThred.start();
+            new Thread(scheduler).start();
         } catch (ParseException e) {
             printUsage(options);
         }
+    }
+
+    private MesosSchedulerDriver buildSchedulerDriver() {
+        final Protos.FrameworkInfo frameworkInfo = buildFramework();
+
+        return new MesosSchedulerDriver(this, frameworkInfo, this.master + ":" + MESOS_PORT);
+    }
+
+    private Protos.FrameworkInfo buildFramework() {
+        final Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder();
+        frameworkBuilder.setName(FRAMEWORK_NAME);
+        frameworkBuilder.setUser("triforkse");
+        frameworkBuilder.setCheckpoint(true);
+        frameworkBuilder.setFailoverTimeout(FAILOVER_TIMEOUT);
+        return frameworkBuilder.build();
     }
 
     private void onShutdown() {
@@ -177,9 +194,25 @@ public class LogstashScheduler implements Scheduler, Runnable {
     }
 
     private void addAllScalarResources(List<Protos.Resource> offeredResources, List<Protos.Resource> acceptedResources) {
+
+
         for (Protos.Resource resource : offeredResources) {
             if (resource.getType().equals(Protos.Value.Type.SCALAR)) {
-                acceptedResources.add(resource);
+
+                Protos.Value.Scalar sc = resource.getScalar();
+                double value = sc.getValue() * RESOURCE_FACTOR;
+
+                if(resource.getName().equals("cpus")) {
+                    value = 1;
+                }
+
+                Protos.Resource rsc = Protos.Resource.newBuilder()
+                        .setName(resource.getName())
+                        .setType(Protos.Value.Type.SCALAR)
+                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(value).build())
+                        .build();
+
+                acceptedResources.add(rsc);
             }
         }
     }
@@ -218,22 +251,48 @@ public class LogstashScheduler implements Scheduler, Runnable {
                 .setImage("library/logstash")
                 .addPortMappings(transportPortMapping);
 
+
+
+        /*
+        String configContent = ("input {\n" +
+                "    stdin {\n" +
+                "    }\n" +
+                "\n" +
+                "}\n" +
+                "output {\n" +
+                "    stdout { }\n" +
+                "}").replace("\n", " ");
+                */
+        String configContent = readFileAsString(configFilePath);
+        LOGGER.info("CONFIG: "+ configContent);
+
+
+        Protos.CommandInfo commandInfo = Protos.CommandInfo.newBuilder()
+                .addArguments("logstash")
+                .addArguments("-e")
+                .addArguments(configContent)
+                .setShell(false).build();
+
+        LOGGER.info(commandInfo.toString());
+
         containerInfo.setDocker(docker.build());
         containerInfo.setType(Protos.ContainerInfo.Type.DOCKER);
         taskInfoBuilder.setContainer(containerInfo);
         taskInfoBuilder
-                .setCommand(Protos.CommandInfo.newBuilder()
-                        .addArguments("logstash")
-                        .addArguments("-e")
-                        .addArguments("input { file {\n" +
-                                "    path => \"/etc/hosts\"\n" +
-                                "    type => \"raw\"\n" +
-                                "  } } output { stdout { } }")
-                        .setShell(false))
-                .build();
+                .setCommand(commandInfo);
 
         LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
         return taskInfoBuilder.build();
+    }
+
+    public static String readFileAsString(String filePath) {
+        try(FileInputStream inputStream = new FileInputStream(filePath)) {
+            return IOUtils.toString(inputStream);
+        }
+        catch(IOException e) {
+            LOGGER.error(e);
+            return "";
+        }
     }
 
     private boolean shouldAcceptOffer(Protos.Offer offer) {
