@@ -13,8 +13,6 @@ import org.apache.mesos.Protos.ContainerInfo.DockerInfo.PortMapping;
 import org.apache.mesos.Scheduler;
 import org.apache.mesos.SchedulerDriver;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -25,7 +23,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashScheduler.class.toString());
     private static final int MESOS_PORT = 5050;
-    private static final String FRAMEWORK_NAME = "LOGSTASH";
+    private static final String FRAMEWORK_NAME = "logstash";
     public static final String TASK_DATE_FORMAT = "yyyyMMdd'T'HHmmss.SSS'Z'";
 
     private Clock clock = new Clock();
@@ -100,26 +98,30 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     @Override
     public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
-        LOGGER.info("RESOURCE OFFER");
+        LOGGER.info("Registered against Mesos");
     }
 
     @Override
     public void reregistered(SchedulerDriver schedulerDriver, Protos.MasterInfo masterInfo) {
-
+        LOGGER.info("Reregistered against Mesos");
     }
 
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Protos.Offer> list) {
-        LOGGER.info("RESOURCE OFFER");
         for (Protos.Offer offer : list) {
+            LOGGER.info("Received offer from slave " + offer.getSlaveId() + ", " + offer.getHostname());
 
-            if(tasks.size() == 0) {
+            if (shouldAcceptOffer(offer)) {
+                LOGGER.info("Offer accepted");
+
                 String id = taskId(offer);
-                Protos.TaskInfo taskInfo = buildTask(schedulerDriver, offer.getResourcesList(), offer, id);
+                Protos.TaskInfo taskInfo = buildTask(schedulerDriver, offer, id);
+
                 schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
                 tasks.add(new Task(offer.getHostname(), id));
-                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
-            }else {
+            }
+            else {
+                LOGGER.info("Offer declined");
                 schedulerDriver.declineOffer(offer.getId());
             }
         }
@@ -162,7 +164,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     private String taskId(Protos.Offer offer) {
         String date = new SimpleDateFormat(TASK_DATE_FORMAT).format(clock.now());
-        return String.format("elasticsearch_%s_%s", offer.getHostname(), date);
+        return String.format(FRAMEWORK_NAME + "_%s_%s", offer.getHostname(), date);
     }
 
     private Integer selectFirstPort(List<Protos.Resource> offeredResources) {
@@ -182,14 +184,14 @@ public class LogstashScheduler implements Scheduler, Runnable {
         }
     }
 
-    private Protos.TaskInfo buildTask(SchedulerDriver driver, List<Protos.Resource> offeredResources, Protos.Offer offer, String id) {
+    private Protos.TaskInfo buildTask(SchedulerDriver driver, Protos.Offer offer, String id) {
 
 
         List<Protos.Resource> acceptedResources = new ArrayList<>();
 
-        addAllScalarResources(offeredResources, acceptedResources);
+        addAllScalarResources(offer.getResourcesList(), acceptedResources);
 
-        Integer port = selectFirstPort(offeredResources);
+        Integer port = selectFirstPort(offer.getResourcesList());
 
         if (port == null) {
             LOGGER.info("Declined offer: Offer did not contain 1 port");
@@ -232,5 +234,15 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
         return taskInfoBuilder.build();
+    }
+
+    private boolean shouldAcceptOffer(Protos.Offer offer) {
+        // Don't start the same framework multiple times on the same host
+        for (Task task : tasks) {
+            if (task.getHostname().equals(offer.getHostname())) {
+                return false;
+            }
+        }
+        return true;
     }
 }
