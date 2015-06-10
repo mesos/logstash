@@ -134,7 +134,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus taskStatus) {
-
+        LOGGER.info("Task status update! " + taskStatus.toString());
     }
 
     @Override
