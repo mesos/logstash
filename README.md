@@ -20,6 +20,7 @@ Alteratively:
 
 ```bash
 $ java -jar logstash-scheduler.jar -m MASTER_IP:5050 -f /path/to/logstashconfig
+```
 
 ## Alternative ways of building
 ### Building with Vagrant
