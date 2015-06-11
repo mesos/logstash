@@ -1,4 +1,5 @@
 rootProject.name = 'logstash'
 
 include 'scheduler'
+include 'executor'
 
