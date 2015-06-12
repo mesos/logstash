@@ -1,12 +1,24 @@
-apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'groovy'
+
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 
 mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
 
+
+
+sourceCompatibility = 1.7
+version='1.0'
+
+
+
 buildscript {
-    repositories { jcenter() }
+    repositories { jcenter { url "http://jcenter.bintray.com/"} }
     dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:2.2'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
     }
 }
@@ -17,25 +29,86 @@ repositories {
 }
 
 dependencies {
-
     compile 'org.apache.mesos:mesos:0.21.1'
     compile "log4j:log4j:1.2.16"
 
+    testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
 shadowJar {
-    baseName = "logstash-mesos-executor"
-    mergeServiceFiles()
-    classifier = ''
+    baseName = "logstash-executor-dependencies"
+
+    exclude 'org/apache/mesos/logstash' // only include dependencies
+}
+
+jar {
+    baseName = "logstash-executor"
+    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor' }
 }
 
 task copyJar(type: Copy) {
-    dependsOn   'shadowJar'
-    from        "build/libs/logstash-mesos-executor-${project.version}.jar"
-    into        'build/libs'
+    dependsOn 'shadowJar', 'jar'
+
+    from        "build/libs/logstash-executor-${project.version}.jar"
+    from        "build/libs/logstash-executor-dependencies-${project.version}-all.jar"
+
+    into        'build/docker'
+
     rename { String fileName ->
-        fileName.replace("-${project.version}", "")
+        fileName.replace("-${project.version}-all", "").replace("-${project.version}", "")
     }
 }
 
+
+task buildDockerImage(type: DockerBuildImage) {
+    dependsOn   copyJar
+    if (System.env.DOCKER_HOST) {
+        url = "$System.env.DOCKER_HOST".replace("tcp","https")
+        if (System.env.DOCKER_CERT_PATH) {
+            certPath = new File(System.env.DOCKER_CERT_PATH)
+
+        }
+    }
+    else {
+        url = 'unix:///var/run/docker.sock'
+    }
+    inputDir = file('.')
+    tag = 'docker.io/swemail/logstash-mesos-executor:latest'
+}
+
+def dockerCredentials = new com.bmuschko.gradle.docker.DockerRegistryCredentials()
+dockerCredentials.username = 'swemail'
+dockerCredentials.password = 'jvIn7eucvovuxDejZPMJ6rNECGPJJJqYKpWU'
+dockerCredentials.email = 'emil.rondahl@gmail.com'
+dockerCredentials.url = 'http://localhost:5000'
+
+
+docker {
+    url = 'http://0.0.0.0:4243'
+//    certPath = new File('/etc/docker')
+
+//    registryCredentials {
+//        url = 'https://index.docker.io/v1'
+//        username = 'swemail'
+//        password = 'jvIn7eucvovuxDejZPMJ6rNECGPJJJqYKpWU'
+//        email =  'emil.rondahl@gmail.com'
+//    }
+}
+
+
+
+task pushDockerImage(type: DockerPushImage) {
+    dependsOn buildDockerImage
+
+//    url = '192.168.59.103:2376'
+//    certPath = new File('/etc/docker')
+
+
+    registryCredentials = dockerCredentials
+    imageName   'docker.io/swemail/logstash-mesos-executor:latest'
+    tag         'latest'
+}
+
+
+build.dependsOn pushDockerImage
 build.dependsOn copyJar

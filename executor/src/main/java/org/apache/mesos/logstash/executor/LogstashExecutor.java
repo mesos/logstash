@@ -50,6 +50,10 @@ public class LogstashExecutor implements Executor {
                 .setState(Protos.TaskState.TASK_RUNNING).build();
         driver.sendStatusUpdate(status);
 
+
+        // To see something in the logs
+        LOGGER.error("FOOOOOOOOOOOOOOOOOOOOFOFOFOFOFOFOOOOOFOFOFOFO");
+
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
