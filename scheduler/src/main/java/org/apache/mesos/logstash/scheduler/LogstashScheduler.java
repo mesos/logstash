@@ -233,7 +233,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
                 .addAllResources(acceptedResources);
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecuter = Protos.ContainerInfo.DockerInfo.newBuilder()
-                .setImage("registry:5000/mesos/logstash-executor");
+                .setImage("docker.io/epeld/logstash-executor");
 //                .setParameters();
 
 

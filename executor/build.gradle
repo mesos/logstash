@@ -39,7 +39,8 @@ shadowJar {
 
 jar {
     baseName = "logstash-executor"
-    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor' }
+    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor',
+               'Class-Path':'logstash-executor-dependencies.jar' }
 }
 
 task copyJar(type: Copy) {
