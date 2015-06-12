@@ -10,6 +10,7 @@ target/
 # Package Files #
 *.war
 *.ear
+*.jar
 
 *.pem
 *.iml

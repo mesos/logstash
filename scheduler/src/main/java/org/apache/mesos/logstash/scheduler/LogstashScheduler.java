@@ -304,4 +304,11 @@ public class LogstashScheduler implements Scheduler, Runnable {
         }
         return true;
     }
+
+    public Collection getStuff() {
+
+
+
+        return null;
+    }
 }

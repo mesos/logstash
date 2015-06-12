@@ -1,5 +1,8 @@
 apply plugin: 'application'
 apply plugin: 'com.bmuschko.docker-remote-api'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'groovy'
+
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 
@@ -9,12 +12,14 @@ mainClassName = "org.apache.mesos.logstash.scheduler.LogstashScheduler"
 sourceCompatibility = 1.7
 version = '1.0'
 
+
 buildscript {
     repositories {
         jcenter()
     }
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:2.2'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
     }
 }
 
@@ -36,19 +41,27 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
+shadowJar {
+    baseName = "logstash-scheduler-dependencies"
+
+    exclude 'org/apache/mesos/logstash' // only include dependencies
+}
+
 jar {
     baseName = "logstash-scheduler"
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.scheduler.LogstashScheduler' }
 }
 
-
 task copyJar(type: Copy) {
-    dependsOn   'jar'
-    from        "build/libs/logstash-scheduler-${project.version}.jar"
     into        'build/docker'
+
+
+    from        "build/libs/logstash-scheduler-${project.version}.jar"
+    from        "build/libs/logstash-scheduler-dependencies-${project.version}-all.jar"
+
     rename { String fileName ->
-        fileName.replace("-${project.version}", "")
+        fileName.replace("-${project.version}-all", "").replace("-${project.version}", "")
+
     }
 }
 
