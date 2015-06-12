@@ -53,6 +53,8 @@ jar {
 }
 
 task copyJar(type: Copy) {
+    dependsOn 'shadowJar', 'jar'
+
     into        'build/docker'
 
 
