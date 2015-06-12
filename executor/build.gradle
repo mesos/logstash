@@ -1,10 +1,6 @@
 apply plugin: 'application'
-apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'groovy'
-
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 
 mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
 
@@ -60,51 +56,23 @@ task copyJar(type: Copy) {
 }
 
 
-task buildDockerImage(type: DockerBuildImage) {
-    dependsOn   copyJar
-    if (System.env.DOCKER_HOST) {
-        url = "$System.env.DOCKER_HOST".replace("tcp","https")
-        if (System.env.DOCKER_CERT_PATH) {
-            certPath = new File(System.env.DOCKER_CERT_PATH)
+task buildDockerImage(type: Exec) {
 
-        }
-    }
-    else {
-        url = 'unix:///var/run/docker.sock'
-    }
-    inputDir = file('.')
-    tag = 'localhost:5000/swemail/logstash-mesos-executor:latest'
+    executable "docker"
+    args "build"
+    args "-t"
+    args "docker.io/epeld/logstash-executor"
+    args "."
 }
 
-def dockerCredentials = new com.bmuschko.gradle.docker.DockerRegistryCredentials()
-
-
-docker {
-    url = 'http://0.0.0.0:4243'
-//    certPath = new File('/etc/docker')
-
-//    registryCredentials {
-//        url = 'https://index.docker.io/v1'
-//        username = 'swemail'
-//        password = 'jvIn7eucvovuxDejZPMJ6rNECGPJJJqYKpWU'
-//        email =  'emil.rondahl@gmail.com'
-//    }
-}
-
-
-
-task pushDockerImage(type: DockerPushImage) {
+task pushDockerImage(type: Exec) {
     dependsOn buildDockerImage
 
-//    url = '192.168.59.103:2376'
-//    certPath = new File('/etc/docker')
-
-
-    registryCredentials = dockerCredentials
-    imageName   'localhost:5000/swemail/logstash-mesos-executor'
-    tag         'latest'
+    executable "docker"
+    args "push"
+    args "-f"
+    args "docker.io/epeld/logstash-executor"
 }
 
 
 build.dependsOn pushDockerImage
-build.dependsOn copyJar
