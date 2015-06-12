@@ -38,6 +38,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     // As per the DCOS Service Specification, setting the failover timeout to a large value;
     private static final double FAILOVER_TIMEOUT = 86400000;
+    private Protos.FrameworkID frameworkId;
 
     public LogstashScheduler(String master, String configFilePath) {
         this.master = master;
@@ -46,7 +47,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     public static void main(String[] args) {
         Options options = new Options();
-        options.addOption("f", "logstash config file", true, "logstash config file");
+        options.addOption("f", "logstash config file", false, "logstash config file");
         options.addOption("m", "master host or IP", true, "master host or IP");
 
         CommandLineParser parser = new BasicParser();
@@ -116,6 +117,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
     @Override
     public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
         LOGGER.info("Registered against Mesos");
+        this.frameworkId = frameworkID;
     }
 
     @Override
@@ -224,33 +226,47 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         addAllScalarResources(offer.getResourcesList(), acceptedResources);
 
-        Integer port = selectFirstPort(offer.getResourcesList());
-
-        if (port == null) {
-            LOGGER.info("Declined offer: Offer did not contain 1 port");
-            driver.declineOffer(offer.getId());
-        } else {
-            LOGGER.info("Logstash transport port " + port);
-            acceptedResources.add(Resources.singlePortRange(port));
-        }
-
         Protos.TaskInfo.Builder taskInfoBuilder = Protos.TaskInfo.newBuilder()
                 .setName(Configuration.TASK_NAME)
                 .setTaskId(Protos.TaskID.newBuilder().setValue(id))
                 .setSlaveId(offer.getSlaveId())
                 .addAllResources(acceptedResources);
 
+        Protos.ContainerInfo.DockerInfo.Builder dockerExecuter = Protos.ContainerInfo.DockerInfo.newBuilder()
+                .setImage("registry:5000/mesos/logstash-executor");
+//                .setParameters();
 
-        LOGGER.info("Using Docker to start Logstash cloud mesos on slaves");
-        Protos.ContainerInfo.Builder containerInfo = Protos.ContainerInfo.newBuilder();
-        PortMapping transportPortMapping = PortMapping.newBuilder().setContainerPort(Configuration.LOGSTASH_TRANSPORT_PORT).setHostPort(port).build();
+
+            LOGGER.info("Using Executor to start Elasticsearch cloud mesos on slaves");
+            Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
+                    .setExecutorId(Protos.ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
+                    .setFrameworkId(frameworkId)
+                    .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecuter.build()))
+                    .setName("" + UUID.randomUUID())
+                    .setCommand(Protos.CommandInfo.newBuilder()
+                            .addArguments("java")
+                            .addArguments("-Djava.library.path=/usr/local/lib")
+                            .addArguments("-jar")
+                            .addArguments("/tmp/logstash-executor.jar")
+                            .setShell(false))
+                    .addAllResources(acceptedResources)
+                    .build();
+
+            taskInfoBuilder.setExecutor(executorInfo);
+
+        return taskInfoBuilder.build();
 
 
-        Protos.ContainerInfo.DockerInfo.Builder docker = Protos.ContainerInfo.DockerInfo.newBuilder()
-                .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-                .setImage("library/logstash")
-                .addPortMappings(transportPortMapping);
-
+//        LOGGER.info("Using Docker to start Logstash cloud mesos on slaves");
+//        Protos.ContainerInfo.Builder containerInfo = Protos.ContainerInfo.newBuilder();
+//        PortMapping transportPortMapping = PortMapping.newBuilder().setContainerPort(Configuration.LOGSTASH_TRANSPORT_PORT).setHostPort(port).build();
+//
+//
+//        Protos.ContainerInfo.DockerInfo.Builder docker = Protos.ContainerInfo.DockerInfo.newBuilder()
+//                .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
+//                .setImage("library/logstash")
+//                .addPortMappings(transportPortMapping);
+//
 
 
         /*
@@ -263,36 +279,36 @@ public class LogstashScheduler implements Scheduler, Runnable {
                 "    stdout { }\n" +
                 "}").replace("\n", " ");
                 */
-        String configContent = readFileAsString(configFilePath);
-        LOGGER.info("CONFIG: "+ configContent);
-
-
-        Protos.CommandInfo commandInfo = Protos.CommandInfo.newBuilder()
-                .addArguments("logstash")
-                .addArguments("-e")
-                .addArguments(configContent)
-                .setShell(false).build();
-
-        LOGGER.info(commandInfo.toString());
-
-        containerInfo.setDocker(docker.build());
-        containerInfo.setType(Protos.ContainerInfo.Type.DOCKER);
-        taskInfoBuilder.setContainer(containerInfo);
-        taskInfoBuilder
-                .setCommand(commandInfo);
-
-        LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
-        return taskInfoBuilder.build();
-    }
-
-    public static String readFileAsString(String filePath) {
-        try(FileInputStream inputStream = new FileInputStream(filePath)) {
-            return IOUtils.toString(inputStream);
-        }
-        catch(IOException e) {
-            LOGGER.error(e);
-            return "";
-        }
+//        String configContent = readFileAsString(configFilePath);
+//        LOGGER.info("CONFIG: "+ configContent);
+//
+//
+//        Protos.CommandInfo commandInfo = Protos.CommandInfo.newBuilder()
+//                .addArguments("logstash")
+//                .addArguments("-e")
+//                .addArguments(configContent)
+//                .setShell(false).build();
+//
+//        LOGGER.info(commandInfo.toString());
+//
+//        containerInfo.setDocker(docker.build());
+//        containerInfo.setType(Protos.ContainerInfo.Type.DOCKER);
+//        taskInfoBuilder.setContainer(containerInfo);
+//        taskInfoBuilder
+//                .setCommand(commandInfo);
+//
+//        LOGGER.info("Using Docker to start logstash cloud mesos on slaves");
+//        return taskInfoBuilder.build();
+//    }
+//
+//    public static String readFileAsString(String filePath) {
+//        try(FileInputStream inputStream = new FileInputStream(filePath)) {
+//            return IOUtils.toString(inputStream);
+//        }
+//        catch(IOException e) {
+//            LOGGER.error(e);
+//            return "";
+//        }
     }
 
     private boolean shouldAcceptOffer(Protos.Offer offer) {

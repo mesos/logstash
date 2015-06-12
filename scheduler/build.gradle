@@ -15,7 +15,7 @@ version = '1.0'
 
 buildscript {
     repositories {
-        jcenter()
+        jcenter{ url "http://jcenter.bintray.com/" }
     }
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:2.2'
@@ -49,7 +49,8 @@ shadowJar {
 
 jar {
     baseName = "logstash-scheduler"
-    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.scheduler.LogstashScheduler' }
+    manifest { attributes ('Main-Class': 'org.apache.mesos.logstash.scheduler.LogstashScheduler',
+            'Class-Path':'logstash-scheduler-dependencies.jar') }
 }
 
 task copyJar(type: Copy) {
