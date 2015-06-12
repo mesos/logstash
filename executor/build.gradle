@@ -73,14 +73,10 @@ task buildDockerImage(type: DockerBuildImage) {
         url = 'unix:///var/run/docker.sock'
     }
     inputDir = file('.')
-    tag = 'docker.io/swemail/logstash-mesos-executor:latest'
+    tag = 'localhost:5000/swemail/logstash-mesos-executor:latest'
 }
 
 def dockerCredentials = new com.bmuschko.gradle.docker.DockerRegistryCredentials()
-dockerCredentials.username = 'swemail'
-dockerCredentials.password = 'jvIn7eucvovuxDejZPMJ6rNECGPJJJqYKpWU'
-dockerCredentials.email = 'emil.rondahl@gmail.com'
-dockerCredentials.url = 'http://localhost:5000'
 
 
 docker {
@@ -105,7 +101,7 @@ task pushDockerImage(type: DockerPushImage) {
 
 
     registryCredentials = dockerCredentials
-    imageName   'docker.io/swemail/logstash-mesos-executor:latest'
+    imageName   'localhost:5000/swemail/logstash-mesos-executor'
     tag         'latest'
 }
 
