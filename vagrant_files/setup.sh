@@ -27,6 +27,9 @@ echo "Installing docker-compose"
 curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose-`uname -s`-`uname -m` > /usr/bin/docker-compose
 chmod +x /usr/bin/docker-compose
 
+echo "Pulling docker registry image"
+docker pull registry:2.0
+
 echo "Installing jdk"
 yum install -y java-1.8.0-openjdk-devel.x86_64
 
@@ -49,6 +52,8 @@ yum -y install mesos
 
 echo "Turn off firewall"
 systemctl disable firewalld
-systemctl stop firewalld
+
+echo "Starting a registry container"
+docker run -p 5000:5000 registry:2.0 &
 
 echo "Done!"
