@@ -6,6 +6,7 @@ import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 
+import java.lang.InterruptedException;
 import java.util.Arrays;
 
 /**
@@ -53,6 +54,14 @@ public class LogstashExecutor implements Executor {
 
         // To see something in the logs
         LOGGER.error("FOOOOOOOOOOOOOOOOOOOOFOFOFOFOFOFOOOOOFOFOFOFO");
+
+        try {
+            Thread.sleep(30_000);
+        }
+        catch(InterruptedException e) {
+            LOGGER.error("INTERRUPTED");
+        }
+
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
