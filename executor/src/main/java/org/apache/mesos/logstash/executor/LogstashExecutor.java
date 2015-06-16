@@ -1,5 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.core.DockerClientBuilder;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
@@ -8,6 +10,8 @@ import org.apache.mesos.Protos;
 
 import java.lang.InterruptedException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Executor for Logstash.
@@ -18,15 +22,26 @@ public class LogstashExecutor implements Executor {
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
     public static void main(String[] args) {
-                   LOGGER.info("Started LogstashExecutor");
 
-            MesosExecutorDriver driver = new MesosExecutorDriver(new LogstashExecutor());
-            Protos.Status status = driver.run();
-            if (status.equals(Protos.Status.DRIVER_STOPPED)) {
-                System.exit(0);
-            } else {
-                System.exit(1);
-            }
+        DockerInfo dockerInfo = new DockerInfo(DockerClientBuilder.getInstance("unix:///var/run/docker.sock").build());
+
+        Map<String, LogstashInfo> containersWithLogging = dockerInfo.getContainersThatWantsLogging();
+
+        for (String key : containersWithLogging.keySet()) {
+            LOGGER.info(String.format("Container %s, LOG_LOCATION %s, CONFIG_FILE %s", key,
+                    containersWithLogging.get(key).GetLoggingLocationPath(),
+                    containersWithLogging.get(key).GetConfigurationPath()));
+        }
+
+        LOGGER.info("Started LogstashExecutor");
+
+        MesosExecutorDriver driver = new MesosExecutorDriver(new LogstashExecutor());
+        Protos.Status status = driver.run();
+        if (status.equals(Protos.Status.DRIVER_STOPPED)) {
+            System.exit(0);
+        } else {
+            System.exit(1);
+        }
     }
 
     @Override
@@ -57,8 +72,7 @@ public class LogstashExecutor implements Executor {
 
         try {
             Thread.sleep(30_000);
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             LOGGER.error("INTERRUPTED");
         }
 
@@ -72,7 +86,8 @@ public class LogstashExecutor implements Executor {
                             .setState(Protos.TaskState.TASK_FINISHED).build();
                     driver.sendStatusUpdate(taskStatus);
                 }
-            })  {});
+            }) {
+            });
         } catch (Exception e) {
             status = Protos.TaskStatus.newBuilder()
                     .setTaskId(task.getTaskId())
