@@ -36,4 +36,4 @@ RUN mkdir -p /var/log/supervisor /etc/supervisor/conf.d
 # Add the base configuration file for Supervisord
 ADD supervisor.conf /etc/supervisor.conf
 
-CMD supervisord -c /etc/supervisor.conf
+ENTRYPOINT ["supervisord", "-c", "/etc/supervisor.conf"]

@@ -6,6 +6,7 @@
 .gradle/
 build/
 target/
+local/
 
 # Package Files #
 *.war
