@@ -4,6 +4,7 @@ apply plugin: 'groovy'
 
 mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
 
+project.ext.executorImageName = "docker.io/epeld/logstash-executor"
 
 
 sourceCompatibility = 1.7
@@ -19,6 +20,11 @@ buildscript {
     }
 }
 
+run {
+
+    args "-m", "192.168.1.106:5050", "-f", "./conf.conf"
+    jvmArgs "-Djava.library.path=/usr/local/lib"
+}
 
 repositories {
     mavenCentral()
@@ -65,7 +71,7 @@ task buildDockerImage(type: Exec) {
     executable "docker"
     args "build"
     args "-t"
-    args "docker.io/epeld/logstash-executor"
+    args project.ext.executorImageName
     args "."
 }
 
@@ -75,7 +81,7 @@ task pushDockerImage(type: Exec) {
     executable "docker"
     args "push"
     args "-f"
-    args "docker.io/epeld/logstash-executor"
+    args project.ext.executorImageName
 }
 
 

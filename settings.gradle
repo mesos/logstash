@@ -2,4 +2,5 @@ rootProject.name = 'logstash'
 
 include 'scheduler'
 include 'executor'
+include 'system-test'
 

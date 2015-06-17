@@ -23,10 +23,13 @@ public class LogstashExecutor implements Executor {
 
     public static void main(String[] args) {
 
+        System.out.println("Testing testing");
+        LOGGER.info("Executor running?!");
         DockerInfo dockerInfo = new DockerInfo(DockerClientBuilder.getInstance("unix:///var/run/docker.sock").build());
 
         Map<String, LogstashInfo> containersWithLogging = dockerInfo.getContainersThatWantsLogging();
 
+        LOGGER.info("Hasn't exploded yet");
         for (String key : containersWithLogging.keySet()) {
             LOGGER.info(String.format("Container %s, LOG_LOCATION %s, CONFIG_FILE %s", key,
                     containersWithLogging.get(key).GetLoggingLocationPath(),

@@ -4,4 +4,4 @@ ADD ./build/docker/logstash-executor-dependencies.jar /tmp/logstash-executor-dep
 
 ADD ./build/docker/logstash-executor.jar /tmp/logstash-executor.jar
 
-CMD ["java", "-Djava.library.path=/usr/local/lib","-cp","/tmp/logstash-executor-dependencies.jar", "-jar", "/tmp/logstash-executor.jar"]
+ENTRYPOINT ["java", "-Djava.library.path=/usr/local/lib","-jar", "/tmp/logstash-executor.jar"]

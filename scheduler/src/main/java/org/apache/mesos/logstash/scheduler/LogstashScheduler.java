@@ -33,6 +33,10 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     private Clock clock = new Clock();
     private Set<Task> tasks = new HashSet<>();
+
+
+
+
     private String master; // the URL of the mesos master
     private String configFilePath;
 
@@ -50,33 +54,64 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     }
 
+    public static final Options OPTIONS = new Options();
+
+
+    static {
+        OPTIONS.addOption("f", "logstash config file", true, "logstash config file");
+        OPTIONS.addOption("m", "master host or IP", true, "master host or IP");
+    }
+
     public static void main(String[] args) {
-        Options options = new Options();
-        options.addOption("f", "logstash config file", true, "logstash config file");
-        options.addOption("m", "master host or IP", true, "master host or IP");
+        logArgs(args);
 
-        CommandLineParser parser = new BasicParser();
+        String masterHost, configPath;
+        CommandLine cmdLine = parseCommandLineArgs(args);
         try {
-            CommandLine cmd = parser.parse(options, args);
-            String masterHost = cmd.getOptionValue("m");
-            String configPath = cmd.getOptionValue("f");
-
-            if (masterHost == null) {
-                printUsage(options);
-                return;
-            }
-
-            LOGGER.info("Starting Logstash on Mesos");
-            LOGGER.info("Config path: " + configPath);
-
-            final LogstashScheduler scheduler = new LogstashScheduler(masterHost, configPath);
-            scheduler.installShutdownHook();
-
-            LOGGER.info("Starting scheduler..");
-            new Thread(scheduler).start();
-        } catch (ParseException e) {
-            printUsage(options);
+            masterHost = cmdLine.getOptionValue("m");
+            configPath = cmdLine.getOptionValue("f");
         }
+        catch(NullPointerException e) {
+            printUsage(OPTIONS);
+            return;
+        }
+
+        if(masterHost == null || configPath == null) {
+            printUsage(OPTIONS);
+            return;
+        }
+
+        startLogstash(masterHost, configPath);
+    }
+
+    private static void logArgs(String[] args) {
+        LOGGER.info("Command line arguments: ");
+        for(int i = 0; i < args.length; ++i) {
+            LOGGER.info(args[i]);
+        }
+    }
+
+    private static CommandLine parseCommandLineArgs(String[] args) {
+        CommandLineParser parser = new BasicParser();
+
+        try {
+            return parser.parse(OPTIONS, args);
+        }
+        catch (ParseException e) {
+            e.printStackTrace(System.err);
+            return null;
+        }
+    }
+
+    private static void startLogstash(String masterHost, String configPath) {
+        LOGGER.info("Starting Logstash on Mesos");
+        LOGGER.info("Config path: " + configPath);
+
+        final LogstashScheduler scheduler = new LogstashScheduler(masterHost, configPath);
+        scheduler.installShutdownHook();
+
+        LOGGER.info("Starting scheduler..");
+        new Thread(scheduler).start();
     }
 
     private void installShutdownHook() {

@@ -1,0 +1,80 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.7
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+buildscript {
+}
+
+dependencies {
+
+    compile project(':scheduler')
+    compile project(':executor')
+
+    testCompile 'junit:junit:4.11'
+    testCompile 'com.github.docker-java:docker-java:1.3.0'
+    testCompile 'com.mashape.unirest:unirest-java:1.4.5'
+
+}
+
+task copyDockerCompose(type: Copy) {
+    from 'src/templates'
+    into "${project.buildDir}/resources/test/mesos-ls/"
+
+    include 'docker-compose.yml.template'
+
+    rename { file -> 'docker-compose.yml' }
+
+    expand(scheduler: project(':scheduler').ext.schedulerImageName)
+}
+
+task copyMesosSlaveThatRunsInsideDocker(type: Copy) {
+    from "${project.projectDir}/src/test/resources/mesos-ls/"
+    into "${project.buildDir}/resources/test/mesos-ls/"
+}
+
+task dockerComposeUp(type: Exec) {
+    dependsOn copyDockerCompose, copyMesosSlaveThatRunsInsideDocker
+    dependsOn project(':scheduler').buildDockerImage
+    dependsOn project(':executor').pushDockerImage // executor must be PUSHED so that inner docker host can retrieve it (pull)
+
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+
+    commandLine 'docker-compose', 'up', '-d'
+
+}
+
+test.dependsOn dockerComposeUp
+
+/*
+task dockerComposeKill(type: Exec) {
+
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+
+    commandLine 'docker-compose', 'kill'
+
+}
+
+task dockerComposeRm(type: Exec) {
+
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+
+    commandLine 'docker-compose', 'rm', '--force', '-v'
+
+}
+*/
+
+task compose(type: Exec) {
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+
+    commandLine 'docker-compose'
+    args "$compose".split()
+}
+
+//test.finalizedBy dockerComposeKill
+
+//dockerComposeKill.finalizedBy dockerComposeRm
