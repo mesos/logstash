@@ -1,7 +1,7 @@
 # /etc/sysconfig/docker
 
 # Modify these options if you want to change the way the docker daemon runs
-OPTIONS='--selinux-enabled=false -H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock'
+OPTIONS='-H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock'
 
 DOCKER_CERT_PATH=/etc/docker
 
@@ -24,7 +24,6 @@ DOCKER_CERT_PATH=/etc/docker
 
 # On an SELinux system, if you remove the --selinux-enabled option, you
 # also need to turn on the docker_transition_unconfined boolean.
-setsebool -P docker_transition_unconfined 1
 
 # Location used for temporary files, such as those created by
 # docker load and build operations. Default is /var/lib/docker/tmp
