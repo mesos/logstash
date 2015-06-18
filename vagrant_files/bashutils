@@ -1,0 +1,12 @@
+
+function dockerBash() {
+    echo "Grepping for $1"
+    CONTAINER_ID=$(sudo docker ps | grep "$1" | awk '{ print $1 }' | tail -n 1)
+    echo "Found $CONTAINER_ID"
+    if [ ! -z "${CONTAINER_ID-unset}" ]; then
+        echo "Bashing into $CONTAINER_ID"
+        sudo docker exec -it $CONTAINER_ID bash
+    fi
+}
+
+alias dbash=dockerBash

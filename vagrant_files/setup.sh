@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+echo "Setting up useful docker bash utils"
+cp -f /vagrant/vagrant_files/bash/bashutils /home/vagrant/.bashutils
+echo "source ~/.bashutils" >> /home/vagrant/.bashrc
+chown vagrant -R /home/vagrant
+
 apt-get -y update
 apt-get -y install linux-image-generic-lts-trusty
 sudo apt-get install wget
