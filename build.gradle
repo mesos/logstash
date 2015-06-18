@@ -1,5 +1,4 @@
 apply plugin: 'java'
-apply from: 'local.gradle'
 
 sourceCompatibility = 1.5
 version = '1.0'

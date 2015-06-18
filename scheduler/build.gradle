@@ -11,6 +11,7 @@ mainClassName = "org.apache.mesos.logstash.scheduler.LogstashScheduler"
 sourceCompatibility = 1.7
 version = '1.0'
 
+evaluationDependsOn(':local')
 
 buildscript {
     repositories {
@@ -33,8 +34,6 @@ repositories {
 }
 
 dependencies {
-    compile project(':local')
-
     compile 'commons-io:commons-io:2.4'
     compile 'org.apache.mesos:mesos:0.22.1'
     compile "commons-cli:commons-cli:1.0"
@@ -73,8 +72,6 @@ task copyJar(type: Copy) {
 task buildDockerImage(type: Exec) {
     dependsOn 'copyJar'
 
-
-    System.out.println("ABC" + project(':local').schedulerImageName)
     executable "docker"
     args "build"
     args "-t"

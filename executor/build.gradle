@@ -5,12 +5,12 @@ apply plugin: 'groovy'
 mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
 
 sourceCompatibility = 1.7
-version='1.0'
+version = '1.0'
 
-
+evaluationDependsOn(':local')
 
 buildscript {
-    repositories { jcenter { url "http://jcenter.bintray.com/"} }
+    repositories { jcenter { url "http://jcenter.bintray.com/" } }
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:2.2'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
@@ -47,17 +47,19 @@ shadowJar {
 
 jar {
     baseName = "logstash-executor"
-    manifest { attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor',
-               'Class-Path':'logstash-executor-dependencies.jar' }
+    manifest {
+        attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor',
+                'Class-Path': 'logstash-executor-dependencies.jar'
+    }
 }
 
 task copyJar(type: Copy) {
     dependsOn 'shadowJar', 'jar'
 
-    from        "build/libs/logstash-executor-${project.version}.jar"
-    from        "build/libs/logstash-executor-dependencies-${project.version}-all.jar"
+    from "build/libs/logstash-executor-${project.version}.jar"
+    from "build/libs/logstash-executor-dependencies-${project.version}-all.jar"
 
-    into        'build/docker'
+    into 'build/docker'
 
     rename { String fileName ->
         fileName.replace("-${project.version}-all", "").replace("-${project.version}", "")
@@ -80,10 +82,8 @@ task pushDockerImage(type: Exec) {
 
     executable "docker"
     args "push"
-    args "-f"
     args project(':local').executorImageName
 }
-
 
 build.dependsOn copyJar
 build.dependsOn pushDockerImage

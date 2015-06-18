@@ -3,6 +3,8 @@ apply plugin: 'java'
 sourceCompatibility = 1.7
 version = '1.0'
 
+evaluationDependsOn(':local')
+
 repositories {
     mavenCentral()
 }
@@ -29,8 +31,6 @@ task copyDockerCompose(type: Copy) {
     include 'docker-compose.yml.template'
 
     rename { file -> 'docker-compose.yml' }
-
-    System.out.println("ABD " + project(':local').schedulerImageName)
 
     expand(scheduler: project(':local').schedulerImageName)
 }
