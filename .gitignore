@@ -16,3 +16,5 @@ local/
 *.pem
 *.iml
 .idea
+
+gradle.properties
