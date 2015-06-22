@@ -5,18 +5,18 @@ package org.apache.mesos.logstash.executor;
  */
 public final class LogstashInfo {
     private final String loggingLocationPath;
-    private final String confgurationPath;
+    private final String confguration;
 
-    public String GetLoggingLocationPath() {
+    public String getLoggingLocationPath() {
         return this.loggingLocationPath;
     }
 
-    public String GetConfigurationPath() {
-        return this.confgurationPath;
+    public String getConfiguration() {
+        return this.confguration;
     }
 
-    public LogstashInfo(String loggingLocationPath, String configurationPath) {
+    public LogstashInfo(String loggingLocationPath, String configuration) {
         this.loggingLocationPath = loggingLocationPath;
-        this.confgurationPath = configurationPath;
+        this.confguration = configuration;
     }
 }

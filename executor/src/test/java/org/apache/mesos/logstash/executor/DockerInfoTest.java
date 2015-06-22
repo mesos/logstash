@@ -105,8 +105,8 @@ public class DockerInfoTest {
         //
         // Assert
         //
-        assertEquals(result.get(containerId).GetLoggingLocationPath(), logLocation);
-        assertEquals(result.get(containerId).GetConfigurationPath(), configFile);
+        assertEquals(result.get(containerId).getLoggingLocationPath(), logLocation);
+        assertEquals(result.get(containerId).getConfiguration(), configFile);
     }
 
     @Test
