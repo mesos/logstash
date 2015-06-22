@@ -24,7 +24,10 @@ dependencies {
 
 }
 
-task copyDockerCompose(type: Copy) {
+//
+//  Configuration
+//
+task copyDockerComposeConfig(type: Copy) {
     from 'src/templates'
     into "${project.buildDir}/resources/test/mesos-ls/"
 
@@ -35,49 +38,93 @@ task copyDockerCompose(type: Copy) {
     expand(scheduler: project(':local').schedulerImageName)
 }
 
-task copyMesosSlaveThatRunsInsideDocker(type: Copy) {
+task copyMesosSlaveConfig(type: Copy) {
     from "${project.projectDir}/src/test/resources/mesos-ls/"
     into "${project.buildDir}/resources/test/mesos-ls/"
 }
 
-task dockerComposeUp(type: Exec) {
-    dependsOn copyDockerCompose, copyMesosSlaveThatRunsInsideDocker
+task configure {
+    dependsOn copyMesosSlaveConfig, copyDockerComposeConfig
+}
+
+
+//
+//  Docker Compose Tasks
+//
+def composeCommands = ["stop", "build", "rm", "up"]
+def containers = ["mesosmaster", "slave1", "scheduler"]
+
+containers.each { container ->
+    composeCommands.each { command ->
+        task "dockerCompose${command.capitalize()}${container.capitalize()}"(type: Exec) {
+            dependsOn configure
+            doFirst {
+                println "Issuing docker-compose $command $container"
+            }
+            workingDir "${project.buildDir}/resources/test/mesos-ls"
+            if(command == "up") {
+                commandLine 'docker-compose', "up", "-d", container
+            }
+            else {
+                commandLine 'docker-compose', command, container
+            }
+        }
+    }
+}
+
+// slave needs executor image to run
+dockerComposeUpSlave1.dependsOn project(':executor').pushDockerImage
+dockerComposeUpSlave1.dependsOn dockerComposeStopSlave1
+
+// scheduler image needs scheduler image to run (doesn't need to be pushed though)
+dockerComposeUpScheduler.dependsOn project(':scheduler').buildDockerImage
+dockerComposeUpScheduler.dependsOn dockerComposeStopScheduler
+
+
+//
+//  Cluster Tasks
+//
+task clusterStatus(type: Exec) {
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+    commandLine 'docker-compose', "ps"
+}
+
+task clusterUp(dependsOn: dockerComposeUpSlave1)
+
+task clusterDown(type: Exec) {
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+    commandLine 'docker-compose', "stop"
+}
+
+
+//
+// Redeploying
+task stopFramework(type: Exec) {
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+    commandLine 'docker-compose', "stop", "slave1", "scheduler"
+}
+
+task rmFramework(type: Exec) {
+    dependsOn stopFramework
+    workingDir "${project.buildDir}/resources/test/mesos-ls"
+    commandLine 'docker-compose', "rm", "-f", "slave1", "scheduler"
+}
+
+task redeploy(type: Exec) {
+    dependsOn rmFramework, configure
+    dependsOn project(':executor').pushDockerImage
     dependsOn project(':scheduler').buildDockerImage
-    dependsOn project(':executor').pushDockerImage // executor must be PUSHED so that inner docker host can retrieve it (pull)
+    mustRunAfter clusterUp
 
     workingDir "${project.buildDir}/resources/test/mesos-ls"
-
-    commandLine 'docker-compose', 'up', '-d'
-
+    commandLine 'docker-compose', "up", "-d", "slave1", "scheduler"
 }
 
-test.dependsOn dockerComposeUp
 
-/*
-task dockerComposeKill(type: Exec) {
 
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
+// bring up the cluster before tests
+test.dependsOn clusterUp
 
-    commandLine 'docker-compose', 'kill'
-
-}
-
-task dockerComposeRm(type: Exec) {
-
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-
-    commandLine 'docker-compose', 'rm', '--force', '-v'
-
-}
-*/
-
-task compose(type: Exec) {
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-
-    commandLine 'docker-compose'
-    args "$compose".split()
-}
-
-//test.finalizedBy dockerComposeKill
-
-//dockerComposeKill.finalizedBy dockerComposeRm
+// bring it down after tests
+test.finalizedBy clusterDown
+//sclusterDown.finalizedBy clusterRm

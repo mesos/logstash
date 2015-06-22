@@ -1,12 +1,5 @@
 
 
-dns:
-  image: devries/dnsmasq
-  links:
-  - mesosmaster
-  - slave1
-
-
 mesosmaster:
   image: mesosphere/mesos-master:0.22.1-1.0.ubuntu1404
   hostname: mesosmaster
@@ -34,4 +27,3 @@ scheduler:
   command: "-f /tmp/conf.conf -m mesosmaster"
   links:
    - mesosmaster
-   - dns
