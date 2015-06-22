@@ -1,7 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.ListContainersCmd;
+import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
+import com.github.dockerjava.core.DockerClientConfig;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
@@ -9,7 +12,13 @@ import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 
 import java.lang.InterruptedException;
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -22,19 +31,10 @@ public class LogstashExecutor implements Executor {
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
     public static void main(String[] args) {
+        // Hack to get around ServiceLoader not finding DockerCmdExecFactoryImpl on the class path when executed from mesos
+        loadDockerClientToCacheClassLoader(getHostAddress());
 
-        System.out.println("Testing testing");
         LOGGER.info("Executor running?!");
-        DockerInfo dockerInfo = new DockerInfo(DockerClientBuilder.getInstance("unix:///var/run/docker.sock").build());
-
-        Map<String, LogstashInfo> containersWithLogging = dockerInfo.getContainersThatWantsLogging();
-
-        LOGGER.info("Hasn't exploded yet");
-        for (String key : containersWithLogging.keySet()) {
-            LOGGER.info(String.format("Container %s, LOG_LOCATION %s, CONFIG_FILE %s", key,
-                    containersWithLogging.get(key).GetLoggingLocationPath(),
-                    containersWithLogging.get(key).GetConfigurationPath()));
-        }
 
         LOGGER.info("Started LogstashExecutor");
 
@@ -69,9 +69,8 @@ public class LogstashExecutor implements Executor {
                 .setState(Protos.TaskState.TASK_RUNNING).build();
         driver.sendStatusUpdate(status);
 
-
-        // To see something in the logs
-        LOGGER.error("FOOOOOOOOOOOOOOOOOOOOFOFOFOFOFOFOOOOOFOFOFOFO");
+        String hostAddress = getHostAddress();
+        logContainers(hostAddress);
 
         try {
             Thread.sleep(30_000);
@@ -97,6 +96,44 @@ public class LogstashExecutor implements Executor {
                     .setState(Protos.TaskState.TASK_FAILED).build();
             driver.sendStatusUpdate(status);
         }
+    }
+
+    private static void loadDockerClientToCacheClassLoader(String hostAddress) {
+        DockerClientBuilder.getInstance(hostAddress).build();
+    }
+
+    private void logContainers(String hostAddress) {
+        LOGGER.info("Host address is: " + hostAddress);
+
+        DockerClient dockerClient = DockerClientBuilder.getInstance(hostAddress).build();
+        List<Container> containers = dockerClient.listContainersCmd().exec();
+
+        LOGGER.info(String.format("Number of containers running %d", containers.size()));
+
+        for (Container c : containers) {
+            LOGGER.info(String.format("Container %d has id %s", containers.indexOf(c) + 1, c.getId()));
+        }
+    }
+
+    private static String getHostAddress() {
+        String hostAddress = null;
+        try {
+            Enumeration<InetAddress> inetAddresses = NetworkInterface.getByName("eth0").getInetAddresses();
+            while (inetAddresses.hasMoreElements()) {
+                InetAddress a = inetAddresses.nextElement();
+                if (a instanceof Inet6Address) {
+                    continue;
+                }
+
+                hostAddress = String.format("http:/%s:2376", a.toString());
+                LOGGER.info("Host address is: " + hostAddress);
+            }
+
+        } catch (SocketException se) {
+            se.printStackTrace();
+        }
+
+        return hostAddress;
     }
 
     @Override

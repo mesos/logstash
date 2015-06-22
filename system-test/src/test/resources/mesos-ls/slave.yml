@@ -13,6 +13,7 @@ slave:
     - /var/lib/docker/vfs:/var/lib/docker/vfs
     - /var/lib/docker/volumes:/var/lib/docker/volumes
   environment:
+    - PORT=2376
     - MESOS_MASTER=mesosmaster:5050
     - MESOS_EXECUTOR_REGISTRATION_TIMEOUT=5mins
     - MESOS_CONTAINERIZERS=docker,mesos

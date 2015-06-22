@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.scheduler;
 
+import com.google.protobuf.ByteString;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -35,8 +36,6 @@ public class LogstashScheduler implements Scheduler, Runnable {
     private Set<Task> tasks = new HashSet<>();
 
 
-
-
     private String master; // the URL of the mesos master
     private String configFilePath;
 
@@ -70,13 +69,12 @@ public class LogstashScheduler implements Scheduler, Runnable {
         try {
             masterHost = cmdLine.getOptionValue("m");
             configPath = cmdLine.getOptionValue("f");
-        }
-        catch(NullPointerException e) {
+        } catch (NullPointerException e) {
             printUsage(OPTIONS);
             return;
         }
 
-        if(masterHost == null || configPath == null) {
+        if (masterHost == null || configPath == null) {
             printUsage(OPTIONS);
             return;
         }
@@ -86,7 +84,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
     private static void logArgs(String[] args) {
         LOGGER.info("Command line arguments: ");
-        for(int i = 0; i < args.length; ++i) {
+        for (int i = 0; i < args.length; ++i) {
             LOGGER.info(args[i]);
         }
     }
@@ -96,8 +94,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         try {
             return parser.parse(OPTIONS, args);
-        }
-        catch (ParseException e) {
+        } catch (ParseException e) {
             e.printStackTrace(System.err);
             return null;
         }
@@ -191,8 +188,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
                 schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
                 tasks.add(new Task(offer.getHostname(), id));
-            }
-            else {
+            } else {
                 LOGGER.info("Offer declined");
                 schedulerDriver.declineOffer(offer.getId());
             }
@@ -253,24 +249,25 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
                 .setForcePullImage(true)
-                .setImage("epeld/logstash-executor");
+                .setImage("swemail/logstash-executor");
 
 
-            LOGGER.info("Using Executor to start Logstash cloud mesos on slaves");
-            Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-                    .setExecutorId(Protos.ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
-                    .setFrameworkId(frameworkId)
-                    .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecutor.build()))
-                    .setName("" + UUID.randomUUID())
-                    .setCommand(Protos.CommandInfo.newBuilder()
-                            .addArguments("java")
-                            .addArguments("-Djava.library.path=/usr/local/lib")
-                            .addArguments("-jar")
-                            .addArguments("/tmp/logstash-executor.jar")
-                            .setShell(false))
-                    .build();
+        LOGGER.info("Using Executor to start Logstash cloud mesos on slaves");
 
-            taskInfoBuilder.setExecutor(executorInfo);
+        Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
+                .setFrameworkId(frameworkId)
+                .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecutor.build()))
+                .setName("" + UUID.randomUUID())
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addArguments("java")
+                        .addArguments("-Djava.library.path=/usr/local/lib")
+                        .addArguments("-jar")
+                        .addArguments("/tmp/logstash-executor.jar")
+                        .setShell(false))
+                .build();
+
+        taskInfoBuilder.setExecutor(executorInfo);
 
         return taskInfoBuilder.build();
     }
