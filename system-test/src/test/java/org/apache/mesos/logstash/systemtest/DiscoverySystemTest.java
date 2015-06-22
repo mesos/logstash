@@ -9,13 +9,10 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Tests REST node discovery
@@ -41,6 +38,10 @@ public class DiscoverySystemTest {
         assertEquals(1, numberOfContainersRunning);
     }
 
+    public void testThatAContainerStarts() throws InterruptedException {
+
+    }
+
     private static DockerClient createDockerClient(String hostAddress) {
         DockerClientConfig config = DockerClientConfig.createDefaultConfigBuilder()
                 .withVersion("1.18")
@@ -53,7 +54,7 @@ public class DiscoverySystemTest {
     private Callable<Integer> containersSize(final ListContainersCmd listContainersCmd) {
         return new Callable<Integer>() {
             public Integer call() throws Exception {
-                return listContainersCmd.exec().size(); // The condition supplier part
+                return listContainersCmd.exec().size();
             }
         };
     }
