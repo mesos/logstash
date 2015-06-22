@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.systemtest;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import org.apache.log4j.Logger;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -23,7 +25,7 @@ public class DiscoverySystemTest {
     public static final Logger LOGGER = Logger.getLogger(DiscoverySystemTest.class);
 
     @Test
-    public void testNodeDiscoveryRest() throws InterruptedException {
+    public void testThatOneContainerIsRunning() throws InterruptedException {
 
         DockerClient outerDockerClient = createDockerClient("unix:///var/run/docker.sock");
         InspectContainerResponse response = outerDockerClient.inspectContainerCmd("mesosls_slave1_1").exec();
@@ -34,7 +36,7 @@ public class DiscoverySystemTest {
 
         LOGGER.info(String.format("Asking for containers at %s", ipAddress));
 
-        int numberOfContainersRunning = innerDockerClient.listContainersCmd().exec().size();
+        int numberOfContainersRunning = await().until(containersSize(innerDockerClient.listContainersCmd()), equalTo(1));
 
         assertEquals(1, numberOfContainersRunning);
     }
@@ -46,6 +48,14 @@ public class DiscoverySystemTest {
                 .build();
 
         return DockerClientBuilder.getInstance(config).build();
+    }
+
+    private Callable<Integer> containersSize(final ListContainersCmd listContainersCmd) {
+        return new Callable<Integer>() {
+            public Integer call() throws Exception {
+                return listContainersCmd.exec().size(); // The condition supplier part
+            }
+        };
     }
 
 }
