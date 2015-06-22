@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.EventCallback;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
@@ -86,6 +87,23 @@ public class DockerInfoImpl implements DockerInfo {
         }
 
         return null;
+    }
+
+    public String startContainer(String imageId) {
+        CreateContainerResponse r = dockerClient.createContainerCmd(imageId).exec();
+
+        dockerClient.startContainerCmd(r.getId()).exec();
+
+        return r.getId();
+    }
+
+    public void stopContainer(String containerId) {
+        dockerClient.stopContainerCmd(containerId);
+    }
+
+    public void execInContainer(String containerId, String command) {
+        // dockerClient.exec
+
     }
 
 }
