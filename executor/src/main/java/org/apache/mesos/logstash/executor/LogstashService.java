@@ -17,13 +17,13 @@ public class LogstashService {
 
     public void start() {
         if(currentContainerId == null) {
-            String containerId = client.startContainer(LOGSTASH_IMAGE);
+            //String containerId = client.startContainer(LOGSTASH_IMAGE);
         }
     }
 
     public void stop() {
         if(currentContainerId != null) {
-            client.stopContainer(currentContainerId);
+            //client.stopContainer(currentContainerId);
             currentContainerId = null;
         }
     }

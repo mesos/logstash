@@ -1,12 +1,11 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.EventCallback;
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
 import org.apache.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -16,7 +15,7 @@ import java.util.Map;
  * Created by ero on 22/06/15.
  */
 public class DockerInfoImpl implements DockerInfo {
-    private final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
+    private final Logger LOGGER = Logger.getLogger(DockerInfoImpl.class.toString());
     private final String LOG_LOCATION = "LOG_LOCATION";
     private final String CONFIG_FILE = "CONFIG_FILE";
 
@@ -37,7 +36,7 @@ public class DockerInfoImpl implements DockerInfo {
         List<InspectContainerResponse> containerResponses = getContainerResponses(dockerClient, containers);
 
         LOGGER.info(String.format("Found %d running containers", containers.size()));
-        return parseLogstahsInfoFromRunningContainers(containerResponses);
+        return parseLogstashInfoFromRunningContainers(containerResponses);
     }
 
     private List<Container> getRunningContainers(DockerClient dockerClient) {
@@ -52,7 +51,7 @@ public class DockerInfoImpl implements DockerInfo {
         return containerResponses;
     }
 
-    private Map<String, LogstashInfo> parseLogstahsInfoFromRunningContainers(List<InspectContainerResponse> containers) {
+    private Map<String, LogstashInfo> parseLogstashInfoFromRunningContainers(List<InspectContainerResponse> containers) {
         Map<String, LogstashInfo> runningContainers = new Hashtable<>();
         for (InspectContainerResponse container : containers) {
             LogstashInfo li = parseEnvironmentToLogstashInfo(container);
@@ -60,6 +59,8 @@ public class DockerInfoImpl implements DockerInfo {
                 runningContainers.put(container.getId(), li);
             }
         }
+        LOGGER.info(String.format("Found %d CONFIGURED containers", runningContainers.size()));
+
         return runningContainers;
     }
 
@@ -101,9 +102,19 @@ public class DockerInfoImpl implements DockerInfo {
         dockerClient.stopContainerCmd(containerId);
     }
 
-    public void execInContainer(String containerId, String command) {
-        // dockerClient.exec
+    public void execInContainer(String containerId, String... command) {
+        String execId = dockerClient.execCreateCmd(containerId).withAttachStdout().withCmd(command).exec().getId();
 
+        ExecStartCmd abc = dockerClient.execStartCmd(execId);
+        InspectExecCmd cmd = dockerClient.inspectExecCmd(execId);
+
+        try {
+            abc.exec().close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        LOGGER.info("COMMAND EXIT CODE: " + cmd.exec().getExitCode());
     }
 
 }

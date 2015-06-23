@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.command.EventCallback;
 import com.github.dockerjava.api.model.Event;
+import org.apache.log4j.Logger;
 
 import java.util.*;
 
@@ -9,6 +10,8 @@ import java.util.*;
  * Created by ero on 22/06/15.
  */
 public class DockerPoll {
+    public static final Logger LOGGER = Logger.getLogger(DockerPoll.class.toString());
+
 
     private DockerInfo dockerInfo = null;
     private Map<String, LogstashInfo> runningContainers = new HashMap<>();
@@ -30,43 +33,31 @@ public class DockerPoll {
         dockerInfo.attachEventListener(new EventCallback() {
             @Override
             public void onEvent(Event event) {
-                if (event.getStatus() == "stop") {
-                    removeContainer(event.getId());
+                LOGGER.info("Got event!!!!!! " + event.getStatus());
+                if (event.getStatus().equalsIgnoreCase("stop") || event.getStatus().equalsIgnoreCase("die")) {
+                    updateContainerState(dockerInfo.getContainersThatWantLogging());
                 }
-                if (event.getStatus() == "start" || event.getStatus() == "restart") {
-                    addContainer(event.getId());
+                if (event.getStatus().equalsIgnoreCase("start") || event.getStatus().equalsIgnoreCase("restart")) {
+                    updateContainerState(dockerInfo.getContainersThatWantLogging());
                 }
             }
 
             @Override
             public void onException(Throwable throwable) {
-
+                LOGGER.error("exception :(" + throwable.toString());
             }
 
             @Override
             public void onCompletion(int numEvents) {
-
+                LOGGER.info("Completed!!!!!! ");
             }
 
             @Override
             public boolean isReceiving() {
-                return false;
+                return true;
             }
         });
 
-    }
-
-    private void addContainer(String containerId) {
-        Map<String, LogstashInfo> runningContainers = dockerInfo.getContainersThatWantLogging();
-        if(runningContainers.containsKey(containerId)) {
-            updateContainerState(runningContainers);
-        }
-    }
-
-    private void removeContainer(String containerId) {
-        if(runningContainers.containsKey(containerId)) {
-            updateContainerState(dockerInfo.getContainersThatWantLogging());
-        }
     }
 
     private void updateContainerState(Map<String, LogstashInfo> newContainerState) {
@@ -96,6 +87,7 @@ public class DockerPoll {
     }
 
 
+    // compute the complement of subSet, relative to set
     private Map<String,LogstashInfo> diffingContainers(Map<String, LogstashInfo> set, Map<String, LogstashInfo> subSet) {
         Map<String, LogstashInfo> diff = new HashMap<>();
         for (Map.Entry<String, LogstashInfo> entry : set.entrySet()) {

@@ -86,7 +86,7 @@ public class LogstashConnector implements FrameworkListener {
 
         void start() {
             LOGGER.info("Running magic command");
-            client.execInContainer(framework.getId(), "echo 'I was here but I dissapear' >> /dev/stdout");
+            client.execInContainer(framework.getId(), "touch", "/tmp/abc");
         }
     }
 }

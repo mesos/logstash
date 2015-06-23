@@ -11,5 +11,5 @@ public interface DockerInfo {
     void attachEventListener(EventCallback eventCallback);
     String startContainer(String imageId);
     void stopContainer(String containerId);
-    void execInContainer(String containerId, String command);
+    void execInContainer(String containerId, String... command);
 }
