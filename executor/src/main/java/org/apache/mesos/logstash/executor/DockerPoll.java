@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
-import javafx.util.Pair;
+import com.github.dockerjava.api.command.EventCallback;
+import com.github.dockerjava.api.model.Event;
 
 import java.util.*;
 
@@ -10,36 +11,71 @@ import java.util.*;
 public class DockerPoll {
 
     private DockerInfo dockerInfo = null;
-    private Map<String, LogstashInfo> runningContainers = null;
+    private Map<String, LogstashInfo> runningContainers = new HashMap<>();
     private List<FrameworkListener> frameworkListeners = new ArrayList<>();
 
     public DockerPoll(DockerInfo dockerInfo) {
         this.dockerInfo = dockerInfo;
+        this.runningContainers = dockerInfo.getContainersThatWantsLogging();
+        attachToDockerEventStream();
     }
 
     public void attach(FrameworkListener observer) {
         frameworkListeners.add(observer);
+        notifyForEachNewContainer(observer, this.runningContainers);
     }
 
-    public void poll(long delay, long interval) {
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(createTimerTask(), delay, interval);
-    }
-
-    private TimerTask createTimerTask() {
-        return new TimerTask() {
+    private void attachToDockerEventStream() {
+        dockerInfo.attachEventListener(new EventCallback() {
             @Override
-            public void run() {
-                Map<String, LogstashInfo> newContainerState = dockerInfo.getContainersThatWantsLogging();
-                Map<String, LogstashInfo> removedContainers = diffingContainers(runningContainers, newContainerState);
-                Map<String, LogstashInfo> addedContainers = diffingContainers(newContainerState, runningContainers);
-                notifyNewContainerState(removedContainers, addedContainers);
-                runningContainers = newContainerState;
+            public void onEvent(Event event) {
+                if (event.getStatus() == "stop") {
+                    removeContainer(event.getId());
+                }
+                if (event.getStatus() == "start" || event.getStatus() == "restart") {
+                    addContainer(event.getId());
+                }
             }
-        };
+
+            @Override
+            public void onException(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompletion(int numEvents) {
+
+            }
+
+            @Override
+            public boolean isReceiving() {
+                return false;
+            }
+        });
+
     }
 
-    private void notifyNewContainerState(Map<String, LogstashInfo> removedContainers, Map<String, LogstashInfo> addedContainers) {
+    private void addContainer(String containerId) {
+        Map<String, LogstashInfo> runningContainers = dockerInfo.getContainersThatWantsLogging();
+        if(runningContainers.containsKey(containerId)) {
+            updateContainerState(runningContainers);
+        }
+    }
+
+    private void removeContainer(String containerId) {
+        if(runningContainers.containsKey(containerId)) {
+            updateContainerState(dockerInfo.getContainersThatWantsLogging());
+        }
+    }
+
+    private void updateContainerState(Map<String, LogstashInfo> newContainerState) {
+        notifyNewContainerState(newContainerState, runningContainers);
+        runningContainers = new HashMap<>(newContainerState);
+    }
+
+    private void notifyNewContainerState(Map<String, LogstashInfo> newContainerState, Map<String, LogstashInfo> runningContainers) {
+        Map<String, LogstashInfo> removedContainers = diffingContainers(runningContainers, newContainerState);
+        Map<String, LogstashInfo> addedContainers = diffingContainers(newContainerState, runningContainers);
         for (FrameworkListener frameWorkListener : frameworkListeners) {
             notifyForEachRemovedContainer(frameWorkListener, removedContainers);
             notifyForEachNewContainer(frameWorkListener, addedContainers);
