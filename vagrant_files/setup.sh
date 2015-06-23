@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 echo "Setting up useful docker bash utils"
-cp -f /vagrant/vagrant_files/bash/bashutils /home/vagrant/.bashutils
+cp -f /vagrant/vagrant_files/bashutils /home/vagrant/.bashutils
 echo "source ~/.bashutils" >> /home/vagrant/.bashrc
 chown vagrant -R /home/vagrant
 
