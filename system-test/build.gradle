@@ -115,7 +115,8 @@ task redeploy(type: Exec) {
     dependsOn rmFramework, configure
     dependsOn project(':executor').pushDockerImage
     dependsOn project(':scheduler').buildDockerImage
-    mustRunAfter clusterUp
+
+    mustRunAfter clusterUp // IMPORTANT!
 
     workingDir "${project.buildDir}/resources/test/mesos-ls"
     commandLine 'docker-compose', "up", "-d", "slave1", "scheduler"
@@ -124,7 +125,7 @@ task redeploy(type: Exec) {
 
 
 // bring up the cluster before tests
-test.dependsOn clusterUp
+test.dependsOn clusterUp, redeploy
 
 // bring it down after tests
 test.finalizedBy clusterDown
