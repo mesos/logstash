@@ -100,7 +100,7 @@ public class DockerInfoTest {
         // Act
         //
         DockerInfo target = new DockerInfoImpl(dockerClientStub);
-        Map<String, LogstashInfo> result = target.getContainersThatWantsLogging();
+        Map<String, LogstashInfo> result = target.getContainersThatWantLogging();
 
         //
         // Assert
@@ -131,7 +131,7 @@ public class DockerInfoTest {
         // Act
         //
         DockerInfo target = new DockerInfoImpl(dockerClientStub);
-        Map<String, LogstashInfo> result = target.getContainersThatWantsLogging();
+        Map<String, LogstashInfo> result = target.getContainersThatWantLogging();
 
         //
         // Assert

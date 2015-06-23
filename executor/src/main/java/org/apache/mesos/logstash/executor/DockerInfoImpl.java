@@ -32,7 +32,7 @@ public class DockerInfoImpl implements DockerInfo {
     }
 
     @Override
-    public Map<String, LogstashInfo> getContainersThatWantsLogging() {
+    public Map<String, LogstashInfo> getContainersThatWantLogging() {
         List<Container> containers = getRunningContainers(dockerClient);
         List<InspectContainerResponse> containerResponses = getContainerResponses(dockerClient, containers);
 

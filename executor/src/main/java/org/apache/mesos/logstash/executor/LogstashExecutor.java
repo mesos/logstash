@@ -1,10 +1,8 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.ListContainersCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
@@ -19,8 +17,6 @@ import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Executor for Logstash.
@@ -70,10 +66,10 @@ public class LogstashExecutor implements Executor {
         driver.sendStatusUpdate(status);
 
         String hostAddress = getHostAddress();
-        logContainers(hostAddress);
+        doIt(hostAddress);
 
         try {
-            Thread.sleep(30_000);
+            Thread.sleep(120_000);
         } catch (InterruptedException e) {
             LOGGER.error("INTERRUPTED");
         }
@@ -102,7 +98,7 @@ public class LogstashExecutor implements Executor {
         DockerClientBuilder.getInstance(hostAddress).build();
     }
 
-    private void logContainers(String hostAddress) {
+    private void doIt(String hostAddress) {
         LOGGER.info("Host address is: " + hostAddress);
 
         DockerClient dockerClient = DockerClientBuilder.getInstance(hostAddress).build();
@@ -113,6 +109,8 @@ public class LogstashExecutor implements Executor {
         for (Container c : containers) {
             LOGGER.info(String.format("Container %d has id %s", containers.indexOf(c) + 1, c.getId()));
         }
+
+        new LogstashConnector(new DockerInfoImpl(dockerClient)).init();
     }
 
     private static String getHostAddress() {

@@ -16,12 +16,13 @@ public class DockerPoll {
 
     public DockerPoll(DockerInfo dockerInfo) {
         this.dockerInfo = dockerInfo;
-        this.runningContainers = dockerInfo.getContainersThatWantsLogging();
+        this.runningContainers = dockerInfo.getContainersThatWantLogging();
         attachToDockerEventStream();
     }
 
     public void attach(FrameworkListener observer) {
         frameworkListeners.add(observer);
+        // NOTE: DANGEROUS RACE CONDITION!!!
         notifyForEachNewContainer(observer, this.runningContainers);
     }
 
@@ -56,7 +57,7 @@ public class DockerPoll {
     }
 
     private void addContainer(String containerId) {
-        Map<String, LogstashInfo> runningContainers = dockerInfo.getContainersThatWantsLogging();
+        Map<String, LogstashInfo> runningContainers = dockerInfo.getContainersThatWantLogging();
         if(runningContainers.containsKey(containerId)) {
             updateContainerState(runningContainers);
         }
@@ -64,7 +65,7 @@ public class DockerPoll {
 
     private void removeContainer(String containerId) {
         if(runningContainers.containsKey(containerId)) {
-            updateContainerState(dockerInfo.getContainersThatWantsLogging());
+            updateContainerState(dockerInfo.getContainersThatWantLogging());
         }
     }
 
@@ -84,13 +85,13 @@ public class DockerPoll {
 
     private void notifyForEachRemovedContainer(FrameworkListener frameWorkListener, Map<String, LogstashInfo> removedContainers) {
         for (Map.Entry<String, LogstashInfo> entry : removedContainers.entrySet()) {
-            frameWorkListener.FrameworkRemoved(new Framework(entry));
+            frameWorkListener.frameworkRemoved(new Framework(entry));
         }
     }
 
     private void notifyForEachNewContainer(FrameworkListener frameWorkListener, Map<String, LogstashInfo> newContainers) {
         for (Map.Entry<String, LogstashInfo> entry : newContainers.entrySet()) {
-            frameWorkListener.FrameworkAdded(new Framework(entry));
+            frameWorkListener.frameworkAdded(new Framework(entry));
         }
     }
 

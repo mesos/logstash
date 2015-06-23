@@ -7,7 +7,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.assertEquals;
@@ -31,7 +31,7 @@ public class DockerPollTest {
         //
         // Arrange
         //
-        when(dockerInfoStub.getContainersThatWantsLogging()).thenReturn(new HashMap<String, LogstashInfo>() {
+        when(dockerInfoStub.getContainersThatWantLogging()).thenReturn(new LinkedHashMap<String, LogstashInfo>() {
             {
                 put("TEST_ID_1", new LogstashInfo("LOGGPATH1", "{{}}"));
                 put("TEST_ID_2", new LogstashInfo("LOGGPATH2", "{{}}"));
@@ -49,7 +49,7 @@ public class DockerPollTest {
         //
         // Assert
         //
-        verify(frameworkListenerSpy, times(2)).FrameworkAdded(argumentCaptor.capture());
+        verify(frameworkListenerSpy, times(2)).frameworkAdded(argumentCaptor.capture());
 
         Framework framework1 = argumentCaptor.getAllValues().get(0);
         assertEquals("TEST_ID_1", framework1.getId());
@@ -68,7 +68,7 @@ public class DockerPollTest {
         //
         // Arrange
         //
-        when(dockerInfoStub.getContainersThatWantsLogging())
+        when(dockerInfoStub.getContainersThatWantLogging())
                 .thenReturn(new HashMap<String, LogstashInfo>() {
                     {
                         put("TEST_ID_1", new LogstashInfo("LOGGPATH1", "{{}}"));
@@ -96,7 +96,7 @@ public class DockerPollTest {
         verify(dockerInfoStub).attachEventListener(argumentCaptorForCallback.capture());
         argumentCaptorForCallback.getValue().onEvent(new Event("start", "TEST_ID_2", "SLAVE1", 1));
 
-        verify(frameworkListenerSpy, times(2)).FrameworkAdded(argumentCaptor.capture());
+        verify(frameworkListenerSpy, times(2)).frameworkAdded(argumentCaptor.capture());
 
         Framework framework1 = argumentCaptor.getAllValues().get(0);
         assertEquals("TEST_ID_1", framework1.getId());
@@ -114,7 +114,7 @@ public class DockerPollTest {
         //
         // Arrange
         //
-        when(dockerInfoStub.getContainersThatWantsLogging())
+        when(dockerInfoStub.getContainersThatWantLogging())
                 .thenReturn(new HashMap<String, LogstashInfo>() {
                     {
                         put("TEST_ID_1", new LogstashInfo("LOGGPATH1", "{{}}"));
@@ -143,7 +143,7 @@ public class DockerPollTest {
         verify(dockerInfoStub).attachEventListener(argumentCaptorForCallback.capture());
         argumentCaptorForCallback.getValue().onEvent(new Event("stop", "TEST_ID_2", "SLAVE1", 1));
 
-        verify(frameworkListenerSpy).FrameworkRemoved(argumentCaptor.capture());
+        verify(frameworkListenerSpy).frameworkRemoved(argumentCaptor.capture());
 
         Framework framework = argumentCaptor.getValue();
         assertEquals("TEST_ID_2", framework.getId());

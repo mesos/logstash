@@ -7,7 +7,7 @@ import java.util.*;
  * Created by ero on 15/06/15.
  */
 public interface DockerInfo {
-    Map<String, LogstashInfo> getContainersThatWantsLogging();
+    Map<String, LogstashInfo> getContainersThatWantLogging();
     void attachEventListener(EventCallback eventCallback);
     String startContainer(String imageId);
     void stopContainer(String containerId);
