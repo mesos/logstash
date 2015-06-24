@@ -3,12 +3,17 @@ package org.apache.mesos.logstash.executor;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateExceptionHandler;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.InterruptedException;
 import java.net.*;
 import java.util.Arrays;
@@ -63,13 +68,8 @@ public class LogstashExecutor implements Executor {
         driver.sendStatusUpdate(status);
 
         String hostAddress = getHostAddress();
-        doIt(hostAddress);
 
-        try {
-            Thread.sleep(120_000);
-        } catch (InterruptedException e) {
-            LOGGER.error("INTERRUPTED");
-        }
+        doIt(hostAddress);
 
 
         try {
@@ -111,7 +111,23 @@ public class LogstashExecutor implements Executor {
                 .uri(URI.create(hostAddress))
                 .build();
 
-        new LogstashConnector(new DockerInfoImpl(dockerClient, spotifyDockerClient)).init();
+        try {
+            Template configTemplate = initTemplatingEngine().getTemplate("logstash.conf.ftl");
+
+            LOGGER.info("Config template loaded");
+
+            LogstashService logstash = new LogstashService(configTemplate);
+
+            LOGGER.info("logstash service created");
+
+            new LogstashConnector(new DockerInfoImpl(dockerClient, spotifyDockerClient), logstash).init();
+
+            LOGGER.info("connector set up");
+        }
+        catch(IOException e) {
+            LOGGER.error("Couldn't load config template");
+            e.printStackTrace();
+        }
     }
 
     private static String getHostAddress() {
@@ -157,5 +173,19 @@ public class LogstashExecutor implements Executor {
     @Override
     public void error(ExecutorDriver driver, String message) {
         LOGGER.info("Error in executor: " + message);
+    }
+
+    private Configuration initTemplatingEngine() {
+        Configuration conf = new Configuration();
+        try {
+            conf.setDirectoryForTemplateLoading(new File("/etc/"));
+        }
+        catch(IOException e) {
+            LOGGER.error("Failed to set template directory");
+        }
+        conf.setDefaultEncoding("UTF-8");
+        conf.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
+
+        return conf;
     }
 }

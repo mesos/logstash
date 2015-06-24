@@ -4,7 +4,7 @@ SCRIPT_LOCATION=/tmp/logstash.conf
 TEMP_SCRIPT_LOCATION=/tmp/logstash.temp.conf
 
 cp $SCRIPT_LOCATION $TEMP_SCRIPT_LOCATION
-logstash -f $TEMP_SCRIPT_LOCATION &
+logstash -f $TEMP_SCRIPT_LOCATION -e 'input { file { path => "/dev/null" } }' &
 
 LOGSTASH_PID=$!
 echo "PID $LOGSTASH_PID"
@@ -29,7 +29,7 @@ do
     kill $LOGSTASH_PID
 
     echo "Restarting.."
-    logstash -f $TEMP_SCRIPT_LOCATION &
+    logstash -f $TEMP_SCRIPT_LOCATION  -e 'input { file { path => "/dev/null" } }' &
     LOGSTASH_PID=$!
     echo "PID $LOGSTASH_PID"
   fi

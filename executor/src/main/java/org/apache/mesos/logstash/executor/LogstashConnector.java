@@ -8,7 +8,9 @@ import org.apache.log4j.Logger;
 import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,10 +31,11 @@ public class LogstashConnector implements FrameworkListener {
 
     private DockerPoll poll;
 
-    public LogstashConnector(DockerInfo client) {
+    public LogstashConnector(DockerInfo client, LogstashService service) {
         this.client = client;
-        logstash = new LogstashService(client);
         forwarders = new HashMap<>();
+
+        logstash = service;
     }
 
     public void init() {
@@ -40,38 +43,26 @@ public class LogstashConnector implements FrameworkListener {
 
         poll = new DockerPoll(client);
         poll.attach(this);
+
+        logstash.start();
     }
 
     public void frameworkAdded(Framework f) {
-        LOGGER.info("New framework. stopping logstash..");
+        forwarders.put(f.getId(), new LogForwarder(f));
 
-        logstash.stop();
-        try {
-            forwarders.put(f.getId(), new LogForwarder(f));
-        }
-        finally {
-            LOGGER.info("Starting again!");
-            logstash.start();
+
+        LOGGER.info("Reconfiguring logstash!");
+
+        List<Framework> frameworks = new ArrayList<>();
+        for(LogForwarder fw : forwarders.values()) {
+            frameworks.add(fw.framework);
         }
 
-        LOGGER.info("..and forwarders!");
-        runForwarders();
+        logstash.reconfigure(frameworks);
     }
 
     public void frameworkRemoved(Framework f) {
-        LOGGER.info("Framework removed");
-
-        logstash.stop();
-        try {
-            forwarders.remove(f.getId());
-        }
-        finally {
-            LOGGER.info("Starting again!");
-            logstash.start();
-        }
-
-        LOGGER.info("..and forwarders");
-        runForwarders();
+        //
     }
 
 

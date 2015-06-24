@@ -1,4 +1,5 @@
 input {
+
   <#list frameworks as framework>
   file {
     path => "${framework.getLogLocation()}"

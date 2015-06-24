@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,27 +27,22 @@ public class LogstashService {
 
     public static final String LOGSTASH_IMAGE = "logstash";
 
-    private DockerInfo client;
-    private String currentContainerId;
     private Template configTemplate;
 
 
-    public LogstashService(DockerInfo client) {
-        this.client = client;
-
-        initTemplatingEngine();
+    public LogstashService(Template configTemplate) {
+        this.configTemplate = configTemplate;
     }
 
     public void start() {
-        if(currentContainerId == null) {
-            //String containerId = client.startContainer(LOGSTASH_IMAGE);
+        reconfigure(new ArrayList<Framework>());
+        try {
+            Runtime.getRuntime().exec("bash /tmp/run_logstash.sh").waitFor();
+            System.out.println("Logstash service stopped!");
+            LOGGER.error("LOGSTASH DOWN");
         }
-    }
-
-    public void stop() {
-        if(currentContainerId != null) {
-            //client.stopContainer(currentContainerId);
-            currentContainerId = null;
+        catch(IOException | InterruptedException e) {
+            LOGGER.error("Something went horribly, horribly wrong: " + e.toString());
         }
     }
 
@@ -63,32 +59,6 @@ public class LogstashService {
         }
         catch(TemplateException e) {
             e.printStackTrace();
-        }
-
-        // TODO restart logstash!
-    }
-
-    public String getCurrentContainerId() {
-        return currentContainerId;
-    }
-
-    // TODO move out into executor?? We only need a reference to the Template. Pass that to constructor instead
-    private void initTemplatingEngine() {
-        Configuration conf = new Configuration();
-        try {
-            conf.setDirectoryForTemplateLoading(new File("/mnt/mesos/sandbox"));
-        }
-        catch(IOException e) {
-            LOGGER.error("Failed to set template directory");
-        }
-        conf.setDefaultEncoding("UTF-8");
-        conf.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-
-        try {
-            configTemplate = conf.getTemplate("config.template");
-        }
-        catch(IOException e) {
-            LOGGER.error("Couldn't load config tempate!");
         }
     }
 }
