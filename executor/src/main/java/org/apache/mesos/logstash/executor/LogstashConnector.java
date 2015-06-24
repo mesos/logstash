@@ -1,9 +1,13 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.DockerClient;
+import freemarker.template.Configuration;
+import freemarker.template.TemplateExceptionHandler;
 import org.apache.log4j.Logger;
 
 import java.io.InputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 

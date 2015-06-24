@@ -22,6 +22,8 @@ public class Framework {
     private String logstashFilter;
     private String logLocation;
 
+    private String configBlock; // for filtering/parsing log messages
+
     public Framework(String id, String logstashFilter, String logLocation) {
         this.id = id;
         this.logstashFilter = logstashFilter;
