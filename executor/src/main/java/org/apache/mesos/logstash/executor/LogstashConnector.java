@@ -3,6 +3,7 @@ package org.apache.mesos.logstash.executor;
 import com.github.dockerjava.api.DockerClient;
 import org.apache.log4j.Logger;
 
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,7 +87,10 @@ public class LogstashConnector implements FrameworkListener {
 
         void start() {
             LOGGER.info("Running magic command");
-            client.execInContainer(framework.getId(), "touch", "/tmp/abc");
+            com.spotify.docker.client.LogStream logStream = client.execInContainer(framework.getId(), "tail", "-f", framework.getLogLocation());
+            String fileName = LogDispatcher.writeLogToFile(framework.getId(), "", logStream);
+
+            LOGGER.info(String.format("Thread writing to file %s", fileName));
         }
     }
 }

@@ -1,6 +1,8 @@
 package org.apache.mesos.logstash.executor;
 
 import com.github.dockerjava.api.command.EventCallback;
+
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -11,5 +13,5 @@ public interface DockerInfo {
     void attachEventListener(EventCallback eventCallback);
     String startContainer(String imageId);
     void stopContainer(String containerId);
-    void execInContainer(String containerId, String... command);
+    com.spotify.docker.client.LogStream execInContainer(String containerId, String... command);
 }

@@ -249,7 +249,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
                 .setForcePullImage(true)
-                .setImage("epeld/logstash-executor");
+                .setImage("swemail/logstash-executor");
 
 
         LOGGER.info("Using Executor to start Logstash cloud mesos on slaves");

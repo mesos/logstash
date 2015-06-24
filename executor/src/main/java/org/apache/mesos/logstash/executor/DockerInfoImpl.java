@@ -3,9 +3,11 @@ package org.apache.mesos.logstash.executor;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.*;
 import com.github.dockerjava.api.model.Container;
+import com.spotify.docker.client.DockerException;
 import org.apache.log4j.Logger;
 
-import java.io.IOException;
+
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
@@ -20,9 +22,11 @@ public class DockerInfoImpl implements DockerInfo {
     private final String CONFIG_FILE = "CONFIG_FILE";
 
     private final DockerClient dockerClient;
+    private final com.spotify.docker.client.DockerClient spotifyDockerClient;
 
-    public DockerInfoImpl(DockerClient dockerClient) {
+    public DockerInfoImpl(DockerClient dockerClient, com.spotify.docker.client.DockerClient spotifyDockerClient) {
         this.dockerClient = dockerClient;
+        this.spotifyDockerClient = spotifyDockerClient;
     }
 
     @Override
@@ -102,19 +106,30 @@ public class DockerInfoImpl implements DockerInfo {
         dockerClient.stopContainerCmd(containerId);
     }
 
-    public void execInContainer(String containerId, String... command) {
-        String execId = dockerClient.execCreateCmd(containerId).withAttachStdout().withCmd(command).exec().getId();
-
-        ExecStartCmd abc = dockerClient.execStartCmd(execId);
-        InspectExecCmd cmd = dockerClient.inspectExecCmd(execId);
+    public com.spotify.docker.client.LogStream execInContainer(String containerId, String... command) {
 
         try {
-            abc.exec().close();
-        } catch (IOException e) {
+            String id = spotifyDockerClient.execCreate(containerId, command, com.spotify.docker.client.DockerClient.ExecParameter.STDOUT,
+                    com.spotify.docker.client.DockerClient.ExecParameter.STDERR);
+            com.spotify.docker.client.LogStream logStream = spotifyDockerClient.execStart(id);
+            return logStream;
+
+        } catch (DockerException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        return null;
 
-        LOGGER.info("COMMAND EXIT CODE: " + cmd.exec().getExitCode());
+//        String execId = dockerClient.execCreateCmd(containerId).withAttachStdout().withCmd(command).exec().getId();
+//
+//        ExecStartCmd execStartCmd = dockerClient.execStartCmd(execId);
+//        InspectExecCmd cmd = dockerClient.inspectExecCmd(execId);
+//
+//        InputStream result = execStartCmd.withDetach().exec();
+//
+////        LOGGER.info("COMMAND EXIT CODE: " + cmd.exec().getExitCode());
+//
+//        return result;
     }
-
 }

@@ -75,12 +75,14 @@ public class DockerPoll {
     }
 
     private void notifyForEachRemovedContainer(FrameworkListener frameWorkListener, Map<String, LogstashInfo> removedContainers) {
+        LOGGER.info(String.format("Notifying about %d removed containers", removedContainers.size()));
         for (Map.Entry<String, LogstashInfo> entry : removedContainers.entrySet()) {
             frameWorkListener.frameworkRemoved(new Framework(entry));
         }
     }
 
     private void notifyForEachNewContainer(FrameworkListener frameWorkListener, Map<String, LogstashInfo> newContainers) {
+        LOGGER.info(String.format("Notifying about %d new containers", newContainers.size()));
         for (Map.Entry<String, LogstashInfo> entry : newContainers.entrySet()) {
             frameWorkListener.frameworkAdded(new Framework(entry));
         }

@@ -10,10 +10,7 @@ import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 
 import java.lang.InterruptedException;
-import java.net.Inet6Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
@@ -110,7 +107,11 @@ public class LogstashExecutor implements Executor {
             LOGGER.info(String.format("Container %d has id %s", containers.indexOf(c) + 1, c.getId()));
         }
 
-        new LogstashConnector(new DockerInfoImpl(dockerClient)).init();
+        com.spotify.docker.client.DockerClient spotifyDockerClient = com.spotify.docker.client.DefaultDockerClient.builder()
+                .uri(URI.create(hostAddress))
+                .build();
+
+        new LogstashConnector(new DockerInfoImpl(dockerClient, spotifyDockerClient)).init();
     }
 
     private static String getHostAddress() {
