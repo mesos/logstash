@@ -5,6 +5,7 @@ import freemarker.template.Configuration;
 import freemarker.template.TemplateExceptionHandler;
 import org.apache.log4j.Logger;
 
+import java.awt.*;
 import java.io.InputStream;
 import java.io.File;
 import java.io.IOException;
@@ -48,30 +49,28 @@ public class LogstashConnector implements FrameworkListener {
     }
 
     public void frameworkAdded(Framework f) {
-        forwarders.put(f.getId(), new LogForwarder(f));
+        LogForwarder fw = new LogForwarder(f);
+        forwarders.put(f.getId(), fw);
+
+        LOGGER.info("Starting forwarder");
+        fw.start();
 
 
         LOGGER.info("Reconfiguring logstash!");
+        logstash.reconfigure(getFrameworks());
+    }
 
+    private List<Framework> getFrameworks() {
         List<Framework> frameworks = new ArrayList<>();
         for(LogForwarder fw : forwarders.values()) {
             frameworks.add(fw.framework);
         }
-
-        logstash.reconfigure(frameworks);
+        return frameworks;
     }
 
     public void frameworkRemoved(Framework f) {
         //
     }
-
-
-    private void runForwarders() {
-        for(LogForwarder f : forwarders.values()) {
-            f.start();
-        }
-    }
-
 
     class LogForwarder {
         Framework framework;

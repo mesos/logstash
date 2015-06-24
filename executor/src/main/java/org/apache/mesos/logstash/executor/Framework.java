@@ -6,17 +6,26 @@ import java.util.Map;
  * Created by ero on 22/06/15.
  */
 public class Framework {
+    private String localLogLocation = "/tmp/TODO"; // TODO we should set this when issuing writeLogToFile
+
     public String getId() {
         return id;
     }
+
+    public String getLogType() { return "dummyLogType"; } // TODO replace
+    public String[] getLogTags() { return new String[]{"dummyLogTag"}; }
 
     public String getLogstashFilter() {
         return logstashFilter;
     }
 
+    // Get the log location INSIDE THE CONTAINER RUNNING THE SERVICE
     public String getLogLocation() {
         return logLocation;
     }
+
+    // Get the log location INSIDE THE LOGSTASH EXECUTOR's CONTAINER
+    public String getLocalLogLocation() { return localLogLocation; }
 
     private String id;
     private String logstashFilter;
@@ -35,4 +44,8 @@ public class Framework {
         this.logstashFilter = entry.getValue().getConfiguration();
         this.logLocation = entry.getValue().getLoggingLocationPath();
     }
+
+    public boolean hasFilterSection() { return false; } // TODO
+
+    public String getFilterSection() { return ""; } // TODO
 }

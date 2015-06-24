@@ -2,9 +2,8 @@ input {
 
   <#list frameworks as framework>
   file {
-    path => "${framework.getLogLocation()}"
+    path => "${framework.getLocalLogLocation()}"
     type => "${framework.getLogType()}"
-    tags => [${framework.getLogTags() ? join(", ")}]
     containerId => "${framework.getId()}"
   }
   </#list>
