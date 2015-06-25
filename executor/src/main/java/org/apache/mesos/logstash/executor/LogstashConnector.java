@@ -81,8 +81,8 @@ public class LogstashConnector implements FrameworkListener {
 
         void start() {
             LOGGER.info("Running magic command");
-            String magicCommand = "while sleep 1; do echo '%s HEARTBEAT'; done & tail -f " + framework.getLogLocation();
-            magicCommand = String.format(magicCommand, LogDispatcher.MAGIC_CHARACTER + "");
+            String magicCommand = "while sleep 1; do echo '%c HEARTBEAT'; done & tail -f " + framework.getLogLocation();
+            magicCommand = String.format(magicCommand, LogDispatcher.MAGIC_CHARACTER);
 
             com.spotify.docker.client.LogStream logStream = client.execInContainer(framework.getId(), "bash", "-c", magicCommand);
             String fileName = LogDispatcher.writeLogToFile(framework.getId(), "", logStream);

@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
  * Created by ero on 24/06/15.
  */
 public class LogDispatcher {
-    public static final char MAGIC_CHARACTER = 'A';
+    public static final char MAGIC_CHARACTER = '\u0002';
 
     private static final String TEMP_PATH = "/tmp";
 

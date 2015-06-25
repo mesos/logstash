@@ -9,7 +9,7 @@ import java.io.ByteArrayOutputStream;
 import static org.junit.Assert.*;
 
 public class HeartbeatFilterOutputStreamTest {
-    final String TEST_STRING = "Hello\nA Ignore me\nWorld!";
+    final String TEST_STRING = String.format("Hello\n%c Ignore me\nWorld!", LogDispatcher.MAGIC_CHARACTER);
 
 
     ByteArrayOutputStream baos;
@@ -24,6 +24,12 @@ public class HeartbeatFilterOutputStreamTest {
     @After
     public void tearDown() throws Exception {
 
+    }
+
+    @Test
+    public void magicCharacterIsOneByteUTF8() throws Exception {
+        final String singleByteString = LogDispatcher.MAGIC_CHARACTER + "";
+        assertEquals(1, singleByteString.getBytes("UTF-8").length);
     }
 
     @Test
@@ -58,7 +64,7 @@ public class HeartbeatFilterOutputStreamTest {
 
     @Test
     public void ignoresMagicCharacter() throws Exception {
-        target.write(String.format(TEST_STRING, LogDispatcher.MAGIC_CHARACTER).getBytes("UTF-8"));
+        target.write(TEST_STRING.getBytes("UTF-8"));
         baos.close();
         String result = baos.toString("UTF-8");
 
@@ -67,8 +73,7 @@ public class HeartbeatFilterOutputStreamTest {
 
     @Test
     public void ignoresMagicCharacter2() throws Exception {
-        String s = String.format(TEST_STRING, LogDispatcher.MAGIC_CHARACTER);
-        target.write(s.getBytes("UTF-8"), 3, 4);
+        target.write(TEST_STRING.getBytes("UTF-8"), 3, 4);
         baos.close();
         String result = baos.toString("UTF-8");
 
