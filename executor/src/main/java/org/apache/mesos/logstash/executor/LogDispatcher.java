@@ -5,6 +5,7 @@ import java.net.SocketTimeoutException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,6 +24,8 @@ public class LogDispatcher {
     public static String writeLogToFile(final String folder, final String fileName, final com.spotify.docker.client.LogStream logStream) {
 
         final Path path = Paths.get(TEMP_PATH, folder, fileName);
+
+        touch(path.toFile());
 
         LOGGER.info("Starting thread for reading logStream to file " + path.toString());
 
@@ -51,6 +54,15 @@ public class LogDispatcher {
         });
 
         return path.toString();
+    }
+
+    private static void touch(File file) {
+        try {
+            new FileOutputStream(file).close();
+        }
+        catch(IOException e) {
+            LOGGER.error(e);
+        }
     }
 }
 

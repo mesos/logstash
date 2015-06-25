@@ -6,6 +6,7 @@ package org.apache.mesos.logstash.executor;
 public final class LogstashInfo {
     private final String loggingLocationPath;
     private final String confguration;
+    private final String name;
 
     public String getLoggingLocationPath() {
         return this.loggingLocationPath;
@@ -15,8 +16,13 @@ public final class LogstashInfo {
         return this.confguration;
     }
 
-    public LogstashInfo(String loggingLocationPath, String configuration) {
+    public LogstashInfo(String name, String loggingLocationPath, String configuration) {
+        this.name = name;
         this.loggingLocationPath = loggingLocationPath;
         this.confguration = configuration;
+    }
+
+    public String getName() {
+        return name;
     }
 }

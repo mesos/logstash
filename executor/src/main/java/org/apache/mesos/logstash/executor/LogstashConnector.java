@@ -87,6 +87,8 @@ public class LogstashConnector implements FrameworkListener {
             com.spotify.docker.client.LogStream logStream = client.execInContainer(framework.getId(), "bash", "-c", magicCommand);
             String fileName = LogDispatcher.writeLogToFile(framework.getId(), "", logStream);
 
+            framework.setLocalLogLocation(fileName);
+
             LOGGER.info(String.format("Thread writing to file %s", fileName));
         }
     }

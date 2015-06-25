@@ -4,7 +4,9 @@ input {
   file {
     path => "${framework.getLocalLogLocation()}"
     type => "${framework.getLogType()}"
-    containerId => "${framework.getId()}"
+    add_field => {
+      containerId => "${framework.getId()}"
+    }
   }
   </#list>
 }
@@ -20,7 +22,8 @@ filter {
 }
 
 output {
-  stdout {
-    codec => rubydebug
+  file {
+    codec => "json"
+    path => "/tmp/debug"
   }
 }

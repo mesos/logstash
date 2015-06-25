@@ -85,7 +85,7 @@ public class DockerInfoImpl implements DockerInfo {
             }
         }
         if (loggingLocationPath != null && configurationPath != null) {
-            return new LogstashInfo(loggingLocationPath, configurationPath);
+            return new LogstashInfo(container.name(), loggingLocationPath, configurationPath);
         }
         return null;
     }

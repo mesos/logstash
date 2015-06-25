@@ -6,13 +6,14 @@ import java.util.Map;
  * Created by ero on 22/06/15.
  */
 public class Framework {
-    private String localLogLocation = "/tmp/TODO"; // TODO we should set this when issuing writeLogToFile
+    private String localLogLocation;
+    private String logType;
 
     public String getId() {
         return id;
     }
 
-    public String getLogType() { return "dummyLogType"; } // TODO replace
+    public String getLogType() { return logType; }
     public String[] getLogTags() { return new String[]{"dummyLogTag"}; }
 
     public String getLogstashFilter() {
@@ -40,6 +41,7 @@ public class Framework {
     }
 
     public Framework(Map.Entry<String, LogstashInfo> entry) {
+        this.logType = entry.getValue().getName();
         this.id = entry.getKey();
         this.logstashFilter = entry.getValue().getConfiguration();
         this.logLocation = entry.getValue().getLoggingLocationPath();
@@ -48,4 +50,8 @@ public class Framework {
     public boolean hasFilterSection() { return false; } // TODO
 
     public String getFilterSection() { return ""; } // TODO
+
+    public void setLocalLogLocation(String localLogLocation) {
+        this.localLogLocation = localLogLocation;
+    }
 }
