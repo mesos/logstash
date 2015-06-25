@@ -1,8 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.core.DockerClientBuilder;
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerClient;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
@@ -11,6 +10,7 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
+import static java.util.concurrent.TimeUnit.HOURS;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,8 +29,6 @@ public class LogstashExecutor implements Executor {
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
     public static void main(String[] args) {
-        // Hack to get around ServiceLoader not finding DockerCmdExecFactoryImpl on the class path when executed from mesos
-        loadDockerClientToCacheClassLoader(getHostAddress());
 
         LOGGER.info("Executor running?!");
 
@@ -91,23 +89,11 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private static void loadDockerClientToCacheClassLoader(String hostAddress) {
-        DockerClientBuilder.getInstance(hostAddress).build();
-    }
-
     private void doIt(String hostAddress) {
         LOGGER.info("Host address is: " + hostAddress);
 
-        DockerClient dockerClient = DockerClientBuilder.getInstance(hostAddress).build();
-        List<Container> containers = dockerClient.listContainersCmd().exec();
-
-        LOGGER.info(String.format("Number of containers running %d", containers.size()));
-
-        for (Container c : containers) {
-            LOGGER.info(String.format("Container %d has id %s", containers.indexOf(c) + 1, c.getId()));
-        }
-
-        com.spotify.docker.client.DockerClient spotifyDockerClient = com.spotify.docker.client.DefaultDockerClient.builder()
+        DockerClient dockerClient = DefaultDockerClient.builder()
+                .readTimeoutMillis(HOURS.toMillis(1))
                 .uri(URI.create(hostAddress))
                 .build();
 
@@ -120,7 +106,7 @@ public class LogstashExecutor implements Executor {
 
             LOGGER.info("logstash service created");
 
-            new LogstashConnector(new DockerInfoImpl(dockerClient, spotifyDockerClient), logstash).init();
+            new LogstashConnector(new DockerInfoImpl(dockerClient), logstash).init();
 
             LOGGER.info("connector set up");
         }
