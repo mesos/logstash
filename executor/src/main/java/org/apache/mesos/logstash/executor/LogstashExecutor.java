@@ -10,11 +10,12 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashProtos;
+
 import static java.util.concurrent.TimeUnit.HOURS;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.InterruptedException;
 import java.net.*;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -67,7 +68,7 @@ public class LogstashExecutor implements Executor {
 
         String hostAddress = getHostAddress();
 
-        doIt(hostAddress);
+        doIt(driver, hostAddress);
 
 
         try {
@@ -89,13 +90,20 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private void doIt(String hostAddress) {
+    private void doIt(final ExecutorDriver executorDriver, String hostAddress) {
         LOGGER.info("Host address is: " + hostAddress);
 
         DockerClient dockerClient = DefaultDockerClient.builder()
                 .readTimeoutMillis(HOURS.toMillis(1))
                 .uri(URI.create(hostAddress))
                 .build();
+
+        FrameworkDiscoveryListener frameworkDiscoveryListener = new FrameworkDiscoveryListener() {
+            @Override
+            public void frameworksDiscovered(List<String> frameworkNames) {
+                executorDriver.sendFrameworkMessage(createExecutorMessage(frameworkNames));
+            }
+        };
 
         try {
             Template configTemplate = initTemplatingEngine().getTemplate("logstash.conf.ftl");
@@ -106,7 +114,7 @@ public class LogstashExecutor implements Executor {
 
             LOGGER.info("logstash service created");
 
-            new LogstashConnector(new DockerInfoImpl(dockerClient), logstash).init();
+            new LogstashConnector(new DockerInfoImpl(dockerClient, frameworkDiscoveryListener), logstash).init();
 
             LOGGER.info("connector set up");
         }
@@ -114,6 +122,13 @@ public class LogstashExecutor implements Executor {
             LOGGER.error("Couldn't load config template");
             e.printStackTrace();
         }
+    }
+
+    private byte[] createExecutorMessage(List<String> frameworkNames) {
+        return LogstashProtos.ExecutorMessage.newBuilder()
+                .addAllFrameworkName(frameworkNames)
+                .build()
+                .toByteArray();
     }
 
     private static String getHostAddress() {

@@ -6,97 +6,74 @@ import com.spotify.docker.client.LogStream;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.Container;
 import com.spotify.docker.client.messages.ContainerCreation;
-import com.spotify.docker.client.messages.ContainerInfo;
 import org.apache.log4j.Logger;
 
 
-import javax.print.Doc;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by ero on 22/06/15.
  */
 public class DockerInfoImpl implements DockerInfo {
+
+    private Map<String, String> runningContainers = new HashMap<>();
     private final Logger LOGGER = Logger.getLogger(DockerInfoImpl.class.toString());
-    private final String LOG_LOCATION = "LOG_LOCATION";
-    private final String CONFIG_FILE = "CONFIG_FILE";
 
     private final DockerClient dockerClient;
+    private final FrameworkDiscoveryListener frameworkDiscoveryListener;
 
-    public DockerInfoImpl(DockerClient dockerClient) {
+    public DockerInfoImpl(DockerClient dockerClient, FrameworkDiscoveryListener frameworkDiscoveryListener) {
         this.dockerClient = dockerClient;
+        this.frameworkDiscoveryListener = frameworkDiscoveryListener;
+        startPoll(5000);
     }
 
-    @Override
-    public Map<String, LogstashInfo> getContainersThatWantLogging() {
-        try {
-            List<Container> containers = getRunningContainers(this.dockerClient);
-            List<ContainerInfo> containerInfos = getContainerResponses(dockerClient, containers);
-
-            LOGGER.info(String.format("Found %d running containers", containers.size()));
-            return parseLogstashInfoFromRunningContainers(containerInfos);
-
-        } catch (DockerException e) {
-            LOGGER.error(String.format("Error calling docker remote api %s", e));
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            LOGGER.error(String.format("Error calling docker remote api %s", e));
-        }
-        return null;
+    public Set<String> getRunningContainers() {
+        return this.runningContainers.keySet();
     }
 
-    private List<Container> getRunningContainers(DockerClient dockerClient) throws DockerException, InterruptedException {
+    public String getImageNameOfContainer(String containerId) {
+        return this.runningContainers.get(containerId);
+    }
+
+    private List<Container> getContainers(DockerClient dockerClient) throws DockerException, InterruptedException {
         return dockerClient.listContainers();
     }
 
-    private List<ContainerInfo> getContainerResponses(DockerClient dockerClient, List<Container> containers) throws DockerException, InterruptedException {
-        List<ContainerInfo> containerResponses = new ArrayList<>();
-        for (Container container : containers) {
-            containerResponses.add(dockerClient.inspectContainer(container.id()));
-        }
-        return containerResponses;
+    private void startPoll(long pollInterval) {
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    updateContainerState(getContainers(dockerClient));
+                } catch (DockerException e) {
+                    LOGGER.error(String.format("There was an error updating containers: %s", e));
+                } catch (InterruptedException e) {
+                    LOGGER.error(String.format("There was an error updating containers: %s", e));
+                }
+            }
+        }, 0, pollInterval);
     }
 
-    private Map<String, LogstashInfo> parseLogstashInfoFromRunningContainers(List<ContainerInfo> containers) {
-        Map<String, LogstashInfo> runningContainers = new Hashtable<>();
-        for (ContainerInfo container : containers) {
-            LogstashInfo li = parseEnvironmentToLogstashInfo(container);
-            if (li != null) {
-                runningContainers.put(container.id(), li);
-            }
-        }
-        LOGGER.info(String.format("Found %d CONFIGURED containers", runningContainers.size()));
+    private void updateContainerState(List<Container> latestRunningContainers) {
+        Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(latestRunningContainers);
+        if (!latestRunningContainerIdAndNames.keySet().containsAll(this.runningContainers.keySet())
+                || !this.runningContainers.keySet().containsAll(latestRunningContainerIdAndNames.keySet())) {
 
-        return runningContainers;
+            this.runningContainers = latestRunningContainerIdAndNames;
+
+            frameworkDiscoveryListener.frameworksDiscovered(
+                    new ArrayList<>(new HashSet<>(this.runningContainers.values())));
+        }
     }
 
-    private LogstashInfo parseEnvironmentToLogstashInfo(ContainerInfo container) {
-        String loggingLocationPath = null;
-        String configurationPath = null;
-        for (String env : container.config().env()) {
-            if (loggingLocationPath == null) {
-                loggingLocationPath = tryParseVariable(env, LOG_LOCATION);
-            }
-            if (configurationPath == null) {
-                configurationPath = tryParseVariable(env, CONFIG_FILE);
-            }
+    private Map<String, String> getContainerIdAndNames(List<Container> containers) {
+        Map<String, String> containerIdsAndNames = new HashMap<>();
+        for (Container c : containers) {
+            containerIdsAndNames.put(c.id(), c.image());
         }
-        if (loggingLocationPath != null && configurationPath != null) {
-            return new LogstashInfo(container.name(), loggingLocationPath, configurationPath);
-        }
-        return null;
-    }
-
-    private String tryParseVariable(String env, String match) {
-        String[] parts = env.split("=");
-        if (parts[0].equals(match)) {
-            return parts[1];
-        }
-
-        return null;
+        return containerIdsAndNames;
     }
 
     public String startContainer(String imageId) {

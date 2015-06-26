@@ -1,16 +1,16 @@
 package org.apache.mesos.logstash.executor;
 
-import com.github.dockerjava.api.command.EventCallback;
+import com.spotify.docker.client.LogStream;
 
-import java.io.InputStream;
 import java.util.*;
 
 /**
  * Created by ero on 15/06/15.
  */
 public interface DockerInfo {
-    Map<String, LogstashInfo> getContainersThatWantLogging();
+    Set<String> getRunningContainers();
+    String getImageNameOfContainer(String containerId);
     String startContainer(String imageId);
     void stopContainer(String containerId);
-    com.spotify.docker.client.LogStream execInContainer(String containerId, String... command);
+    LogStream execInContainer(String containerId, String... command);
 }
