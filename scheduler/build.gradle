@@ -39,6 +39,8 @@ dependencies {
     compile "commons-cli:commons-cli:1.0"
     compile "log4j:log4j:1.2.16"
 
+    compile project(':common')
+
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 

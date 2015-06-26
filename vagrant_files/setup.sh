@@ -5,9 +5,13 @@ cp -f /vagrant/vagrant_files/bashutils /home/vagrant/.bashutils
 echo "source ~/.bashutils" >> /home/vagrant/.bashrc
 chown vagrant -R /home/vagrant
 
+
 apt-get -y update
 apt-get -y install linux-image-generic-lts-trusty
 sudo apt-get install wget
+
+echo "Installing protobuf-compiler"
+apt-get -y install protobuf-compiler
 
 # Docker setup
 echo "Installing docker"

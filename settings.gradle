@@ -1,4 +1,4 @@
 rootProject.name = 'logstash'
 
-include 'local', 'executor', 'scheduler', 'system-test'
+include 'common', 'local', 'executor', 'scheduler', 'system-test'
 
