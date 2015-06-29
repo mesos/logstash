@@ -25,7 +25,6 @@ public class LogstashService {
 
     private Template configTemplate;
 
-
     public LogstashService(Template configTemplate) {
         this.configTemplate = configTemplate;
     }
@@ -42,9 +41,9 @@ public class LogstashService {
         }
     }
 
-    public void reconfigure(List<Framework> knownFrameworks) {
+    public void reconfigure(Map<String, String[]> logConfigurations) {
         Map m = new HashMap<>();
-        m.put("frameworks", knownFrameworks);
+        m.put("configurations", logConfigurations);
 
         try {
             FileOutputStream os = new FileOutputStream("/tmp/logstash.conf");
@@ -56,17 +55,5 @@ public class LogstashService {
         catch(TemplateException e) {
             e.printStackTrace();
         }
-    }
-
-    public class LogInputConfiguration {
-        LogInputConfiguration(String containerId, String logType, String localLocation) {
-            this.containerId = containerId;
-            this.logType = logType;
-            this.localLogLocation = localLocation;
-        }
-
-        String containerId;
-        String logType;
-        String localLogLocation;
     }
 }

@@ -1,16 +1,13 @@
 input {
 
-  <#list frameworks as framework>
+  <#list configurations?keys as containerId >
+  <#list configurations.get(containerId) as location >
   file {
-    path => "${framework.getLocalLogLocation()}"
+    path => "${location}"
     type => "${framework.getLogType()}"
     add_field => {
-      containerId => "${framework.getId()}"
+      containerId => "${containerId}"
     }
   }
   </#list>
 }
-
-<#list configs as config>
-${config.getContent()}
-</#list>

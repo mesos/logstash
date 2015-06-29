@@ -63,23 +63,23 @@ public class LogstashConnector implements LogConfigurationListener {
     }
 
     @Override
-    public void updatedLogLocations(Map<String, String[]> locationsPerFrameworkName) {
-        String[] running = new String[10]; // TODO
+    public void updatedLogLocations(Map<String, String[]> locationsPerImageName) {
+        Set<String> running = dockerInfo.getRunningContainers();
 
         for(String containerId : running) {
-            final String imageName = ""; // TODO
+            final String imageName = dockerInfo.getImageNameOfContainer(containerId);
 
             if(logConfigurations.containsKey(containerId)) {
                 LOGGER.info(String.format("Skipping %s (%s) because it is already configured", containerId, imageName));
                 continue;
             }
-            if(!locationsPerFrameworkName.containsKey(imageName)) {
+            if(!locationsPerImageName.containsKey(imageName)) {
                 // We don't know where to locate the log files
                 LOGGER.info(String.format("Ignoring running %s (%s) because missing log information", containerId, imageName));
                 continue;
             }
 
-            setupContainerLogfileStreaming(containerId, locationsPerFrameworkName.get(imageName));
+            setupContainerLogfileStreaming(containerId, locationsPerImageName.get(imageName));
         }
 
         // TODO reconfigure
