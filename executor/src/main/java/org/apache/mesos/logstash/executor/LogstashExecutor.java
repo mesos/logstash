@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.executor;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import freemarker.cache.TemplateLoader;
@@ -102,6 +103,8 @@ public class LogstashExecutor implements Executor {
         FrameworkDiscoveryListener frameworkDiscoveryListener = new FrameworkDiscoveryListener() {
             @Override
             public void frameworksDiscovered(List<String> frameworkNames) {
+                LOGGER.info(String.format("Sending framework message..."));
+
                 executorDriver.sendFrameworkMessage(createExecutorMessage(frameworkNames));
             }
         };
@@ -165,6 +168,19 @@ public class LogstashExecutor implements Executor {
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
         LOGGER.info("Framework message: " + Arrays.toString(data));
+
+        try {
+            LogstashProtos.SchedulerMessage schedulerMessage = LogstashProtos.SchedulerMessage.parseFrom(data);
+
+            LOGGER.info(String.format("Configuration fragments: %s", schedulerMessage.getConfigurationFragments()));
+            LOGGER.info(String.format("Framework name: %s", schedulerMessage.getLogstashConfig(0).getFrameworkName()));
+            LOGGER.info(String.format("Location: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getLocation()));
+            LOGGER.info(String.format("Tag: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getTag()));
+            LOGGER.info(String.format("Type: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getType()));
+
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

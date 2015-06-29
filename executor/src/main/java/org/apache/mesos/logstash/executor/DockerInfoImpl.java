@@ -23,9 +23,14 @@ public class DockerInfoImpl implements DockerInfo {
     private final FrameworkDiscoveryListener frameworkDiscoveryListener;
 
     public DockerInfoImpl(DockerClient dockerClient, FrameworkDiscoveryListener frameworkDiscoveryListener) {
+        this(dockerClient, frameworkDiscoveryListener, 5000);
+    }
+
+    public DockerInfoImpl(DockerClient dockerClient, FrameworkDiscoveryListener frameworkDiscoveryListener, long pollInterval) {
         this.dockerClient = dockerClient;
         this.frameworkDiscoveryListener = frameworkDiscoveryListener;
-        startPoll(5000);
+        updateContainerState();
+        startPoll(pollInterval);
     }
 
     public Set<String> getRunningContainers() {
@@ -36,8 +41,17 @@ public class DockerInfoImpl implements DockerInfo {
         return this.runningContainers.get(containerId);
     }
 
-    private List<Container> getContainers(DockerClient dockerClient) throws DockerException, InterruptedException {
-        return dockerClient.listContainers();
+    private List<Container> getContainers() throws DockerException, InterruptedException {
+        return this.dockerClient.listContainers();
+    }
+
+    private List<String> getContainerImageNames() {
+        return new ArrayList<>(new HashSet<>(this.runningContainers.values()));
+    }
+
+    private void notifyFrameworkListener() {
+        LOGGER.info("Notifying about running containers");
+        this.frameworkDiscoveryListener.frameworksDiscovered(getContainerImageNames());
     }
 
     private void startPoll(long pollInterval) {
@@ -45,26 +59,29 @@ public class DockerInfoImpl implements DockerInfo {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                try {
-                    updateContainerState(getContainers(dockerClient));
-                } catch (DockerException e) {
-                    LOGGER.error(String.format("There was an error updating containers: %s", e));
-                } catch (InterruptedException e) {
-                    LOGGER.error(String.format("There was an error updating containers: %s", e));
-                }
+                updateContainerState();
             }
         }, 0, pollInterval);
     }
 
-    private void updateContainerState(List<Container> latestRunningContainers) {
-        Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(latestRunningContainers);
-        if (!latestRunningContainerIdAndNames.keySet().containsAll(this.runningContainers.keySet())
-                || !this.runningContainers.keySet().containsAll(latestRunningContainerIdAndNames.keySet())) {
+    private void updateContainerState() {
+        try {
+            List<Container> latestRunningContainers = getContainers();
 
-            this.runningContainers = latestRunningContainerIdAndNames;
+            LOGGER.info(String.format("Found %d running containers", latestRunningContainers.size()));
 
-            frameworkDiscoveryListener.frameworksDiscovered(
-                    new ArrayList<>(new HashSet<>(this.runningContainers.values())));
+            Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(latestRunningContainers);
+
+            if (!latestRunningContainerIdAndNames.keySet().equals(this.runningContainers.keySet())) {
+
+                this.runningContainers = latestRunningContainerIdAndNames;
+
+                notifyFrameworkListener();
+            }
+        } catch (DockerException e) {
+            LOGGER.error(String.format("There was an error updating containers: %s", e));
+        } catch (InterruptedException e) {
+            LOGGER.error(String.format("There was an error updating containers: %s", e));
         }
     }
 
