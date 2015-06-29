@@ -30,7 +30,7 @@ public class LogstashService {
     }
 
     public void start() {
-        reconfigure(new ArrayList<Framework>());
+//        reconfigure(new ArrayList<Framework>());
         try {
             Runtime.getRuntime().exec("bash /tmp/run_logstash.sh").waitFor();
             System.out.println("Logstash service stopped!");
