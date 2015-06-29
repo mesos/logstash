@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.executor;
 
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
@@ -106,7 +107,7 @@ public class LogstashExecutor implements Executor {
         };
 
         try {
-            Template configTemplate = initTemplatingEngine().getTemplate("logstash.conf.ftl");
+            Template configTemplate = initTemplatingEngine().getTemplate("conf.ftl");
 
             LOGGER.info("Config template loaded");
 
@@ -178,13 +179,9 @@ public class LogstashExecutor implements Executor {
 
     private Configuration initTemplatingEngine() {
         Configuration conf = new Configuration();
-        try {
-            conf.setDirectoryForTemplateLoading(new File("/etc/"));
-        }
-        catch(IOException e) {
-            LOGGER.error("Failed to set template directory");
-        }
         conf.setDefaultEncoding("UTF-8");
+
+        conf.setClassForTemplateLoading(this.getClass(), "/");
         conf.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
 
         return conf;

@@ -1,13 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
 
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
-import freemarker.template.TemplateExceptionHandler;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -23,7 +20,6 @@ import java.util.Map;
 public class LogstashService {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashService.class.toString());
-
 
     public static final String LOGSTASH_IMAGE = "logstash";
 
@@ -60,5 +56,17 @@ public class LogstashService {
         catch(TemplateException e) {
             e.printStackTrace();
         }
+    }
+
+    public class LogInputConfiguration {
+        LogInputConfiguration(String containerId, String logType, String localLocation) {
+            this.containerId = containerId;
+            this.logType = logType;
+            this.localLogLocation = localLocation;
+        }
+
+        String containerId;
+        String logType;
+        String localLogLocation;
     }
 }

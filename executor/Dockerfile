@@ -9,7 +9,6 @@ RUN apt-get install -y --force-yes logstash
 ADD ./build/docker/logstash-executor-dependencies.jar /tmp/logstash-executor-dependencies.jar
 
 ADD ./build/docker/logstash-executor.jar /tmp/logstash-executor.jar
-ADD ./build/resources/main/sample.conf.ftl /etc/logstash.conf.ftl
 ADD ./build/resources/main/run_logstash.sh /tmp/run_logstash.sh
 
 
