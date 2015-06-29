@@ -3,19 +3,15 @@ package org.apache.mesos.logstash.executor;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.Container;
-import com.spotify.docker.client.messages.ContainerConfig;
-import com.spotify.docker.client.messages.ContainerInfo;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -24,58 +20,25 @@ import static org.mockito.Mockito.*;
 */
 public class DockerInfoTest {
 
-    private Container getContainer(final String id) {
+    private Container getContainer(final String id, final String imageName) {
         return new Container() {
             @Override
             public String id() {
                 return id;
             }
-        };
-    }
-
-    private ContainerConfig getContainerConfig(final String logLocation, final String configFile) {
-        List<String> env = new ArrayList<>();
-        if (logLocation != null && configFile != null) {
-            env = new ArrayList<String>() {{
-                add("LOG_LOCATION=" + logLocation);
-                add("CONFIG_FILE=" + configFile);
-            }};
-        }
-
-        return ContainerConfig.builder()
-                .env(env)
-                .build();
-    }
-
-    private ContainerInfo getContainerResponse(final String id, final String logLocation, final String configFile) {
-        return new ContainerInfo() {
-            @Override
-            public ContainerConfig config() {
-                return getContainerConfig(logLocation, configFile);
-            }
 
             @Override
-            public String id() {
-                return id;
+            public String image() {
+                return imageName;
             }
         };
     }
 
     private DockerClient dockerClientStub;
 
-    private void mockListCommand(List<Container> containers) {
+    private void mockListCommand(List<Container> firstResult, List<Container>... restResults) {
         try {
-            when(dockerClientStub.listContainers()).thenReturn(containers);
-        } catch (DockerException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void mockInspectCommand(String containerId, ContainerInfo containerResponse) {
-        try {
-            when(dockerClientStub.inspectContainer(containerId)).thenReturn(containerResponse);
+            when(dockerClientStub.listContainers()).thenReturn(firstResult, restResults);
         } catch (DockerException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
@@ -89,59 +52,97 @@ public class DockerInfoTest {
     }
 
     @Test
-    public void testGetContainersThatWantsLoggingExpectingSingleResult() {
-        final String logLocation = "path/to/logs";
-        final String configFile = "path/to/config";
-        final String containerId = "TEST_CONTAINER_ID";
-        final List<Container> containerIds = Collections.singletonList(getContainer(containerId));
-
-        //
-        // Arrange
-        //
-        this.mockListCommand(containerIds);
-        this.mockInspectCommand(containerId, getContainerResponse(containerId, logLocation, configFile));
-
-        //
-        // Act
-        //
-        DockerInfo target = new DockerInfoImpl(dockerClientStub);
-        Map<String, LogstashInfo> result = target.getContainersThatWantLogging();
-
-        //
-        // Assert
-        //
-        assertEquals(result.get(containerId).getLoggingLocationPath(), logLocation);
-        assertEquals(result.get(containerId).getConfiguration(), configFile);
-    }
-
-    @Test
-    public void testGetContainersThatWantsLoggingExpectingOnlyContainerThatSpecifiesLogstashEnvironment() {
-        final String logLocation = "path/to/logs";
-        final String configFile = "path/to/config";
-        final String containerWithLoggingNeeds = "TEST_CONTAINER_ID";
-        final String containerWithoutLoggingNeeds = "TEST_CONTAINER_ID_NO_LOGGING";
+    public void testGetRunningContainersExpectingTwoContainers() {
+        final String container1 = "TEST_CONTAINER_ID1";
+        final String container2 = "TEST_CONTAINER_ID2";
+        final String imageName1 = "TEST_IMAGE_NAME1";
+        final String imageName2 = "TEST_IMAGE_NAME2";
         final List<Container> containerIds = new ArrayList<Container>() {{
-            add(getContainer(containerWithLoggingNeeds));
-            add(getContainer(containerWithoutLoggingNeeds));
+            add(getContainer(container1, imageName1));
+            add(getContainer(container2, imageName2));
         }};
 
         //
         // Arrange
         //
         this.mockListCommand(containerIds);
-        this.mockInspectCommand(containerWithLoggingNeeds, getContainerResponse(containerWithLoggingNeeds, logLocation, configFile));
-        this.mockInspectCommand(containerWithoutLoggingNeeds, getContainerResponse(containerWithoutLoggingNeeds, null, null));
 
         //
         // Act
         //
-        DockerInfo target = new DockerInfoImpl(dockerClientStub);
-        Map<String, LogstashInfo> result = target.getContainersThatWantLogging();
+        DockerInfo target = new DockerInfoImpl(dockerClientStub, mock(FrameworkDiscoveryListener.class));
+        Set<String> result = target.getRunningContainers();
 
         //
         // Assert
         //
-        assertTrue(result.containsKey(containerWithLoggingNeeds));
-        assertFalse(result.containsKey(containerWithoutLoggingNeeds));
+        assertTrue(result.contains(container1));
+        assertTrue(result.contains(container2));
+    }
+
+    @Test
+    public void testGetNotifiedAboutCurrentRunningContainers() {
+        final String containerId = "TEST_CONTAINER_ID";
+        final String imageName = "TEST_IMAGE_NAME";
+        final List<Container> containerIds = Collections.singletonList(getContainer(containerId, imageName));
+
+        //
+        // Arrange
+        //
+        this.mockListCommand(containerIds);
+        FrameworkDiscoveryListener frameworkDiscoveryListenerSpy = mock(FrameworkDiscoveryListener.class);
+        ArgumentCaptor<List> containersCapture = ArgumentCaptor.forClass(List.class);
+
+        //
+        // Act
+        //
+        DockerInfo target = new DockerInfoImpl(dockerClientStub, frameworkDiscoveryListenerSpy);
+
+        //
+        // Assert
+        //
+        verify(frameworkDiscoveryListenerSpy).frameworksDiscovered(containersCapture.capture());
+        assertEquals(imageName, containersCapture.getValue().get(0));
+    }
+
+    @Test
+    public void testGetNotifiedAboutNewRunningContainers() {
+        final String container1 = "TEST_CONTAINER_ID1";
+        final String container2 = "TEST_CONTAINER_ID2";
+        final String imageName1 = "TEST_IMAGE_NAME1";
+        final String imageName2 = "TEST_IMAGE_NAME2";
+        final List<Container> containerIds = new ArrayList<Container>() {{
+            add(getContainer(container1, imageName1));
+            add(getContainer(container2, imageName2));
+        }};
+
+        //
+        // Arrange
+        //
+        this.mockListCommand(Collections.singletonList(getContainer(container1, imageName1)), containerIds);
+        final FrameworkDiscoveryListener frameworkDiscoveryListenerSpy = mock(FrameworkDiscoveryListener.class);
+        final ArgumentCaptor<List> containersCapture = ArgumentCaptor.forClass(List.class);
+
+        //
+        // Act
+        //
+        DockerInfo target = new DockerInfoImpl(dockerClientStub, frameworkDiscoveryListenerSpy, 100);
+
+        //
+        // Assert
+        //
+        await().until(new Runnable() {
+            @Override
+            public void run() {
+                verify(frameworkDiscoveryListenerSpy, times(2)).frameworksDiscovered(containersCapture.capture());
+
+                //First call with only one container
+                assertEquals(imageName1, containersCapture.getAllValues().get(0).get(0));
+
+                //Second call with both containers
+                assertTrue(containersCapture.getAllValues().get(1).contains(imageName1));
+                assertTrue(containersCapture.getAllValues().get(1).contains(imageName2));
+            }
+        });
     }
 }

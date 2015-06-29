@@ -214,10 +214,10 @@ public class LogstashScheduler implements Scheduler, Runnable {
         LOGGER.info("Message received");
 
         try {
-            LogstashProtos.ExecutorMessage executorMessage  = LogstashProtos.ExecutorMessage.parseFrom(bytes);
+            LogstashProtos.ExecutorMessage executorMessage = LogstashProtos.ExecutorMessage.parseFrom(bytes);
             List<String> frameworkNames = executorMessage.getFrameworkNameList();
 
-            for(String frameworkName : frameworkNames) {
+            for (String frameworkName : frameworkNames) {
                 LOGGER.info(String.format("Framework name: %s", frameworkName));
             }
 
@@ -234,10 +234,13 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         List<LogstashProtos.LogstashConfig> logstashConfigs = new ArrayList<>();
 
-        for(String frameworkName : frameworkNames) {
+        for (String frameworkName : frameworkNames) {
             logstashConfigs.add(LogstashProtos.LogstashConfig.newBuilder()
-                .addLogLocation("/var/log/apt/history.log")
-                .setFrameworkName(frameworkName).build());
+                    .addLogInputConfiguraton(LogstashProtos.LogInputConfiguration.newBuilder()
+                            .setLocation("/var/log/apt/history.log")
+                            .setTag("SOME TAG").setType("SOME TYPE")
+                            .build())
+                    .setFrameworkName(frameworkName).build());
         }
 
         return LogstashProtos.SchedulerMessage.newBuilder()
@@ -283,7 +286,7 @@ public class LogstashScheduler implements Scheduler, Runnable {
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
                 .setForcePullImage(true)
-                .setImage("epeld/logstash-executor");
+                .setImage("swemail/logstash-executor");
 
 
         LOGGER.info("Using Executor to start Logstash cloud mesos on slaves");
