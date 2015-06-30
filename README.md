@@ -1,6 +1,28 @@
 # Logstash
 *Coming soon!* Logstash on Mesos
 
+# Roadmap
+
+## Version 1 - July 31st
+
+☑ Automatic discovery of running frameworks, streaming logs from containers.
+☐ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
+☐ External LogStash Configuration (config files propagated from Master to Slaves)
+☐ Support for outputting to Elastic Search
+☐ Installation Documentation
+☐ Design Documentation
+
+## Version 2 - ?
+
+☐ Loss-less logging. Thoroughly ensure that no log messages are lost. (e.g. when a container has rolling log files)
+☐ DCOS certification
+☐ Service Discovery (allow other frameworks to discover the log service automatically)
+
+## Version 3 - ?
+
+☐ Configuration GUI
+
+
 # Getting Started
 
 This framework requires:
@@ -45,13 +67,13 @@ Actions to perform to start in Mac:
     $ vagrant ssh
     ```
 
-3. Build 
+3. Build
 
     ```bash
     $ cd /vagrant
     $ sudo ./gradlew build
     ```
-   
+
 ## Sponsors
 This project is sponsored by Cisco Cloud Services
 
