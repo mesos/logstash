@@ -5,23 +5,23 @@
 
 ## Version 1 - July 31st
 
-☑ Automatic discovery of running frameworks, streaming logs from containers.
-☐ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
-☐ External LogStash Configuration (config files propagated from Master to Slaves)
-☐ Support for outputting to Elastic Search
-☐ Installation Documentation
-☐ Design Documentation
+- ☑ Automatic discovery of running frameworks, streaming logs from containers.
+- ☐ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
+- ☐ External LogStash Configuration (config files propagated from Master to Slaves)
+- ☐ Support for outputting to Elastic Search
+- ☐ Installation Documentation
+- ☐ Design Documentation
 
 ## Version 2 - ?
 
-☐ Loss-less logging. Thoroughly ensure that no log messages are lost. (e.g. when a container has rolling log files)
-☐ DCOS certification
-☐ Service Discovery (allow other frameworks to discover the log service automatically)
+- ☐ Loss-less logging. Thoroughly ensure that no log messages are lost. (e.g. when a container has rolling log files)
+- ☐ DCOS certification
 
 ## Version 3 - ?
 
-☐ Configuration GUI
+- ☐ Service Discovery (allow other frameworks to discover the log service automatically, and configure themselves)
 
+- ☐ Configuration GUI
 
 # Getting Started
 
