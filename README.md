@@ -1,5 +1,8 @@
-# Logstash
-*Coming soon!* Logstash on Mesos
+# Logstash Mesos Framework
+
+A Mesos Framework for running Logstash in your cluster. You can configure logging for all your
+other frameworks and have LogStash parse and send your logs to ElasticSearch.
+
 
 # Roadmap
 
@@ -25,47 +28,43 @@
 
 # Getting Started
 
-This framework requires:
-* a running [Mesos](http://mesos.apache.org) cluster.
+*This project is under active development and instructions on how to actually run in a production
+environment will be coming soon*.
 
-The framework can be run by building the code, the docker images, transferring the code to the Mesos cluster and
-launching the framework _scheduler_.
+This project has been sponsored by Cisco Cloud Services, as part of their effort to give back to the DevOps
+community. Check out the MicroServices Infrastructure project for more.
 
-# How to build
-```
-$ ./gradlew build
-```
+You can find it [here](https://github.com/CiscoCloud/microservices-infrastructure).
 
-Alteratively:
-* Use [gdub](https://github.com/dougborg/gdub) which runs the gradle wrapper from any subdirectory, so that you don't need to deal with relative paths
-* Use [Vagrant](#building-with-vagrant)
+# Development
+
+You can run the project directly on your machine or in Vagrant.
+There is a `Vagrantfile` for the project if you want to run it there.
+
+## Dependencies
+
+- Java 7
+
+## Building
+
+You should copy the `local.properties.example` to `local.properties` and modify it with
+your dockerhub username.
+
+Also make sure you have the repos "logstash-scheduler" and "logstash-executor".
+
+Then run:
 
 ```bash
-$ java -jar logstash-scheduler.jar -m MASTER_IP:5050 -f /path/to/logstashconfig
+$ ./gradlew :build
 ```
 
-## Alternative ways of building
-### Building with Vagrant
+## Running the Tests
 
-Prerequisites:
-* Running Docker service
-* Vagrant 1.7.2 and VirtualBox 4.3.28 (at least the versions have been tested)
+```bash
+$ ./gradlew :system-test:build
+```
 
-**Note:** Currently you need to sudo the build command or the Docker part will fail. This will be fixed shortly.
-
-Actions to perform to start in Mac:
-
-1. Start Vagrant from project directory:
-
-    ```bash
-    $ vagrant up
-    ```
-
-2. When completed SSH into the VM:
-
-    ```bash
-    $ vagrant ssh
-    ```
+## Starting a Local Cluster
 
 3. Build
 
@@ -77,5 +76,7 @@ Actions to perform to start in Mac:
 ## Sponsors
 This project is sponsored by Cisco Cloud Services
 
-## License
-Apache License 2.0
+
+# License
+
+See `LICENSE` file.

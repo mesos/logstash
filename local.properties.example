@@ -1,0 +1,2 @@
+schedulerImageName=docker.io/<USERNAME_REPLACE>/logstash-scheduler
+executorImageName=docker.io/<USERNAME_REPLACE>/logstash-executor

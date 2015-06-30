@@ -24,6 +24,6 @@ slave1:
 
 scheduler:
   image: ${scheduler.replace("docker.io/", "")}
-  command: "-f /tmp/conf.conf -m mesosmaster"
+  command: "-m mesosmaster"
   links:
    - mesosmaster

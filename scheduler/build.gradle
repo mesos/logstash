@@ -6,12 +6,7 @@ apply plugin: 'groovy'
 import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
 import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
 
-mainClassName = "org.apache.mesos.logstash.scheduler.LogstashScheduler"
-
-sourceCompatibility = 1.7
-version = '1.0'
-
-evaluationDependsOn(':local')
+mainClassName = "org.apache.mesos.logstash.scheduler.Application"
 
 buildscript {
     repositories {
@@ -24,13 +19,8 @@ buildscript {
 }
 
 run {
-
     args "-m", "192.168.1.106:5050", "-f", "./conf.conf"
     jvmArgs "-Djava.library.path=/usr/local/lib"
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
@@ -52,8 +42,12 @@ shadowJar {
 
 jar {
     baseName = "logstash-scheduler"
-    manifest { attributes ('Main-Class': 'org.apache.mesos.logstash.scheduler.LogstashScheduler',
-            'Class-Path':'logstash-scheduler-dependencies.jar') }
+    manifest {
+        attributes (
+            'Main-Class': 'org.apache.mesos.logstash.scheduler.Application',
+            'Class-Path':'logstash-scheduler-dependencies.jar'
+        )
+    }
 }
 
 task copyJar(type: Copy) {
@@ -77,9 +71,18 @@ task buildDockerImage(type: Exec) {
     executable "docker"
     args "build"
     args "-t"
-    args project(':local').schedulerImageName
+    args schedulerImageName
     args "."
 }
 
+import org.apache.tools.ant.filters.ReplaceTokens
+
+task createConfig(type: Copy) {
+    from 'executor-name.txt'
+    into 'build/resources/main/'
+    filter(ReplaceTokens, tokens: [executorImageName: executorImageName])
+}
+
+build.dependsOn createConfig
 build.dependsOn buildDockerImage
 build.dependsOn copyJar

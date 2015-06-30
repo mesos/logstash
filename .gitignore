@@ -6,7 +6,7 @@
 .gradle/
 build/
 target/
-local/
+local/build.gradle
 
 # Package Files #
 *.war
@@ -17,4 +17,4 @@ local/
 *.iml
 .idea
 
-gradle.properties
+/local.properties
