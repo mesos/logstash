@@ -28,7 +28,12 @@ public class LogConfiguration {
 
     public void setLocalLogLocation(String frameworkName, String localLogLocation) {
         File fileToLog = new File(this.logLocation);
-        this.localLogLocation = Paths.get(localLogLocation, frameworkName, fileToLog.getName()).toString();
+        String sanitizedFrameworkName = sanitize(frameworkName);
+        this.localLogLocation = Paths.get(localLogLocation, sanitizedFrameworkName, fileToLog.getName()).toString();
+    }
+
+    private String sanitize(String frameworkName) {
+        return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
     }
 
     private final String logLocation;
