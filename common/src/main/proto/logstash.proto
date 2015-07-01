@@ -3,20 +3,13 @@ package org.apache.mesos.logstash.common;
 option java_package = "org.apache.mesos.logstash.common";
 option java_outer_classname = "LogstashProtos";
 
-message LogInputConfiguration {
-  required string location = 1;
-  required string type = 2;
-  required string tag = 3;
-}
-
 message LogstashConfig {
   required string frameworkName = 1;
-  repeated LogInputConfiguration logInputConfiguraton = 2;
+  required string config = 2;
 }
 
 message SchedulerMessage {
-  required string configurationFragments = 1;
-  repeated LogstashConfig logstashConfig = 2;
+  repeated LogstashConfig logstashConfig = 1;
 }
 
 message ExecutorMessage {

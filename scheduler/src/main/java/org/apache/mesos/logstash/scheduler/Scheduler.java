@@ -26,6 +26,9 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
 
     private final MesosSchedulerDriver driver;
 
+    // one-to-one map of slave and corresponding executor
+    private Map<Protos.SlaveID, Protos.ExecutorID> executors;
+
     // As per the DCOS Service Specification, setting the failover timeout to a large value;
     private static final double FAILOVER_TIMEOUT = 86400000;
     private Protos.FrameworkID frameworkId;
@@ -34,6 +37,10 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         this.masterURL = masterURL;
         this.executorImageName = executorImageName;
         this.driver = buildSchedulerDriver();
+
+
+        ConfigMonitor configMonitor = new ConfigMonitor("some path");
+        configMonitor.start(this::broadcastConfig);
     }
 
     private MesosSchedulerDriver buildSchedulerDriver() {
@@ -42,6 +49,26 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         LOGGER.info("Connecting to masterURL " + getMesosUrl());
 
         return new MesosSchedulerDriver(this, frameworkInfo, getMesosUrl());
+    }
+
+    private void broadcastConfig(Map<String, String> configs) {
+        byte[] message = configMapToByteArray(configs);
+        for(Map.Entry<Protos.SlaveID, Protos.ExecutorID> entry : executors.entrySet()) {
+            driver.sendFrameworkMessage(entry.getValue(), entry.getKey(), message);
+        }
+    }
+
+    private static byte[] configMapToByteArray(Map<String, String> configs) {
+        LogstashProtos.SchedulerMessage.Builder builder = LogstashProtos.SchedulerMessage.newBuilder();
+
+        for(Map.Entry<String, String> entry : configs.entrySet()) {
+            builder.addLogstashConfig(LogstashProtos.LogstashConfig.newBuilder()
+                    .setConfig(entry.getValue())
+                    .setFrameworkName(entry.getKey()));
+        }
+
+        return builder.build().toByteArray();
+
     }
 
     private Protos.FrameworkInfo buildFramework() {
@@ -107,50 +134,8 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     @Override
     public void frameworkMessage(SchedulerDriver schedulerDriver, Protos.ExecutorID executorID, Protos.SlaveID slaveID, byte[] bytes) {
         LOGGER.info("Message received");
-
-        try {
-            LogstashProtos.ExecutorMessage executorMessage = LogstashProtos.ExecutorMessage.parseFrom(bytes);
-            List<String> frameworkNames = executorMessage.getFrameworkNameList();
-
-            List<String> filteredFrameworkNames = new ArrayList<>();
-            for (String frameworkName : frameworkNames) {
-                if(!frameworkName.contains(executorImageName.replace("docker.io/", ""))) {
-                    filteredFrameworkNames.add(frameworkName);
-                }
-                LOGGER.info(String.format("Framework name: %s", frameworkName));
-            }
-
-            if(filteredFrameworkNames.size() > 0) {
-                LOGGER.info(String.format("Number of Frameworks to send: %d", filteredFrameworkNames.size()));
-
-                byte[] message = createExecutorMessage(filteredFrameworkNames);
-
-                schedulerDriver.sendFrameworkMessage(executorID, slaveID, message);
-            }
-
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error(String.format("Error parsing message from executor: %s", e));
-        }
     }
 
-    private byte[] createExecutorMessage(List<String> frameworkNames) {
-
-        List<LogstashProtos.LogstashConfig> logstashConfigs = new ArrayList<>();
-
-        for (String frameworkName : frameworkNames) {
-            logstashConfigs.add(LogstashProtos.LogstashConfig.newBuilder()
-                    .addLogInputConfiguraton(LogstashProtos.LogInputConfiguration.newBuilder()
-                            .setLocation("/var/log/apt/history.log")
-                            .setTag("SOME TAG").setType("SOME TYPE")
-                            .build())
-                    .setFrameworkName(frameworkName).build());
-        }
-
-        return LogstashProtos.SchedulerMessage.newBuilder()
-                .setConfigurationFragments("{{}}")
-                .addAllLogstashConfig(logstashConfigs)
-                .build().toByteArray();
-    }
 
     @Override
     public void disconnected(SchedulerDriver schedulerDriver) {

@@ -8,820 +8,6 @@ public final class LogstashProtos {
   public static void registerAllExtensions(
       com.google.protobuf.ExtensionRegistry registry) {
   }
-  public interface LogInputConfigurationOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:org.apache.mesos.logstash.common.LogInputConfiguration)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>required string location = 1;</code>
-     */
-    boolean hasLocation();
-    /**
-     * <code>required string location = 1;</code>
-     */
-    java.lang.String getLocation();
-    /**
-     * <code>required string location = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getLocationBytes();
-
-    /**
-     * <code>required string type = 2;</code>
-     */
-    boolean hasType();
-    /**
-     * <code>required string type = 2;</code>
-     */
-    java.lang.String getType();
-    /**
-     * <code>required string type = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getTypeBytes();
-
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    boolean hasTag();
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    java.lang.String getTag();
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    com.google.protobuf.ByteString
-        getTagBytes();
-  }
-  /**
-   * Protobuf type {@code org.apache.mesos.logstash.common.LogInputConfiguration}
-   */
-  public static final class LogInputConfiguration extends
-      com.google.protobuf.GeneratedMessage implements
-      // @@protoc_insertion_point(message_implements:org.apache.mesos.logstash.common.LogInputConfiguration)
-      LogInputConfigurationOrBuilder {
-    // Use LogInputConfiguration.newBuilder() to construct.
-    private LogInputConfiguration(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
-      super(builder);
-      this.unknownFields = builder.getUnknownFields();
-    }
-    private LogInputConfiguration(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
-
-    private static final LogInputConfiguration defaultInstance;
-    public static LogInputConfiguration getDefaultInstance() {
-      return defaultInstance;
-    }
-
-    public LogInputConfiguration getDefaultInstanceForType() {
-      return defaultInstance;
-    }
-
-    private final com.google.protobuf.UnknownFieldSet unknownFields;
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-        getUnknownFields() {
-      return this.unknownFields;
-    }
-    private LogInputConfiguration(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      initFields();
-      int mutable_bitField0_ = 0;
-      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
-          com.google.protobuf.UnknownFieldSet.newBuilder();
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!parseUnknownField(input, unknownFields,
-                                     extensionRegistry, tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000001;
-              location_ = bs;
-              break;
-            }
-            case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000002;
-              type_ = bs;
-              break;
-            }
-            case 26: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000004;
-              tag_ = bs;
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e.getMessage()).setUnfinishedMessage(this);
-      } finally {
-        this.unknownFields = unknownFields.build();
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.class, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder.class);
-    }
-
-    public static com.google.protobuf.Parser<LogInputConfiguration> PARSER =
-        new com.google.protobuf.AbstractParser<LogInputConfiguration>() {
-      public LogInputConfiguration parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-        return new LogInputConfiguration(input, extensionRegistry);
-      }
-    };
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<LogInputConfiguration> getParserForType() {
-      return PARSER;
-    }
-
-    private int bitField0_;
-    public static final int LOCATION_FIELD_NUMBER = 1;
-    private java.lang.Object location_;
-    /**
-     * <code>required string location = 1;</code>
-     */
-    public boolean hasLocation() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required string location = 1;</code>
-     */
-    public java.lang.String getLocation() {
-      java.lang.Object ref = location_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          location_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string location = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getLocationBytes() {
-      java.lang.Object ref = location_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        location_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int TYPE_FIELD_NUMBER = 2;
-    private java.lang.Object type_;
-    /**
-     * <code>required string type = 2;</code>
-     */
-    public boolean hasType() {
-      return ((bitField0_ & 0x00000002) == 0x00000002);
-    }
-    /**
-     * <code>required string type = 2;</code>
-     */
-    public java.lang.String getType() {
-      java.lang.Object ref = type_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          type_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string type = 2;</code>
-     */
-    public com.google.protobuf.ByteString
-        getTypeBytes() {
-      java.lang.Object ref = type_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        type_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int TAG_FIELD_NUMBER = 3;
-    private java.lang.Object tag_;
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    public boolean hasTag() {
-      return ((bitField0_ & 0x00000004) == 0x00000004);
-    }
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    public java.lang.String getTag() {
-      java.lang.Object ref = tag_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          tag_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string tag = 3;</code>
-     */
-    public com.google.protobuf.ByteString
-        getTagBytes() {
-      java.lang.Object ref = tag_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        tag_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    private void initFields() {
-      location_ = "";
-      type_ = "";
-      tag_ = "";
-    }
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      if (!hasLocation()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasType()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasTag()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getLocationBytes());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getTypeBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        output.writeBytes(3, getTagBytes());
-      }
-      getUnknownFields().writeTo(output);
-    }
-
-    private int memoizedSerializedSize = -1;
-    public int getSerializedSize() {
-      int size = memoizedSerializedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getLocationBytes());
-      }
-      if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getTypeBytes());
-      }
-      if (((bitField0_ & 0x00000004) == 0x00000004)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(3, getTagBytes());
-      }
-      size += getUnknownFields().getSerializedSize();
-      memoizedSerializedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    protected java.lang.Object writeReplace()
-        throws java.io.ObjectStreamException {
-      return super.writeReplace();
-    }
-
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseDelimitedFrom(input, extensionRegistry);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input);
-    }
-    public static org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return PARSER.parseFrom(input, extensionRegistry);
-    }
-
-    public static Builder newBuilder() { return Builder.create(); }
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration prototype) {
-      return newBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() { return newBuilder(this); }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code org.apache.mesos.logstash.common.LogInputConfiguration}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:org.apache.mesos.logstash.common.LogInputConfiguration)
-        org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.class, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder.class);
-      }
-
-      // Construct using org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-        }
-      }
-      private static Builder create() {
-        return new Builder();
-      }
-
-      public Builder clear() {
-        super.clear();
-        location_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
-        type_ = "";
-        bitField0_ = (bitField0_ & ~0x00000002);
-        tag_ = "";
-        bitField0_ = (bitField0_ & ~0x00000004);
-        return this;
-      }
-
-      public Builder clone() {
-        return create().mergeFrom(buildPartial());
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor;
-      }
-
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration getDefaultInstanceForType() {
-        return org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.getDefaultInstance();
-      }
-
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration build() {
-        org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration buildPartial() {
-        org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration result = new org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration(this);
-        int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.location_ = location_;
-        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-          to_bitField0_ |= 0x00000002;
-        }
-        result.type_ = type_;
-        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-          to_bitField0_ |= 0x00000004;
-        }
-        result.tag_ = tag_;
-        result.bitField0_ = to_bitField0_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration) {
-          return mergeFrom((org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration other) {
-        if (other == org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.getDefaultInstance()) return this;
-        if (other.hasLocation()) {
-          bitField0_ |= 0x00000001;
-          location_ = other.location_;
-          onChanged();
-        }
-        if (other.hasType()) {
-          bitField0_ |= 0x00000002;
-          type_ = other.type_;
-          onChanged();
-        }
-        if (other.hasTag()) {
-          bitField0_ |= 0x00000004;
-          tag_ = other.tag_;
-          onChanged();
-        }
-        this.mergeUnknownFields(other.getUnknownFields());
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        if (!hasLocation()) {
-          
-          return false;
-        }
-        if (!hasType()) {
-          
-          return false;
-        }
-        if (!hasTag()) {
-          
-          return false;
-        }
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration) e.getUnfinishedMessage();
-          throw e;
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.lang.Object location_ = "";
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public boolean hasLocation() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public java.lang.String getLocation() {
-        java.lang.Object ref = location_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            location_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getLocationBytes() {
-        java.lang.Object ref = location_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          location_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public Builder setLocation(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        location_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public Builder clearLocation() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        location_ = getDefaultInstance().getLocation();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string location = 1;</code>
-       */
-      public Builder setLocationBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        location_ = value;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object type_ = "";
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public boolean hasType() {
-        return ((bitField0_ & 0x00000002) == 0x00000002);
-      }
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public java.lang.String getType() {
-        java.lang.Object ref = type_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            type_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getTypeBytes() {
-        java.lang.Object ref = type_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          type_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public Builder setType(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        type_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public Builder clearType() {
-        bitField0_ = (bitField0_ & ~0x00000002);
-        type_ = getDefaultInstance().getType();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string type = 2;</code>
-       */
-      public Builder setTypeBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        type_ = value;
-        onChanged();
-        return this;
-      }
-
-      private java.lang.Object tag_ = "";
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public boolean hasTag() {
-        return ((bitField0_ & 0x00000004) == 0x00000004);
-      }
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public java.lang.String getTag() {
-        java.lang.Object ref = tag_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            tag_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public com.google.protobuf.ByteString
-          getTagBytes() {
-        java.lang.Object ref = tag_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          tag_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public Builder setTag(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        tag_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public Builder clearTag() {
-        bitField0_ = (bitField0_ & ~0x00000004);
-        tag_ = getDefaultInstance().getTag();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string tag = 3;</code>
-       */
-      public Builder setTagBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-        tag_ = value;
-        onChanged();
-        return this;
-      }
-
-      // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.LogInputConfiguration)
-    }
-
-    static {
-      defaultInstance = new LogInputConfiguration(true);
-      defaultInstance.initFields();
-    }
-
-    // @@protoc_insertion_point(class_scope:org.apache.mesos.logstash.common.LogInputConfiguration)
-  }
-
   public interface LogstashConfigOrBuilder extends
       // @@protoc_insertion_point(interface_extends:org.apache.mesos.logstash.common.LogstashConfig)
       com.google.protobuf.MessageOrBuilder {
@@ -841,28 +27,18 @@ public final class LogstashProtos {
         getFrameworkNameBytes();
 
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> 
-        getLogInputConfiguratonList();
+    boolean hasConfig();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration getLogInputConfiguraton(int index);
+    java.lang.String getConfig();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    int getLogInputConfiguratonCount();
-    /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-     */
-    java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder> 
-        getLogInputConfiguratonOrBuilderList();
-    /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-     */
-    org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder getLogInputConfiguratonOrBuilder(
-        int index);
+    com.google.protobuf.ByteString
+        getConfigBytes();
   }
   /**
    * Protobuf type {@code org.apache.mesos.logstash.common.LogstashConfig}
@@ -923,11 +99,9 @@ public final class LogstashProtos {
               break;
             }
             case 18: {
-              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-                logInputConfiguraton_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration>();
-                mutable_bitField0_ |= 0x00000002;
-              }
-              logInputConfiguraton_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.PARSER, extensionRegistry));
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000002;
+              config_ = bs;
               break;
             }
           }
@@ -938,9 +112,6 @@ public final class LogstashProtos {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
-          logInputConfiguraton_ = java.util.Collections.unmodifiableList(logInputConfiguraton_);
-        }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
@@ -1015,44 +186,51 @@ public final class LogstashProtos {
       }
     }
 
-    public static final int LOGINPUTCONFIGURATON_FIELD_NUMBER = 2;
-    private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> logInputConfiguraton_;
+    public static final int CONFIG_FIELD_NUMBER = 2;
+    private java.lang.Object config_;
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> getLogInputConfiguratonList() {
-      return logInputConfiguraton_;
+    public boolean hasConfig() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder> 
-        getLogInputConfiguratonOrBuilderList() {
-      return logInputConfiguraton_;
+    public java.lang.String getConfig() {
+      java.lang.Object ref = config_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          config_ = s;
+        }
+        return s;
+      }
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+     * <code>required string config = 2;</code>
      */
-    public int getLogInputConfiguratonCount() {
-      return logInputConfiguraton_.size();
-    }
-    /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-     */
-    public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration getLogInputConfiguraton(int index) {
-      return logInputConfiguraton_.get(index);
-    }
-    /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-     */
-    public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder getLogInputConfiguratonOrBuilder(
-        int index) {
-      return logInputConfiguraton_.get(index);
+    public com.google.protobuf.ByteString
+        getConfigBytes() {
+      java.lang.Object ref = config_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        config_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
     }
 
     private void initFields() {
       frameworkName_ = "";
-      logInputConfiguraton_ = java.util.Collections.emptyList();
+      config_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -1064,11 +242,9 @@ public final class LogstashProtos {
         memoizedIsInitialized = 0;
         return false;
       }
-      for (int i = 0; i < getLogInputConfiguratonCount(); i++) {
-        if (!getLogInputConfiguraton(i).isInitialized()) {
-          memoizedIsInitialized = 0;
-          return false;
-        }
+      if (!hasConfig()) {
+        memoizedIsInitialized = 0;
+        return false;
       }
       memoizedIsInitialized = 1;
       return true;
@@ -1080,8 +256,8 @@ public final class LogstashProtos {
       if (((bitField0_ & 0x00000001) == 0x00000001)) {
         output.writeBytes(1, getFrameworkNameBytes());
       }
-      for (int i = 0; i < logInputConfiguraton_.size(); i++) {
-        output.writeMessage(2, logInputConfiguraton_.get(i));
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getConfigBytes());
       }
       getUnknownFields().writeTo(output);
     }
@@ -1096,9 +272,9 @@ public final class LogstashProtos {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(1, getFrameworkNameBytes());
       }
-      for (int i = 0; i < logInputConfiguraton_.size(); i++) {
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, logInputConfiguraton_.get(i));
+          .computeBytesSize(2, getConfigBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1209,7 +385,6 @@ public final class LogstashProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getLogInputConfiguratonFieldBuilder();
         }
       }
       private static Builder create() {
@@ -1220,12 +395,8 @@ public final class LogstashProtos {
         super.clear();
         frameworkName_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
-        if (logInputConfiguratonBuilder_ == null) {
-          logInputConfiguraton_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
-        } else {
-          logInputConfiguratonBuilder_.clear();
-        }
+        config_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
 
@@ -1258,15 +429,10 @@ public final class LogstashProtos {
           to_bitField0_ |= 0x00000001;
         }
         result.frameworkName_ = frameworkName_;
-        if (logInputConfiguratonBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
-            logInputConfiguraton_ = java.util.Collections.unmodifiableList(logInputConfiguraton_);
-            bitField0_ = (bitField0_ & ~0x00000002);
-          }
-          result.logInputConfiguraton_ = logInputConfiguraton_;
-        } else {
-          result.logInputConfiguraton_ = logInputConfiguratonBuilder_.build();
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
         }
+        result.config_ = config_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -1288,31 +454,10 @@ public final class LogstashProtos {
           frameworkName_ = other.frameworkName_;
           onChanged();
         }
-        if (logInputConfiguratonBuilder_ == null) {
-          if (!other.logInputConfiguraton_.isEmpty()) {
-            if (logInputConfiguraton_.isEmpty()) {
-              logInputConfiguraton_ = other.logInputConfiguraton_;
-              bitField0_ = (bitField0_ & ~0x00000002);
-            } else {
-              ensureLogInputConfiguratonIsMutable();
-              logInputConfiguraton_.addAll(other.logInputConfiguraton_);
-            }
-            onChanged();
-          }
-        } else {
-          if (!other.logInputConfiguraton_.isEmpty()) {
-            if (logInputConfiguratonBuilder_.isEmpty()) {
-              logInputConfiguratonBuilder_.dispose();
-              logInputConfiguratonBuilder_ = null;
-              logInputConfiguraton_ = other.logInputConfiguraton_;
-              bitField0_ = (bitField0_ & ~0x00000002);
-              logInputConfiguratonBuilder_ = 
-                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getLogInputConfiguratonFieldBuilder() : null;
-            } else {
-              logInputConfiguratonBuilder_.addAllMessages(other.logInputConfiguraton_);
-            }
-          }
+        if (other.hasConfig()) {
+          bitField0_ |= 0x00000002;
+          config_ = other.config_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1323,11 +468,9 @@ public final class LogstashProtos {
           
           return false;
         }
-        for (int i = 0; i < getLogInputConfiguratonCount(); i++) {
-          if (!getLogInputConfiguraton(i).isInitialized()) {
-            
-            return false;
-          }
+        if (!hasConfig()) {
+          
+          return false;
         }
         return true;
       }
@@ -1427,244 +570,80 @@ public final class LogstashProtos {
         return this;
       }
 
-      private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> logInputConfiguraton_ =
-        java.util.Collections.emptyList();
-      private void ensureLogInputConfiguratonIsMutable() {
-        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-          logInputConfiguraton_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration>(logInputConfiguraton_);
-          bitField0_ |= 0x00000002;
-         }
-      }
-
-      private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder> logInputConfiguratonBuilder_;
-
+      private java.lang.Object config_ = "";
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+       * <code>required string config = 2;</code>
        */
-      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> getLogInputConfiguratonList() {
-        if (logInputConfiguratonBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(logInputConfiguraton_);
-        } else {
-          return logInputConfiguratonBuilder_.getMessageList();
-        }
+      public boolean hasConfig() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+       * <code>required string config = 2;</code>
        */
-      public int getLogInputConfiguratonCount() {
-        if (logInputConfiguratonBuilder_ == null) {
-          return logInputConfiguraton_.size();
-        } else {
-          return logInputConfiguratonBuilder_.getCount();
-        }
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration getLogInputConfiguraton(int index) {
-        if (logInputConfiguratonBuilder_ == null) {
-          return logInputConfiguraton_.get(index);
-        } else {
-          return logInputConfiguratonBuilder_.getMessage(index);
-        }
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder setLogInputConfiguraton(
-          int index, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration value) {
-        if (logInputConfiguratonBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
+      public java.lang.String getConfig() {
+        java.lang.Object ref = config_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            config_ = s;
           }
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.set(index, value);
-          onChanged();
+          return s;
         } else {
-          logInputConfiguratonBuilder_.setMessage(index, value);
+          return (java.lang.String) ref;
         }
+      }
+      /**
+       * <code>required string config = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getConfigBytes() {
+        java.lang.Object ref = config_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          config_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string config = 2;</code>
+       */
+      public Builder setConfig(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        config_ = value;
+        onChanged();
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+       * <code>required string config = 2;</code>
        */
-      public Builder setLogInputConfiguraton(
-          int index, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder builderForValue) {
-        if (logInputConfiguratonBuilder_ == null) {
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.set(index, builderForValue.build());
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.setMessage(index, builderForValue.build());
-        }
+      public Builder clearConfig() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        config_ = getDefaultInstance().getConfig();
+        onChanged();
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
+       * <code>required string config = 2;</code>
        */
-      public Builder addLogInputConfiguraton(org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration value) {
-        if (logInputConfiguratonBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.add(value);
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.addMessage(value);
-        }
+      public Builder setConfigBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        config_ = value;
+        onChanged();
         return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder addLogInputConfiguraton(
-          int index, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration value) {
-        if (logInputConfiguratonBuilder_ == null) {
-          if (value == null) {
-            throw new NullPointerException();
-          }
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.add(index, value);
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.addMessage(index, value);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder addLogInputConfiguraton(
-          org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder builderForValue) {
-        if (logInputConfiguratonBuilder_ == null) {
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.add(builderForValue.build());
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.addMessage(builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder addLogInputConfiguraton(
-          int index, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder builderForValue) {
-        if (logInputConfiguratonBuilder_ == null) {
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.add(index, builderForValue.build());
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.addMessage(index, builderForValue.build());
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder addAllLogInputConfiguraton(
-          java.lang.Iterable<? extends org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration> values) {
-        if (logInputConfiguratonBuilder_ == null) {
-          ensureLogInputConfiguratonIsMutable();
-          com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, logInputConfiguraton_);
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.addAllMessages(values);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder clearLogInputConfiguraton() {
-        if (logInputConfiguratonBuilder_ == null) {
-          logInputConfiguraton_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.clear();
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public Builder removeLogInputConfiguraton(int index) {
-        if (logInputConfiguratonBuilder_ == null) {
-          ensureLogInputConfiguratonIsMutable();
-          logInputConfiguraton_.remove(index);
-          onChanged();
-        } else {
-          logInputConfiguratonBuilder_.remove(index);
-        }
-        return this;
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder getLogInputConfiguratonBuilder(
-          int index) {
-        return getLogInputConfiguratonFieldBuilder().getBuilder(index);
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder getLogInputConfiguratonOrBuilder(
-          int index) {
-        if (logInputConfiguratonBuilder_ == null) {
-          return logInputConfiguraton_.get(index);  } else {
-          return logInputConfiguratonBuilder_.getMessageOrBuilder(index);
-        }
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder> 
-           getLogInputConfiguratonOrBuilderList() {
-        if (logInputConfiguratonBuilder_ != null) {
-          return logInputConfiguratonBuilder_.getMessageOrBuilderList();
-        } else {
-          return java.util.Collections.unmodifiableList(logInputConfiguraton_);
-        }
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder addLogInputConfiguratonBuilder() {
-        return getLogInputConfiguratonFieldBuilder().addBuilder(
-            org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder addLogInputConfiguratonBuilder(
-          int index) {
-        return getLogInputConfiguratonFieldBuilder().addBuilder(
-            index, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.getDefaultInstance());
-      }
-      /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogInputConfiguration logInputConfiguraton = 2;</code>
-       */
-      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder> 
-           getLogInputConfiguratonBuilderList() {
-        return getLogInputConfiguratonFieldBuilder().getBuilderList();
-      }
-      private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder> 
-          getLogInputConfiguratonFieldBuilder() {
-        if (logInputConfiguratonBuilder_ == null) {
-          logInputConfiguratonBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
-              org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfiguration.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogInputConfigurationOrBuilder>(
-                  logInputConfiguraton_,
-                  ((bitField0_ & 0x00000002) == 0x00000002),
-                  getParentForChildren(),
-                  isClean());
-          logInputConfiguraton_ = null;
-        }
-        return logInputConfiguratonBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.LogstashConfig)
@@ -1683,39 +662,25 @@ public final class LogstashProtos {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    boolean hasConfigurationFragments();
-    /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    java.lang.String getConfigurationFragments();
-    /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    com.google.protobuf.ByteString
-        getConfigurationFragmentsBytes();
-
-    /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> 
         getLogstashConfigList();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index);
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     int getLogstashConfigCount();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
         getLogstashConfigOrBuilderList();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
         int index);
@@ -1773,15 +738,9 @@ public final class LogstashProtos {
               break;
             }
             case 10: {
-              com.google.protobuf.ByteString bs = input.readBytes();
-              bitField0_ |= 0x00000001;
-              configurationFragments_ = bs;
-              break;
-            }
-            case 18: {
-              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
                 logstashConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>();
-                mutable_bitField0_ |= 0x00000002;
+                mutable_bitField0_ |= 0x00000001;
               }
               logstashConfig_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.PARSER, extensionRegistry));
               break;
@@ -1794,7 +753,7 @@ public final class LogstashProtos {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
-        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
           logstashConfig_ = java.util.Collections.unmodifiableList(logstashConfig_);
         }
         this.unknownFields = unknownFields.build();
@@ -1828,78 +787,35 @@ public final class LogstashProtos {
       return PARSER;
     }
 
-    private int bitField0_;
-    public static final int CONFIGURATIONFRAGMENTS_FIELD_NUMBER = 1;
-    private java.lang.Object configurationFragments_;
-    /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    public boolean hasConfigurationFragments() {
-      return ((bitField0_ & 0x00000001) == 0x00000001);
-    }
-    /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    public java.lang.String getConfigurationFragments() {
-      java.lang.Object ref = configurationFragments_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          configurationFragments_ = s;
-        }
-        return s;
-      }
-    }
-    /**
-     * <code>required string configurationFragments = 1;</code>
-     */
-    public com.google.protobuf.ByteString
-        getConfigurationFragmentsBytes() {
-      java.lang.Object ref = configurationFragments_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        configurationFragments_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
-    }
-
-    public static final int LOGSTASHCONFIG_FIELD_NUMBER = 2;
+    public static final int LOGSTASHCONFIG_FIELD_NUMBER = 1;
     private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> logstashConfig_;
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getLogstashConfigList() {
       return logstashConfig_;
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
         getLogstashConfigOrBuilderList() {
       return logstashConfig_;
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     public int getLogstashConfigCount() {
       return logstashConfig_.size();
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index) {
       return logstashConfig_.get(index);
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
      */
     public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
         int index) {
@@ -1907,7 +823,6 @@ public final class LogstashProtos {
     }
 
     private void initFields() {
-      configurationFragments_ = "";
       logstashConfig_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
@@ -1916,10 +831,6 @@ public final class LogstashProtos {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      if (!hasConfigurationFragments()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
       for (int i = 0; i < getLogstashConfigCount(); i++) {
         if (!getLogstashConfig(i).isInitialized()) {
           memoizedIsInitialized = 0;
@@ -1933,11 +844,8 @@ public final class LogstashProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        output.writeBytes(1, getConfigurationFragmentsBytes());
-      }
       for (int i = 0; i < logstashConfig_.size(); i++) {
-        output.writeMessage(2, logstashConfig_.get(i));
+        output.writeMessage(1, logstashConfig_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -1948,13 +856,9 @@ public final class LogstashProtos {
       if (size != -1) return size;
 
       size = 0;
-      if (((bitField0_ & 0x00000001) == 0x00000001)) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(1, getConfigurationFragmentsBytes());
-      }
       for (int i = 0; i < logstashConfig_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(2, logstashConfig_.get(i));
+          .computeMessageSize(1, logstashConfig_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2074,11 +978,9 @@ public final class LogstashProtos {
 
       public Builder clear() {
         super.clear();
-        configurationFragments_ = "";
-        bitField0_ = (bitField0_ & ~0x00000001);
         if (logstashConfigBuilder_ == null) {
           logstashConfig_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000001);
         } else {
           logstashConfigBuilder_.clear();
         }
@@ -2109,21 +1011,15 @@ public final class LogstashProtos {
       public org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage buildPartial() {
         org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage result = new org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage(this);
         int from_bitField0_ = bitField0_;
-        int to_bitField0_ = 0;
-        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-          to_bitField0_ |= 0x00000001;
-        }
-        result.configurationFragments_ = configurationFragments_;
         if (logstashConfigBuilder_ == null) {
-          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
             logstashConfig_ = java.util.Collections.unmodifiableList(logstashConfig_);
-            bitField0_ = (bitField0_ & ~0x00000002);
+            bitField0_ = (bitField0_ & ~0x00000001);
           }
           result.logstashConfig_ = logstashConfig_;
         } else {
           result.logstashConfig_ = logstashConfigBuilder_.build();
         }
-        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -2139,16 +1035,11 @@ public final class LogstashProtos {
 
       public Builder mergeFrom(org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage other) {
         if (other == org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.getDefaultInstance()) return this;
-        if (other.hasConfigurationFragments()) {
-          bitField0_ |= 0x00000001;
-          configurationFragments_ = other.configurationFragments_;
-          onChanged();
-        }
         if (logstashConfigBuilder_ == null) {
           if (!other.logstashConfig_.isEmpty()) {
             if (logstashConfig_.isEmpty()) {
               logstashConfig_ = other.logstashConfig_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000001);
             } else {
               ensureLogstashConfigIsMutable();
               logstashConfig_.addAll(other.logstashConfig_);
@@ -2161,7 +1052,7 @@ public final class LogstashProtos {
               logstashConfigBuilder_.dispose();
               logstashConfigBuilder_ = null;
               logstashConfig_ = other.logstashConfig_;
-              bitField0_ = (bitField0_ & ~0x00000002);
+              bitField0_ = (bitField0_ & ~0x00000001);
               logstashConfigBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
                    getLogstashConfigFieldBuilder() : null;
@@ -2175,10 +1066,6 @@ public final class LogstashProtos {
       }
 
       public final boolean isInitialized() {
-        if (!hasConfigurationFragments()) {
-          
-          return false;
-        }
         for (int i = 0; i < getLogstashConfigCount(); i++) {
           if (!getLogstashConfig(i).isInitialized()) {
             
@@ -2207,88 +1094,12 @@ public final class LogstashProtos {
       }
       private int bitField0_;
 
-      private java.lang.Object configurationFragments_ = "";
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public boolean hasConfigurationFragments() {
-        return ((bitField0_ & 0x00000001) == 0x00000001);
-      }
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public java.lang.String getConfigurationFragments() {
-        java.lang.Object ref = configurationFragments_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            configurationFragments_ = s;
-          }
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
-      }
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public com.google.protobuf.ByteString
-          getConfigurationFragmentsBytes() {
-        java.lang.Object ref = configurationFragments_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          configurationFragments_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public Builder setConfigurationFragments(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        configurationFragments_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public Builder clearConfigurationFragments() {
-        bitField0_ = (bitField0_ & ~0x00000001);
-        configurationFragments_ = getDefaultInstance().getConfigurationFragments();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>required string configurationFragments = 1;</code>
-       */
-      public Builder setConfigurationFragmentsBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-        configurationFragments_ = value;
-        onChanged();
-        return this;
-      }
-
       private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> logstashConfig_ =
         java.util.Collections.emptyList();
       private void ensureLogstashConfigIsMutable() {
-        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
           logstashConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>(logstashConfig_);
-          bitField0_ |= 0x00000002;
+          bitField0_ |= 0x00000001;
          }
       }
 
@@ -2296,7 +1107,7 @@ public final class LogstashProtos {
           org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> logstashConfigBuilder_;
 
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getLogstashConfigList() {
         if (logstashConfigBuilder_ == null) {
@@ -2306,7 +1117,7 @@ public final class LogstashProtos {
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public int getLogstashConfigCount() {
         if (logstashConfigBuilder_ == null) {
@@ -2316,7 +1127,7 @@ public final class LogstashProtos {
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index) {
         if (logstashConfigBuilder_ == null) {
@@ -2326,7 +1137,7 @@ public final class LogstashProtos {
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder setLogstashConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
@@ -2343,7 +1154,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder setLogstashConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
@@ -2357,7 +1168,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder addLogstashConfig(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
         if (logstashConfigBuilder_ == null) {
@@ -2373,7 +1184,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder addLogstashConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
@@ -2390,7 +1201,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder addLogstashConfig(
           org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
@@ -2404,7 +1215,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder addLogstashConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
@@ -2418,7 +1229,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder addAllLogstashConfig(
           java.lang.Iterable<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> values) {
@@ -2433,12 +1244,12 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder clearLogstashConfig() {
         if (logstashConfigBuilder_ == null) {
           logstashConfig_ = java.util.Collections.emptyList();
-          bitField0_ = (bitField0_ & ~0x00000002);
+          bitField0_ = (bitField0_ & ~0x00000001);
           onChanged();
         } else {
           logstashConfigBuilder_.clear();
@@ -2446,7 +1257,7 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public Builder removeLogstashConfig(int index) {
         if (logstashConfigBuilder_ == null) {
@@ -2459,14 +1270,14 @@ public final class LogstashProtos {
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder getLogstashConfigBuilder(
           int index) {
         return getLogstashConfigFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
           int index) {
@@ -2476,7 +1287,7 @@ public final class LogstashProtos {
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
            getLogstashConfigOrBuilderList() {
@@ -2487,14 +1298,14 @@ public final class LogstashProtos {
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addLogstashConfigBuilder() {
         return getLogstashConfigFieldBuilder().addBuilder(
             org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addLogstashConfigBuilder(
           int index) {
@@ -2502,7 +1313,7 @@ public final class LogstashProtos {
             index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 2;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
        */
       public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder> 
            getLogstashConfigBuilderList() {
@@ -2515,7 +1326,7 @@ public final class LogstashProtos {
           logstashConfigBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder>(
                   logstashConfig_,
-                  ((bitField0_ & 0x00000002) == 0x00000002),
+                  ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
           logstashConfig_ = null;
@@ -3034,11 +1845,6 @@ public final class LogstashProtos {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor;
-  private static
-    com.google.protobuf.GeneratedMessage.FieldAccessorTable
-      internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_apache_mesos_logstash_common_LogstashConfig_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -3063,18 +1869,13 @@ public final class LogstashProtos {
   static {
     java.lang.String[] descriptorData = {
       "\n\035src/main/proto/logstash.proto\022 org.apa" +
-      "che.mesos.logstash.common\"D\n\025LogInputCon" +
-      "figuration\022\020\n\010location\030\001 \002(\t\022\014\n\004type\030\002 \002" +
-      "(\t\022\013\n\003tag\030\003 \002(\t\"~\n\016LogstashConfig\022\025\n\rfra" +
-      "meworkName\030\001 \002(\t\022U\n\024logInputConfiguraton" +
-      "\030\002 \003(\01327.org.apache.mesos.logstash.commo" +
-      "n.LogInputConfiguration\"|\n\020SchedulerMess" +
-      "age\022\036\n\026configurationFragments\030\001 \002(\t\022H\n\016l" +
-      "ogstashConfig\030\002 \003(\01320.org.apache.mesos.l" +
-      "ogstash.common.LogstashConfig\"(\n\017Executo",
-      "rMessage\022\025\n\rframeworkName\030\001 \003(\tB2\n org.a" +
-      "pache.mesos.logstash.commonB\016LogstashPro" +
-      "tos"
+      "che.mesos.logstash.common\"7\n\016LogstashCon" +
+      "fig\022\025\n\rframeworkName\030\001 \002(\t\022\016\n\006config\030\002 \002" +
+      "(\t\"\\\n\020SchedulerMessage\022H\n\016logstashConfig" +
+      "\030\001 \003(\01320.org.apache.mesos.logstash.commo" +
+      "n.LogstashConfig\"(\n\017ExecutorMessage\022\025\n\rf" +
+      "rameworkName\030\001 \003(\tB2\n org.apache.mesos.l" +
+      "ogstash.commonB\016LogstashProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -3088,26 +1889,20 @@ public final class LogstashProtos {
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
         }, assigner);
-    internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor =
-      getDescriptor().getMessageTypes().get(0);
-    internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
-        internal_static_org_apache_mesos_logstash_common_LogInputConfiguration_descriptor,
-        new java.lang.String[] { "Location", "Type", "Tag", });
     internal_static_org_apache_mesos_logstash_common_LogstashConfig_descriptor =
-      getDescriptor().getMessageTypes().get(1);
+      getDescriptor().getMessageTypes().get(0);
     internal_static_org_apache_mesos_logstash_common_LogstashConfig_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_LogstashConfig_descriptor,
-        new java.lang.String[] { "FrameworkName", "LogInputConfiguraton", });
+        new java.lang.String[] { "FrameworkName", "Config", });
     internal_static_org_apache_mesos_logstash_common_SchedulerMessage_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(1);
     internal_static_org_apache_mesos_logstash_common_SchedulerMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_SchedulerMessage_descriptor,
-        new java.lang.String[] { "ConfigurationFragments", "LogstashConfig", });
+        new java.lang.String[] { "LogstashConfig", });
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor,
