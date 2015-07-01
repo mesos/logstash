@@ -101,6 +101,7 @@ task redeploy(type: Exec) {
     dependsOn rmFramework, configure
     dependsOn project(':executor').pushDockerImage
     dependsOn project(':scheduler').buildDockerImage
+    dependsOn project(':executor').buildDockerImage
 
     mustRunAfter clusterUp // IMPORTANT!
 
