@@ -31,7 +31,6 @@ public class LogDispatcher {
 
         ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-
         executorService.execute(new Runnable() {
             @Override
             public void run() {

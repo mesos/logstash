@@ -121,7 +121,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
             schedulerDriver.sendFrameworkMessage(executorID, slaveID, message);
 
         } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
+            LOGGER.error(String.format("Error parsing message from executor: %s", e));
         }
     }
 

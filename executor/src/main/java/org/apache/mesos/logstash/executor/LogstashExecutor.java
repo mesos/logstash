@@ -19,9 +19,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import java.io.File;
 import java.io.IOException;
 import java.net.*;
-import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 /**
  * Executor for Logstash.
@@ -30,6 +28,8 @@ import java.util.List;
 public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
+
+    private LogstashConnector logstashConnector = null;
 
     public static void main(String[] args) {
 
@@ -72,7 +72,6 @@ public class LogstashExecutor implements Executor {
 
         doIt(driver, hostAddress);
 
-
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
@@ -105,11 +104,27 @@ public class LogstashExecutor implements Executor {
             public void frameworksDiscovered(List<String> frameworkNames) {
                 LOGGER.info(String.format("Sending framework message..."));
 
-                executorDriver.sendFrameworkMessage(createExecutorMessage(frameworkNames));
+                for (String frameworkName : frameworkNames) {
+                    LOGGER.info(String.format("Framework name: %s", frameworkName));
+                }
+
+                Protos.Status status = executorDriver.sendFrameworkMessage(createExecutorMessage(frameworkNames));
+
+                LOGGER.info(String.format("Driver status %s", status));
             }
         };
 
         try {
+            createLogstashConnector(dockerClient, frameworkDiscoveryListener);
+        }
+        catch(IOException e) {
+            LOGGER.error(String.format("Couldn't load config template %s", e));
+        }
+    }
+
+    private void createLogstashConnector(DockerClient dockerClient,
+                                                      FrameworkDiscoveryListener frameworkDiscoveryListener) throws IOException {
+        if(this.logstashConnector == null) {
             Template configTemplate = initTemplatingEngine().getTemplate("conf.ftl");
 
             LOGGER.info("Config template loaded");
@@ -118,13 +133,10 @@ public class LogstashExecutor implements Executor {
 
             LOGGER.info("logstash service created");
 
-            new LogstashConnector(new DockerInfoImpl(dockerClient, frameworkDiscoveryListener), logstash).init();
+            DockerInfo dockerInfo = new DockerInfoImpl(dockerClient, frameworkDiscoveryListener);
+            this.logstashConnector = new LogstashConnector(dockerInfo, logstash, new LogfileStreaming(dockerInfo));
 
             LOGGER.info("connector set up");
-        }
-        catch(IOException e) {
-            LOGGER.error("Couldn't load config template");
-            e.printStackTrace();
         }
     }
 
@@ -172,6 +184,10 @@ public class LogstashExecutor implements Executor {
         try {
             LogstashProtos.SchedulerMessage schedulerMessage = LogstashProtos.SchedulerMessage.parseFrom(data);
 
+            if(this.logstashConnector != null) {
+                this.logstashConnector.updatedLogLocations(parseFrameworks(schedulerMessage));
+            }
+
             LOGGER.info(String.format("Configuration fragments: %s", schedulerMessage.getConfigurationFragments()));
             LOGGER.info(String.format("Framework name: %s", schedulerMessage.getLogstashConfig(0).getFrameworkName()));
             LOGGER.info(String.format("Location: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getLocation()));
@@ -179,8 +195,19 @@ public class LogstashExecutor implements Executor {
             LOGGER.info(String.format("Type: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getType()));
 
         } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
+            LOGGER.error("Error parsing framework message from scheduler", e);
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error", e);
         }
+    }
+
+    private List<Framework> parseFrameworks(LogstashProtos.SchedulerMessage schedulerMessage) {
+        List<Framework> frameworkConfigs = new ArrayList<>();
+        for(LogstashProtos.LogstashConfig lc : schedulerMessage.getLogstashConfigList()) {
+            frameworkConfigs.add(new Framework(lc));
+        }
+
+        return frameworkConfigs;
     }
 
     @Override

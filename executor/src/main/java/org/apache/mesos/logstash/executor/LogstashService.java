@@ -25,23 +25,30 @@ public class LogstashService {
 
     private Template configTemplate;
 
+    private Process logstashProcess = null;
+
     public LogstashService(Template configTemplate) {
         this.configTemplate = configTemplate;
     }
 
+    public boolean hasStarted() {
+        return this.logstashProcess != null;
+    }
+
     public void start() {
-//        reconfigure(new ArrayList<Framework>());
-        try {
-            Runtime.getRuntime().exec("bash /tmp/run_logstash.sh").waitFor();
-            System.out.println("Logstash service stopped!");
-            LOGGER.error("LOGSTASH DOWN");
-        }
-        catch(IOException | InterruptedException e) {
-            LOGGER.error("Something went horribly, horribly wrong: " + e.toString());
+        if(this.logstashProcess == null) {
+            LOGGER.info("Starting logstash...");
+            try {
+                this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
+            } catch (IOException e) {
+                LOGGER.error("Something went horribly, horribly wrong: " + e.toString());
+            }
+        } else {
+            LOGGER.info("Logstash already started...");
         }
     }
 
-    public void reconfigure(Map<String, String[]> logConfigurations) {
+    public void reconfigure(Map<String, Framework> logConfigurations) {
         Map m = new HashMap<>();
         m.put("configurations", logConfigurations);
 
