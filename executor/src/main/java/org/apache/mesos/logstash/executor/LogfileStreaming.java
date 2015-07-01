@@ -27,8 +27,8 @@ public class LogfileStreaming {
         }
 
         ArrayList<String> localPaths = new ArrayList<>();
-        for (String location : framework.getLocations()) {
-            final String localPath = this.streamContainerLogFile(containerId, location);
+        for (LogConfiguration configuration : framework.getLogConfigurationList()) {
+            final String localPath = this.streamContainerLogFile(containerId, configuration.getLocalLogLocation(), configuration.getLogLocation());
             localPaths.add(localPath);
         }
         logConfigurations.put(containerId, localPaths.toArray(new String[localPaths.size()]));
@@ -41,12 +41,12 @@ public class LogfileStreaming {
     /**
      * Start streaming the content of a log file within a docker container.
      *
-     * @param containerId the docker container id
+     * @param fileName the fileName of the local file where logstash will read
      * @param logLocation the log file's location within the docker container
      * @return the local path where the log file contents will be streamed to
      */
-    private String streamContainerLogFile(String containerId, String logLocation) {
-        final String fileName = LogDispatcher.writeLogToFile(containerId, "", createContainerLogStream(containerId, logLocation));
+    private String streamContainerLogFile(String containerId, String fileName, String logLocation) {
+        LogDispatcher.writeLogToFile(fileName, createContainerLogStream(containerId, logLocation));
 
         LOGGER.info(String.format("Thread writing to file %s", fileName));
         return fileName;

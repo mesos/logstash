@@ -112,13 +112,21 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
             LogstashProtos.ExecutorMessage executorMessage = LogstashProtos.ExecutorMessage.parseFrom(bytes);
             List<String> frameworkNames = executorMessage.getFrameworkNameList();
 
+            List<String> filteredFrameworkNames = new ArrayList<>();
             for (String frameworkName : frameworkNames) {
+                if(!frameworkName.contains(executorImageName.replace("docker.io/", ""))) {
+                    filteredFrameworkNames.add(frameworkName);
+                }
                 LOGGER.info(String.format("Framework name: %s", frameworkName));
             }
 
-            byte[] message = createExecutorMessage(frameworkNames);
+            if(filteredFrameworkNames.size() > 0) {
+                LOGGER.info(String.format("Number of Frameworks to send: %d", filteredFrameworkNames.size()));
 
-            schedulerDriver.sendFrameworkMessage(executorID, slaveID, message);
+                byte[] message = createExecutorMessage(filteredFrameworkNames);
+
+                schedulerDriver.sendFrameworkMessage(executorID, slaveID, message);
+            }
 
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error(String.format("Error parsing message from executor: %s", e));
