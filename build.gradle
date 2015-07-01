@@ -1,5 +1,5 @@
 Properties props = new Properties()
-props.load(new FileInputStream("local.properties"))
+props.load(new FileInputStream(projectDir.absolutePath + "/local.properties"))
 
 subprojects {
     apply plugin: 'java'
