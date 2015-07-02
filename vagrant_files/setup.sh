@@ -31,7 +31,10 @@ curl -L https://github.com/docker/compose/releases/download/1.2.0/docker-compose
 chmod +x /usr/bin/docker-compose
 
 echo "Installing jdk"
-apt-get -y install default-jdk
+echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
+add-apt-repository -y ppa:webupd8team/java
+apt-get update
+apt-get install -y oracle-java8-installer
 
 echo "Installing mesos"
 
