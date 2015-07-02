@@ -662,27 +662,51 @@ public final class LogstashProtos {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
     java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> 
-        getLogstashConfigList();
+        getDockerConfigList();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index);
+    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getDockerConfig(int index);
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    int getLogstashConfigCount();
+    int getDockerConfigCount();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
     java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
-        getLogstashConfigOrBuilderList();
+        getDockerConfigOrBuilderList();
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
+    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getDockerConfigOrBuilder(
+        int index);
+
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> 
+        getHostConfigList();
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getHostConfig(int index);
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    int getHostConfigCount();
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
+        getHostConfigOrBuilderList();
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getHostConfigOrBuilder(
         int index);
   }
   /**
@@ -739,10 +763,18 @@ public final class LogstashProtos {
             }
             case 10: {
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                logstashConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>();
+                dockerConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>();
                 mutable_bitField0_ |= 0x00000001;
               }
-              logstashConfig_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.PARSER, extensionRegistry));
+              dockerConfig_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.PARSER, extensionRegistry));
+              break;
+            }
+            case 18: {
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                hostConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              hostConfig_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.PARSER, extensionRegistry));
               break;
             }
           }
@@ -754,7 +786,10 @@ public final class LogstashProtos {
             e.getMessage()).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          logstashConfig_ = java.util.Collections.unmodifiableList(logstashConfig_);
+          dockerConfig_ = java.util.Collections.unmodifiableList(dockerConfig_);
+        }
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          hostConfig_ = java.util.Collections.unmodifiableList(hostConfig_);
         }
         this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
@@ -787,43 +822,79 @@ public final class LogstashProtos {
       return PARSER;
     }
 
-    public static final int LOGSTASHCONFIG_FIELD_NUMBER = 1;
-    private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> logstashConfig_;
+    public static final int DOCKERCONFIG_FIELD_NUMBER = 1;
+    private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> dockerConfig_;
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getLogstashConfigList() {
-      return logstashConfig_;
+    public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getDockerConfigList() {
+      return dockerConfig_;
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
     public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
-        getLogstashConfigOrBuilderList() {
-      return logstashConfig_;
+        getDockerConfigOrBuilderList() {
+      return dockerConfig_;
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    public int getLogstashConfigCount() {
-      return logstashConfig_.size();
+    public int getDockerConfigCount() {
+      return dockerConfig_.size();
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index) {
-      return logstashConfig_.get(index);
+    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getDockerConfig(int index) {
+      return dockerConfig_.get(index);
     }
     /**
-     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
      */
-    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
+    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getDockerConfigOrBuilder(
         int index) {
-      return logstashConfig_.get(index);
+      return dockerConfig_.get(index);
+    }
+
+    public static final int HOSTCONFIG_FIELD_NUMBER = 2;
+    private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> hostConfig_;
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getHostConfigList() {
+      return hostConfig_;
+    }
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
+        getHostConfigOrBuilderList() {
+      return hostConfig_;
+    }
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    public int getHostConfigCount() {
+      return hostConfig_.size();
+    }
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getHostConfig(int index) {
+      return hostConfig_.get(index);
+    }
+    /**
+     * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+     */
+    public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getHostConfigOrBuilder(
+        int index) {
+      return hostConfig_.get(index);
     }
 
     private void initFields() {
-      logstashConfig_ = java.util.Collections.emptyList();
+      dockerConfig_ = java.util.Collections.emptyList();
+      hostConfig_ = java.util.Collections.emptyList();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -831,8 +902,14 @@ public final class LogstashProtos {
       if (isInitialized == 1) return true;
       if (isInitialized == 0) return false;
 
-      for (int i = 0; i < getLogstashConfigCount(); i++) {
-        if (!getLogstashConfig(i).isInitialized()) {
+      for (int i = 0; i < getDockerConfigCount(); i++) {
+        if (!getDockerConfig(i).isInitialized()) {
+          memoizedIsInitialized = 0;
+          return false;
+        }
+      }
+      for (int i = 0; i < getHostConfigCount(); i++) {
+        if (!getHostConfig(i).isInitialized()) {
           memoizedIsInitialized = 0;
           return false;
         }
@@ -844,8 +921,11 @@ public final class LogstashProtos {
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       getSerializedSize();
-      for (int i = 0; i < logstashConfig_.size(); i++) {
-        output.writeMessage(1, logstashConfig_.get(i));
+      for (int i = 0; i < dockerConfig_.size(); i++) {
+        output.writeMessage(1, dockerConfig_.get(i));
+      }
+      for (int i = 0; i < hostConfig_.size(); i++) {
+        output.writeMessage(2, hostConfig_.get(i));
       }
       getUnknownFields().writeTo(output);
     }
@@ -856,9 +936,13 @@ public final class LogstashProtos {
       if (size != -1) return size;
 
       size = 0;
-      for (int i = 0; i < logstashConfig_.size(); i++) {
+      for (int i = 0; i < dockerConfig_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
-          .computeMessageSize(1, logstashConfig_.get(i));
+          .computeMessageSize(1, dockerConfig_.get(i));
+      }
+      for (int i = 0; i < hostConfig_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, hostConfig_.get(i));
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -969,7 +1053,8 @@ public final class LogstashProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
-          getLogstashConfigFieldBuilder();
+          getDockerConfigFieldBuilder();
+          getHostConfigFieldBuilder();
         }
       }
       private static Builder create() {
@@ -978,11 +1063,17 @@ public final class LogstashProtos {
 
       public Builder clear() {
         super.clear();
-        if (logstashConfigBuilder_ == null) {
-          logstashConfig_ = java.util.Collections.emptyList();
+        if (dockerConfigBuilder_ == null) {
+          dockerConfig_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
         } else {
-          logstashConfigBuilder_.clear();
+          dockerConfigBuilder_.clear();
+        }
+        if (hostConfigBuilder_ == null) {
+          hostConfig_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        } else {
+          hostConfigBuilder_.clear();
         }
         return this;
       }
@@ -1011,14 +1102,23 @@ public final class LogstashProtos {
       public org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage buildPartial() {
         org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage result = new org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage(this);
         int from_bitField0_ = bitField0_;
-        if (logstashConfigBuilder_ == null) {
+        if (dockerConfigBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
-            logstashConfig_ = java.util.Collections.unmodifiableList(logstashConfig_);
+            dockerConfig_ = java.util.Collections.unmodifiableList(dockerConfig_);
             bitField0_ = (bitField0_ & ~0x00000001);
           }
-          result.logstashConfig_ = logstashConfig_;
+          result.dockerConfig_ = dockerConfig_;
         } else {
-          result.logstashConfig_ = logstashConfigBuilder_.build();
+          result.dockerConfig_ = dockerConfigBuilder_.build();
+        }
+        if (hostConfigBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            hostConfig_ = java.util.Collections.unmodifiableList(hostConfig_);
+            bitField0_ = (bitField0_ & ~0x00000002);
+          }
+          result.hostConfig_ = hostConfig_;
+        } else {
+          result.hostConfig_ = hostConfigBuilder_.build();
         }
         onBuilt();
         return result;
@@ -1035,29 +1135,55 @@ public final class LogstashProtos {
 
       public Builder mergeFrom(org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage other) {
         if (other == org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.getDefaultInstance()) return this;
-        if (logstashConfigBuilder_ == null) {
-          if (!other.logstashConfig_.isEmpty()) {
-            if (logstashConfig_.isEmpty()) {
-              logstashConfig_ = other.logstashConfig_;
+        if (dockerConfigBuilder_ == null) {
+          if (!other.dockerConfig_.isEmpty()) {
+            if (dockerConfig_.isEmpty()) {
+              dockerConfig_ = other.dockerConfig_;
               bitField0_ = (bitField0_ & ~0x00000001);
             } else {
-              ensureLogstashConfigIsMutable();
-              logstashConfig_.addAll(other.logstashConfig_);
+              ensureDockerConfigIsMutable();
+              dockerConfig_.addAll(other.dockerConfig_);
             }
             onChanged();
           }
         } else {
-          if (!other.logstashConfig_.isEmpty()) {
-            if (logstashConfigBuilder_.isEmpty()) {
-              logstashConfigBuilder_.dispose();
-              logstashConfigBuilder_ = null;
-              logstashConfig_ = other.logstashConfig_;
+          if (!other.dockerConfig_.isEmpty()) {
+            if (dockerConfigBuilder_.isEmpty()) {
+              dockerConfigBuilder_.dispose();
+              dockerConfigBuilder_ = null;
+              dockerConfig_ = other.dockerConfig_;
               bitField0_ = (bitField0_ & ~0x00000001);
-              logstashConfigBuilder_ = 
+              dockerConfigBuilder_ = 
                 com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
-                   getLogstashConfigFieldBuilder() : null;
+                   getDockerConfigFieldBuilder() : null;
             } else {
-              logstashConfigBuilder_.addAllMessages(other.logstashConfig_);
+              dockerConfigBuilder_.addAllMessages(other.dockerConfig_);
+            }
+          }
+        }
+        if (hostConfigBuilder_ == null) {
+          if (!other.hostConfig_.isEmpty()) {
+            if (hostConfig_.isEmpty()) {
+              hostConfig_ = other.hostConfig_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+            } else {
+              ensureHostConfigIsMutable();
+              hostConfig_.addAll(other.hostConfig_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.hostConfig_.isEmpty()) {
+            if (hostConfigBuilder_.isEmpty()) {
+              hostConfigBuilder_.dispose();
+              hostConfigBuilder_ = null;
+              hostConfig_ = other.hostConfig_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+              hostConfigBuilder_ = 
+                com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders ?
+                   getHostConfigFieldBuilder() : null;
+            } else {
+              hostConfigBuilder_.addAllMessages(other.hostConfig_);
             }
           }
         }
@@ -1066,8 +1192,14 @@ public final class LogstashProtos {
       }
 
       public final boolean isInitialized() {
-        for (int i = 0; i < getLogstashConfigCount(); i++) {
-          if (!getLogstashConfig(i).isInitialized()) {
+        for (int i = 0; i < getDockerConfigCount(); i++) {
+          if (!getDockerConfig(i).isInitialized()) {
+            
+            return false;
+          }
+        }
+        for (int i = 0; i < getHostConfigCount(); i++) {
+          if (!getHostConfig(i).isInitialized()) {
             
             return false;
           }
@@ -1094,244 +1226,484 @@ public final class LogstashProtos {
       }
       private int bitField0_;
 
-      private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> logstashConfig_ =
+      private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> dockerConfig_ =
         java.util.Collections.emptyList();
-      private void ensureLogstashConfigIsMutable() {
+      private void ensureDockerConfigIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          logstashConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>(logstashConfig_);
+          dockerConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>(dockerConfig_);
           bitField0_ |= 0x00000001;
          }
       }
 
       private com.google.protobuf.RepeatedFieldBuilder<
-          org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> logstashConfigBuilder_;
+          org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> dockerConfigBuilder_;
 
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getLogstashConfigList() {
-        if (logstashConfigBuilder_ == null) {
-          return java.util.Collections.unmodifiableList(logstashConfig_);
+      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getDockerConfigList() {
+        if (dockerConfigBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(dockerConfig_);
         } else {
-          return logstashConfigBuilder_.getMessageList();
+          return dockerConfigBuilder_.getMessageList();
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public int getLogstashConfigCount() {
-        if (logstashConfigBuilder_ == null) {
-          return logstashConfig_.size();
+      public int getDockerConfigCount() {
+        if (dockerConfigBuilder_ == null) {
+          return dockerConfig_.size();
         } else {
-          return logstashConfigBuilder_.getCount();
+          return dockerConfigBuilder_.getCount();
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getLogstashConfig(int index) {
-        if (logstashConfigBuilder_ == null) {
-          return logstashConfig_.get(index);
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getDockerConfig(int index) {
+        if (dockerConfigBuilder_ == null) {
+          return dockerConfig_.get(index);
         } else {
-          return logstashConfigBuilder_.getMessage(index);
+          return dockerConfigBuilder_.getMessage(index);
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder setLogstashConfig(
+      public Builder setDockerConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
-        if (logstashConfigBuilder_ == null) {
+        if (dockerConfigBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.set(index, value);
+          ensureDockerConfigIsMutable();
+          dockerConfig_.set(index, value);
           onChanged();
         } else {
-          logstashConfigBuilder_.setMessage(index, value);
+          dockerConfigBuilder_.setMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder setLogstashConfig(
+      public Builder setDockerConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
-        if (logstashConfigBuilder_ == null) {
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.set(index, builderForValue.build());
+        if (dockerConfigBuilder_ == null) {
+          ensureDockerConfigIsMutable();
+          dockerConfig_.set(index, builderForValue.build());
           onChanged();
         } else {
-          logstashConfigBuilder_.setMessage(index, builderForValue.build());
+          dockerConfigBuilder_.setMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder addLogstashConfig(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
-        if (logstashConfigBuilder_ == null) {
+      public Builder addDockerConfig(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
+        if (dockerConfigBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.add(value);
+          ensureDockerConfigIsMutable();
+          dockerConfig_.add(value);
           onChanged();
         } else {
-          logstashConfigBuilder_.addMessage(value);
+          dockerConfigBuilder_.addMessage(value);
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder addLogstashConfig(
+      public Builder addDockerConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
-        if (logstashConfigBuilder_ == null) {
+        if (dockerConfigBuilder_ == null) {
           if (value == null) {
             throw new NullPointerException();
           }
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.add(index, value);
+          ensureDockerConfigIsMutable();
+          dockerConfig_.add(index, value);
           onChanged();
         } else {
-          logstashConfigBuilder_.addMessage(index, value);
+          dockerConfigBuilder_.addMessage(index, value);
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder addLogstashConfig(
+      public Builder addDockerConfig(
           org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
-        if (logstashConfigBuilder_ == null) {
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.add(builderForValue.build());
+        if (dockerConfigBuilder_ == null) {
+          ensureDockerConfigIsMutable();
+          dockerConfig_.add(builderForValue.build());
           onChanged();
         } else {
-          logstashConfigBuilder_.addMessage(builderForValue.build());
+          dockerConfigBuilder_.addMessage(builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder addLogstashConfig(
+      public Builder addDockerConfig(
           int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
-        if (logstashConfigBuilder_ == null) {
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.add(index, builderForValue.build());
+        if (dockerConfigBuilder_ == null) {
+          ensureDockerConfigIsMutable();
+          dockerConfig_.add(index, builderForValue.build());
           onChanged();
         } else {
-          logstashConfigBuilder_.addMessage(index, builderForValue.build());
+          dockerConfigBuilder_.addMessage(index, builderForValue.build());
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder addAllLogstashConfig(
+      public Builder addAllDockerConfig(
           java.lang.Iterable<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> values) {
-        if (logstashConfigBuilder_ == null) {
-          ensureLogstashConfigIsMutable();
+        if (dockerConfigBuilder_ == null) {
+          ensureDockerConfigIsMutable();
           com.google.protobuf.AbstractMessageLite.Builder.addAll(
-              values, logstashConfig_);
+              values, dockerConfig_);
           onChanged();
         } else {
-          logstashConfigBuilder_.addAllMessages(values);
+          dockerConfigBuilder_.addAllMessages(values);
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder clearLogstashConfig() {
-        if (logstashConfigBuilder_ == null) {
-          logstashConfig_ = java.util.Collections.emptyList();
+      public Builder clearDockerConfig() {
+        if (dockerConfigBuilder_ == null) {
+          dockerConfig_ = java.util.Collections.emptyList();
           bitField0_ = (bitField0_ & ~0x00000001);
           onChanged();
         } else {
-          logstashConfigBuilder_.clear();
+          dockerConfigBuilder_.clear();
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public Builder removeLogstashConfig(int index) {
-        if (logstashConfigBuilder_ == null) {
-          ensureLogstashConfigIsMutable();
-          logstashConfig_.remove(index);
+      public Builder removeDockerConfig(int index) {
+        if (dockerConfigBuilder_ == null) {
+          ensureDockerConfigIsMutable();
+          dockerConfig_.remove(index);
           onChanged();
         } else {
-          logstashConfigBuilder_.remove(index);
+          dockerConfigBuilder_.remove(index);
         }
         return this;
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder getLogstashConfigBuilder(
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder getDockerConfigBuilder(
           int index) {
-        return getLogstashConfigFieldBuilder().getBuilder(index);
+        return getDockerConfigFieldBuilder().getBuilder(index);
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getLogstashConfigOrBuilder(
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getDockerConfigOrBuilder(
           int index) {
-        if (logstashConfigBuilder_ == null) {
-          return logstashConfig_.get(index);  } else {
-          return logstashConfigBuilder_.getMessageOrBuilder(index);
+        if (dockerConfigBuilder_ == null) {
+          return dockerConfig_.get(index);  } else {
+          return dockerConfigBuilder_.getMessageOrBuilder(index);
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
       public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
-           getLogstashConfigOrBuilderList() {
-        if (logstashConfigBuilder_ != null) {
-          return logstashConfigBuilder_.getMessageOrBuilderList();
+           getDockerConfigOrBuilderList() {
+        if (dockerConfigBuilder_ != null) {
+          return dockerConfigBuilder_.getMessageOrBuilderList();
         } else {
-          return java.util.Collections.unmodifiableList(logstashConfig_);
+          return java.util.Collections.unmodifiableList(dockerConfig_);
         }
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addLogstashConfigBuilder() {
-        return getLogstashConfigFieldBuilder().addBuilder(
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addDockerConfigBuilder() {
+        return getDockerConfigFieldBuilder().addBuilder(
             org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
-      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addLogstashConfigBuilder(
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addDockerConfigBuilder(
           int index) {
-        return getLogstashConfigFieldBuilder().addBuilder(
+        return getDockerConfigFieldBuilder().addBuilder(
             index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
       }
       /**
-       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig logstashConfig = 1;</code>
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig dockerConfig = 1;</code>
        */
       public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder> 
-           getLogstashConfigBuilderList() {
-        return getLogstashConfigFieldBuilder().getBuilderList();
+           getDockerConfigBuilderList() {
+        return getDockerConfigFieldBuilder().getBuilderList();
       }
       private com.google.protobuf.RepeatedFieldBuilder<
           org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
-          getLogstashConfigFieldBuilder() {
-        if (logstashConfigBuilder_ == null) {
-          logstashConfigBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+          getDockerConfigFieldBuilder() {
+        if (dockerConfigBuilder_ == null) {
+          dockerConfigBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
               org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder>(
-                  logstashConfig_,
+                  dockerConfig_,
                   ((bitField0_ & 0x00000001) == 0x00000001),
                   getParentForChildren(),
                   isClean());
-          logstashConfig_ = null;
+          dockerConfig_ = null;
         }
-        return logstashConfigBuilder_;
+        return dockerConfigBuilder_;
+      }
+
+      private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> hostConfig_ =
+        java.util.Collections.emptyList();
+      private void ensureHostConfigIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          hostConfig_ = new java.util.ArrayList<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig>(hostConfig_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> hostConfigBuilder_;
+
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> getHostConfigList() {
+        if (hostConfigBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(hostConfig_);
+        } else {
+          return hostConfigBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public int getHostConfigCount() {
+        if (hostConfigBuilder_ == null) {
+          return hostConfig_.size();
+        } else {
+          return hostConfigBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig getHostConfig(int index) {
+        if (hostConfigBuilder_ == null) {
+          return hostConfig_.get(index);
+        } else {
+          return hostConfigBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder setHostConfig(
+          int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
+        if (hostConfigBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHostConfigIsMutable();
+          hostConfig_.set(index, value);
+          onChanged();
+        } else {
+          hostConfigBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder setHostConfig(
+          int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
+        if (hostConfigBuilder_ == null) {
+          ensureHostConfigIsMutable();
+          hostConfig_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          hostConfigBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder addHostConfig(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
+        if (hostConfigBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHostConfigIsMutable();
+          hostConfig_.add(value);
+          onChanged();
+        } else {
+          hostConfigBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder addHostConfig(
+          int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig value) {
+        if (hostConfigBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureHostConfigIsMutable();
+          hostConfig_.add(index, value);
+          onChanged();
+        } else {
+          hostConfigBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder addHostConfig(
+          org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
+        if (hostConfigBuilder_ == null) {
+          ensureHostConfigIsMutable();
+          hostConfig_.add(builderForValue.build());
+          onChanged();
+        } else {
+          hostConfigBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder addHostConfig(
+          int index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder builderForValue) {
+        if (hostConfigBuilder_ == null) {
+          ensureHostConfigIsMutable();
+          hostConfig_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          hostConfigBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder addAllHostConfig(
+          java.lang.Iterable<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> values) {
+        if (hostConfigBuilder_ == null) {
+          ensureHostConfigIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, hostConfig_);
+          onChanged();
+        } else {
+          hostConfigBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder clearHostConfig() {
+        if (hostConfigBuilder_ == null) {
+          hostConfig_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000002);
+          onChanged();
+        } else {
+          hostConfigBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public Builder removeHostConfig(int index) {
+        if (hostConfigBuilder_ == null) {
+          ensureHostConfigIsMutable();
+          hostConfig_.remove(index);
+          onChanged();
+        } else {
+          hostConfigBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder getHostConfigBuilder(
+          int index) {
+        return getHostConfigFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getHostConfigOrBuilder(
+          int index) {
+        if (hostConfigBuilder_ == null) {
+          return hostConfig_.get(index);  } else {
+          return hostConfigBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public java.util.List<? extends org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
+           getHostConfigOrBuilderList() {
+        if (hostConfigBuilder_ != null) {
+          return hostConfigBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(hostConfig_);
+        }
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addHostConfigBuilder() {
+        return getHostConfigFieldBuilder().addBuilder(
+            org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder addHostConfigBuilder(
+          int index) {
+        return getHostConfigFieldBuilder().addBuilder(
+            index, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .org.apache.mesos.logstash.common.LogstashConfig hostConfig = 2;</code>
+       */
+      public java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder> 
+           getHostConfigBuilderList() {
+        return getHostConfigFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilder<
+          org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder> 
+          getHostConfigFieldBuilder() {
+        if (hostConfigBuilder_ == null) {
+          hostConfigBuilder_ = new com.google.protobuf.RepeatedFieldBuilder<
+              org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.Builder, org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder>(
+                  hostConfig_,
+                  ((bitField0_ & 0x00000002) == 0x00000002),
+                  getParentForChildren(),
+                  isClean());
+          hostConfig_ = null;
+        }
+        return hostConfigBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.SchedulerMessage)
@@ -1871,11 +2243,13 @@ public final class LogstashProtos {
       "\n\035src/main/proto/logstash.proto\022 org.apa" +
       "che.mesos.logstash.common\"7\n\016LogstashCon" +
       "fig\022\025\n\rframeworkName\030\001 \002(\t\022\016\n\006config\030\002 \002" +
-      "(\t\"\\\n\020SchedulerMessage\022H\n\016logstashConfig" +
-      "\030\001 \003(\01320.org.apache.mesos.logstash.commo" +
-      "n.LogstashConfig\"(\n\017ExecutorMessage\022\025\n\rf" +
-      "rameworkName\030\001 \003(\tB2\n org.apache.mesos.l" +
-      "ogstash.commonB\016LogstashProtos"
+      "(\t\"\240\001\n\020SchedulerMessage\022F\n\014dockerConfig\030" +
+      "\001 \003(\01320.org.apache.mesos.logstash.common" +
+      ".LogstashConfig\022D\n\nhostConfig\030\002 \003(\01320.or" +
+      "g.apache.mesos.logstash.common.LogstashC" +
+      "onfig\"(\n\017ExecutorMessage\022\025\n\rframeworkNam" +
+      "e\030\001 \003(\tB2\n org.apache.mesos.logstash.com" +
+      "monB\016LogstashProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1900,7 +2274,7 @@ public final class LogstashProtos {
     internal_static_org_apache_mesos_logstash_common_SchedulerMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_SchedulerMessage_descriptor,
-        new java.lang.String[] { "LogstashConfig", });
+        new java.lang.String[] { "DockerConfig", "HostConfig", });
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable = new

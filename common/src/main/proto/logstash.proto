@@ -9,7 +9,8 @@ message LogstashConfig {
 }
 
 message SchedulerMessage {
-  repeated LogstashConfig logstashConfig = 1;
+  repeated LogstashConfig dockerConfig = 1;
+  repeated LogstashConfig hostConfig = 2;
 }
 
 message ExecutorMessage {
