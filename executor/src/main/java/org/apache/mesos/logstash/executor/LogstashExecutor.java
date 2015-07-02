@@ -3,9 +3,6 @@ package org.apache.mesos.logstash.executor;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
-import freemarker.template.Configuration;
-import freemarker.template.Template;
-import freemarker.template.TemplateExceptionHandler;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
@@ -29,8 +26,8 @@ public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
-    private Map<String, Framework> dockerConfigs;
-    private Map<String, Framework> hostConfigs;
+    private Map<String, DockerFramework> dockerConfigs;
+    private Map<String, HostFramework> hostConfigs;
 
     private LogstashConnector logstashConnector = null;
 
@@ -112,10 +109,9 @@ public class LogstashExecutor implements Executor {
 
     private void createLogstashConnector(DockerClient dockerClient) throws IOException {
         if(this.logstashConnector == null) {
-            Template configTemplate = initTemplatingEngine().getTemplate("conf.ftl");
 
             LOGGER.info("Config template loaded");
-            LogstashService logstash = new LogstashService(configTemplate);
+            LogstashService logstash = new LogstashService();
             LOGGER.info("logstash service created");
 
             DockerInfo dockerInfo = new DockerInfoImpl(dockerClient, _ignored -> reconfigureLogstash());
@@ -128,7 +124,7 @@ public class LogstashExecutor implements Executor {
     private void reconfigureLogstash() {
         if(this.logstashConnector != null) {
             // TODO make sure we pass along the host configs also
-            this.logstashConnector.updatedLogLocations(new ArrayList<>(dockerConfigs.values()));
+            this.logstashConnector.updatedDockerLogConfigurations(new ArrayList<>(dockerConfigs.values()));
         }
         else {
             LOGGER.error("Logstash connector not created yet, cannot update configurations");
@@ -184,8 +180,9 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private Map<String, Framework> extractConfigs(List<LogstashConfig> cfgs, Function<LogstashConfig, Framework> createConfig) {
-        Map<String, Framework> configs = new HashMap<>();
+
+    private<T extends Framework> Map<String, T> extractConfigs(List<LogstashConfig> cfgs, Function<LogstashConfig, T> createConfig) {
+        Map<String, T> configs = new HashMap<>();
         cfgs.stream()
                 .forEach(cfg ->
                         configs.put(cfg.getFrameworkName(), createConfig.apply(cfg)));
@@ -203,13 +200,4 @@ public class LogstashExecutor implements Executor {
         LOGGER.info("Error in executor: " + message);
     }
 
-    private Configuration initTemplatingEngine() {
-        Configuration conf = new Configuration();
-        conf.setDefaultEncoding("UTF-8");
-
-        conf.setClassForTemplateLoading(this.getClass(), "/");
-        conf.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
-
-        return conf;
-    }
 }

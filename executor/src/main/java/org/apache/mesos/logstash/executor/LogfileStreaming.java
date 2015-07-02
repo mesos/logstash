@@ -20,7 +20,7 @@ public class LogfileStreaming {
         this.logConfigurations = new HashMap<>();
     }
 
-    public void setupContainerLogfileStreaming(String containerId, Framework framework) {
+    public void setupContainerLogfileStreaming(String containerId, DockerFramework framework) {
         ArrayList<String> localPaths = new ArrayList<>();
 
         for(String logLocation : framework.getLogLocations()) {

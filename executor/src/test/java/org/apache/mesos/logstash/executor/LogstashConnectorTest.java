@@ -40,7 +40,7 @@ public class LogstashConnectorTest {
         ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class);
 
         target = new LogstashConnector(dockerInfoStub, logstashServiceMock, logfileStreamingMock);
-        target.updatedLogLocations(frameworks);
+        target.updatedDockerLogConfigurations(frameworks);
 
         verify(logfileStreamingMock).setupContainerLogfileStreaming(containerId, frameworks.get(0));
         verify(logstashServiceMock).reconfigure(argumentCaptor.capture());

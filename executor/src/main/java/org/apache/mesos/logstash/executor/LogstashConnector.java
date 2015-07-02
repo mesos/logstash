@@ -3,6 +3,8 @@ package org.apache.mesos.logstash.executor;
 import org.apache.log4j.Logger;
 
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Class responsible for connecting each discovered framework to logstashService
@@ -24,16 +26,24 @@ public class LogstashConnector implements LogConfigurationListener {
     }
 
     @Override
-    public void updatedLogLocations(List<Framework> frameworks) {
+    public void updatedHostLogConfigurations(List<HostFramework> frameworks) {
+        String concatenated = frameworks.stream()
+                .map(Framework::getConfiguration)
+                .collect(Collectors.joining("\n"));
+        logstashService.setStaticConfig(concatenated);
+    }
+
+    @Override
+    public void updatedDockerLogConfigurations(List<DockerFramework> frameworks) {
 
         LOGGER.info(String.format("Number of frameworks %d", frameworks.size()));
 
-        Map<String, Framework> containerConfiguration = getPerContainerConfiguration(frameworks);
+        Map<String, DockerFramework> containerConfiguration = getPerContainerConfiguration(frameworks);
 
         LOGGER.info(String.format("Number of containers to configure %d", containerConfiguration.size()));
         for (String containerId : containerConfiguration.keySet()) {
 
-            Framework framework = containerConfiguration.get(containerId);
+            DockerFramework framework = containerConfiguration.get(containerId);
 
             if (logfileStreaming.isConfigured(containerId)) {
                 LOGGER.info(String.format("Skipping %s (%s) because it is already configured", containerId, framework.getName()));
@@ -52,15 +62,15 @@ public class LogstashConnector implements LogConfigurationListener {
         }
     }
 
-    private Map<String, Framework> getPerContainerConfiguration(List<Framework> frameworks) {
-        Map<String, Framework> containerConfiguration = new HashMap<>();
+    private Map<String, DockerFramework> getPerContainerConfiguration(List<DockerFramework> frameworks) {
+        Map<String, DockerFramework> containerConfiguration = new HashMap<>();
         Set<String> runningContainers = dockerInfo.getRunningContainers();
 
         for (String containerId : runningContainers) {
             String tempContainerId = containerId;
             String imageName = dockerInfo.getImageNameOfContainer(tempContainerId);
 
-            Framework framework = getFrameworkOfImage(imageName, frameworks);
+            DockerFramework framework = getFrameworkOfImage(imageName, frameworks);
 
             if (framework != null) {
                 LOGGER.info(String.format("Found framework config for image %s", imageName));
@@ -73,8 +83,8 @@ public class LogstashConnector implements LogConfigurationListener {
         return containerConfiguration;
     }
 
-    private Framework getFrameworkOfImage(String imageName, List<Framework> frameworks) {
-        for (Framework f : frameworks) {
+    private DockerFramework getFrameworkOfImage(String imageName, List<DockerFramework> frameworks) {
+        for (DockerFramework f : frameworks) {
             if (imageName.equals(f.getName())) {
                 return f;
             }

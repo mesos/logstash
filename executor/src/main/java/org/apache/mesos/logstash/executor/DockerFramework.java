@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.LogstashProtos;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -14,6 +15,29 @@ public class DockerFramework extends Framework {
 
     public DockerFramework(LogstashProtos.LogstashConfig logstashConfig) {
         super(logstashConfig.getFrameworkName(), logstashConfig.getConfig());
+    }
+
+    /**
+     * Produces a valid logstash configuration from a (very similar looking) Framework configuration
+     * @param containerId
+     * @return
+     */
+    public String generateLogstashConfig(String containerId) {
+        String generatedConfiguration = configuration;
+
+        // Replace all log paths with paths to temporary files
+        for(String logLocation : logLocations) {
+            String localLocation = getLocalLogLocation(containerId, logLocation);
+            generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
+        }
+
+        // replace 'magic' string docker-path with normal path string
+        return generatedConfiguration.replace("docker-path", "path");
+    }
+
+    public String getLocalLogLocation(String containerId, String logLocation) {
+        String sanitizedFrameworkName = sanitize(name);
+        return Paths.get("/tmp", containerId, sanitizedFrameworkName, logLocation).toString();
     }
 
     @Override
@@ -30,7 +54,11 @@ public class DockerFramework extends Framework {
         return locations;
     }
 
-    static DockerFramework create(LogstashProtos.LogstashConfig logstashConfig) {
+    public static DockerFramework create(LogstashProtos.LogstashConfig logstashConfig) {
         return new DockerFramework(logstashConfig);
+    }
+
+    private String sanitize(String frameworkName) {
+        return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
     }
 }

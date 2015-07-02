@@ -28,23 +28,5 @@ public abstract class Framework {
         return logLocations;
     }
 
-    public String generateLogstashConfig(String containerId) {
-        String generatedConfiguration = configuration;
-        for(String logLocation : logLocations) {
-            String localLocation = getLocalLogLocation(containerId, logLocation);
-            generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
-        }
-        return generatedConfiguration.replace("docker-path", "path");
-    }
-
-    public String getLocalLogLocation(String containerId, String logLocation) {
-        String sanitizedFrameworkName = sanitize(name);
-        return Paths.get("/tmp", containerId, sanitizedFrameworkName, logLocation).toString();
-    }
-
-    private String sanitize(String frameworkName) {
-        return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
-    }
-
     protected abstract List<String> parseLogLocations(String configuration);
 }
