@@ -1,12 +1,12 @@
 package org.apache.mesos.logstash.executor;
 
+import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
@@ -32,21 +32,23 @@ public class LogstashConnectorTest {
     public void testUpdatedLogLocationsExpectingLocalLogLocationToBeSet() {
         final String containerId = "TEST_CONTAINER_ID";
         final String imageName = "TEST_IMAGE_NAME";
-        List<Framework> frameworks = new ArrayList<Framework>() {{
-            add(new Framework(imageName, new ArrayList<LogConfiguration>() {{
-                add(new LogConfiguration("TYPE", "LOCATION.log", "TAG"));
-            }}));
-        }};
+        final String configuration = "{input => {}}";
+        List<Framework> frameworks = Collections.singletonList(new Framework(imageName, configuration));
 
-        when(dockerInfoStub.getRunningContainers()).thenReturn(new HashSet<String>() {{
-            add(containerId);
-        }});
-
+        when(dockerInfoStub.getRunningContainers()).thenReturn(Collections.singleton(containerId));
         when(dockerInfoStub.getImageNameOfContainer(containerId)).thenReturn(imageName);
+        when(logfileStreamingMock.isConfigured(containerId)).thenReturn(false);
+        when(logstashServiceMock.hasStarted()).thenReturn(false);
+        ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class);
 
         target = new LogstashConnector(dockerInfoStub, logstashServiceMock, logfileStreamingMock);
         target.updatedLogLocations(frameworks);
 
-        assertEquals("/tmp/TEST_CONTAINER_ID/TEST_IMAGE_NAME/LOCATION.log", frameworks.get(0).getLogConfigurationList().get(0).getLocalLogLocation());
+        verify(logfileStreamingMock).setupContainerLogfileStreaming(containerId, frameworks.get(0));
+        verify(logstashServiceMock).reconfigure(argumentCaptor.capture());
+        verify(logstashServiceMock).start();
+
+        assertTrue(argumentCaptor.getValue().containsKey(containerId));
+        assertTrue(argumentCaptor.getValue().containsValue(frameworks.get(0)));
     }
 }

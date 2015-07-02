@@ -36,7 +36,7 @@ public class LogstashConnector implements LogConfigurationListener {
             Framework framework = containerConfiguration.get(containerId);
 
             if (logfileStreaming.isConfigured(containerId)) {
-                LOGGER.info(String.format("Skipping %s (%s) because it is already configured", containerId, framework.getId()));
+                LOGGER.info(String.format("Skipping %s (%s) because it is already configured", containerId, framework.getName()));
                 continue;
             }
 
@@ -57,15 +57,14 @@ public class LogstashConnector implements LogConfigurationListener {
         Set<String> runningContainers = dockerInfo.getRunningContainers();
 
         for (String containerId : runningContainers) {
-            String imageName = dockerInfo.getImageNameOfContainer(containerId);
+            String tempContainerId = containerId;
+            String imageName = dockerInfo.getImageNameOfContainer(tempContainerId);
 
             Framework framework = getFrameworkOfImage(imageName, frameworks);
 
             if (framework != null) {
                 LOGGER.info(String.format("Found framework config for image %s", imageName));
-
-                framework.setLocalLogLocation(String.format("/tmp/%s", containerId));
-                containerConfiguration.put(containerId, framework);
+                containerConfiguration.put(tempContainerId, framework);
             }
 
             LOGGER.info(String.format("Found no framework config for image %s", imageName));
@@ -76,7 +75,7 @@ public class LogstashConnector implements LogConfigurationListener {
 
     private Framework getFrameworkOfImage(String imageName, List<Framework> frameworks) {
         for (Framework f : frameworks) {
-            if (imageName.equals(f.getId())) {
+            if (imageName.equals(f.getName())) {
                 return f;
             }
         }

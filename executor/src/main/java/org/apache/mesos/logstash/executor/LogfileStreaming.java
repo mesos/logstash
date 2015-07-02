@@ -21,16 +21,14 @@ public class LogfileStreaming {
     }
 
     public void setupContainerLogfileStreaming(String containerId, Framework framework) {
-        if (framework.getLogConfigurationList().size() == 0) {
-            LOGGER.warn("No logs to configure for container " + containerId);
-            return;
-        }
-
         ArrayList<String> localPaths = new ArrayList<>();
-        for (LogConfiguration configuration : framework.getLogConfigurationList()) {
-            final String localPath = this.streamContainerLogFile(containerId, configuration.getLocalLogLocation(), configuration.getLogLocation());
+
+        for(String logLocation : framework.getLogLocations()) {
+            String localPath = framework.getLocalLogLocation(containerId, logLocation);
+            this.streamContainerLogFile(containerId, localPath, logLocation);
             localPaths.add(localPath);
         }
+
         logConfigurations.put(containerId, localPaths.toArray(new String[localPaths.size()]));
     }
 
@@ -43,13 +41,11 @@ public class LogfileStreaming {
      *
      * @param fileName the fileName of the local file where logstash will read
      * @param logLocation the log file's location within the docker container
-     * @return the local path where the log file contents will be streamed to
      */
-    private String streamContainerLogFile(String containerId, String fileName, String logLocation) {
+    private void streamContainerLogFile(String containerId, String fileName, String logLocation) {
         LogDispatcher.writeLogToFile(fileName, createContainerLogStream(containerId, logLocation));
 
         LOGGER.info(String.format("Thread writing to file %s", fileName));
-        return fileName;
     }
 
     private com.spotify.docker.client.LogStream createContainerLogStream(String containerId, String logLocation) {

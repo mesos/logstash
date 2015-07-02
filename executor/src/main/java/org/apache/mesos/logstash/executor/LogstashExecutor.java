@@ -188,12 +188,6 @@ public class LogstashExecutor implements Executor {
                 this.logstashConnector.updatedLogLocations(parseFrameworks(schedulerMessage));
             }
 
-            LOGGER.info(String.format("Configuration fragments: %s", schedulerMessage.getConfigurationFragments()));
-            LOGGER.info(String.format("Framework name: %s", schedulerMessage.getLogstashConfig(0).getFrameworkName()));
-            LOGGER.info(String.format("Location: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getLocation()));
-            LOGGER.info(String.format("Tag: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getTag()));
-            LOGGER.info(String.format("Type: %s", schedulerMessage.getLogstashConfig(0).getLogInputConfiguraton(0).getType()));
-
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler", e);
         } catch (Exception e) {
@@ -202,12 +196,12 @@ public class LogstashExecutor implements Executor {
     }
 
     private List<Framework> parseFrameworks(LogstashProtos.SchedulerMessage schedulerMessage) {
-        List<Framework> frameworkConfigs = new ArrayList<>();
+        List<Framework> frameworks = new ArrayList<>();
         for(LogstashProtos.LogstashConfig lc : schedulerMessage.getLogstashConfigList()) {
-            frameworkConfigs.add(new Framework(lc));
+            frameworks.add(new Framework(lc));
         }
 
-        return frameworkConfigs;
+        return frameworks;
     }
 
     @Override

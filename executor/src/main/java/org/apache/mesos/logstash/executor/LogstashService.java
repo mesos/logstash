@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +42,7 @@ public class LogstashService {
             try {
                 this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
             } catch (IOException e) {
-                LOGGER.error("Something went horribly, horribly wrong: " + e.toString());
+                LOGGER.error("Something went horribly, horribly wrong:", e);
             }
         } else {
             LOGGER.info("Logstash already started...");
@@ -53,14 +54,23 @@ public class LogstashService {
         m.put("configurations", logConfigurations);
 
         try {
-            FileOutputStream os = new FileOutputStream("/tmp/logstash.conf");
-            configTemplate.process(m, new OutputStreamWriter(os));
+            PrintWriter printWriter = new PrintWriter("/tmp/logstash.conf", "UTF-8");
+            printWriter.write(concatConfigs(logConfigurations));
+            printWriter.close();
         }
         catch(IOException e) {
-            e.printStackTrace();
+            LOGGER.error("Error creating logstash.conf", e);
         }
-        catch(TemplateException e) {
-            e.printStackTrace();
+    }
+
+    private String concatConfigs(Map<String, Framework> logConfigurations) {
+        String configuration = "";
+
+        for(String containerId : logConfigurations.keySet()) {
+            configuration = configuration.concat(logConfigurations.get(containerId).generateLogstashConfig(containerId));
         }
+
+        //TODO should find a real output
+        return configuration.concat("output { file { path => \"/tmp/logstash-test.log\" }}");
     }
 }
