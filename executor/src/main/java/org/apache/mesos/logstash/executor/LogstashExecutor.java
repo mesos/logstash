@@ -15,6 +15,7 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
 
 import static java.util.concurrent.TimeUnit.HOURS;
+import static org.apache.mesos.logstash.common.LogstashProtos.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,7 +142,7 @@ public class LogstashExecutor implements Executor {
     }
 
     private byte[] createExecutorMessage(List<String> frameworkNames) {
-        return LogstashProtos.ExecutorMessage.newBuilder()
+        return ExecutorMessage.newBuilder()
                 .addAllFrameworkName(frameworkNames)
                 .build()
                 .toByteArray();
@@ -182,10 +183,14 @@ public class LogstashExecutor implements Executor {
         LOGGER.info("Framework message: " + Arrays.toString(data));
 
         try {
-            LogstashProtos.SchedulerMessage schedulerMessage = LogstashProtos.SchedulerMessage.parseFrom(data);
+            SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
+
+            Map<String, String> dockerConfigs = extractConfigs(schedulerMessage.getDockerConfigList());
+            Map<String, String> hostConfigs = extractConfigs(schedulerMessage.getHostConfigList());
 
             if(this.logstashConnector != null) {
-                this.logstashConnector.updatedLogLocations(parseFrameworks(schedulerMessage));
+                // TODO fixme when we have determined logic flow to logstash
+                // this.logstashConnector.updatedLogLocations(parseFrameworks(schedulerMessage));
             }
 
         } catch (InvalidProtocolBufferException e) {
@@ -195,14 +200,14 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private List<Framework> parseFrameworks(LogstashProtos.SchedulerMessage schedulerMessage) {
-        List<Framework> frameworks = new ArrayList<>();
-        for(LogstashProtos.LogstashConfig lc : schedulerMessage.getLogstashConfigList()) {
-            frameworks.add(new Framework(lc));
-        }
-
-        return frameworks;
+    private Map<String,String> extractConfigs(List<LogstashConfig> cfgs) {
+        Map<String, String> configs = new HashMap<>();
+        cfgs.stream()
+                .forEach(cfg ->
+                        configs.put(cfg.getFrameworkName(), cfg.getConfig()));
+        return configs;
     }
+
 
     @Override
     public void shutdown(ExecutorDriver driver) {
