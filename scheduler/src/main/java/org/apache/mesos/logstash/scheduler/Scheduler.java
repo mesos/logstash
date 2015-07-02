@@ -28,6 +28,8 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
 
     // one-to-one map of slave and corresponding executor
     private Map<Protos.SlaveID, Protos.ExecutorID> executors;
+    private Map<String, String> dockerConfigurations;
+    private Map<String, String> hostConfigurations;
 
     // As per the DCOS Service Specification, setting the failover timeout to a large value;
     private static final double FAILOVER_TIMEOUT = 86400000;
@@ -39,8 +41,11 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         this.driver = buildSchedulerDriver();
 
 
-        ConfigMonitor configMonitor = new ConfigMonitor("some path");
-        configMonitor.start(this::broadcastConfig);
+        ConfigMonitor dockerMonitor = new ConfigMonitor("config/docker");
+        dockerMonitor.start(this::newDockerConfigAvailable);
+
+        ConfigMonitor hostMonitor = new ConfigMonitor("config/host");
+        hostMonitor.start(this::newHostConfigAvailable);
     }
 
     private MesosSchedulerDriver buildSchedulerDriver() {
@@ -51,17 +56,33 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         return new MesosSchedulerDriver(this, frameworkInfo, getMesosUrl());
     }
 
-    private void broadcastConfig(Map<String, String> configs) {
-        byte[] message = configMapToByteArray(configs);
+    private void newDockerConfigAvailable(Map<String, String> config) {
+        this.dockerConfigurations = config;
+        broadcastConfig(dockerConfigurations, hostConfigurations);
+    }
+
+    private void newHostConfigAvailable(Map<String, String> config) {
+        this.hostConfigurations = config;
+        broadcastConfig(dockerConfigurations, hostConfigurations);
+    }
+
+    private void broadcastConfig(Map<String, String> dockerConfigurations, Map<String, String> hostConfigurations) {
+        byte[] message = configMapToByteArray(dockerConfigurations, hostConfigurations);
         for(Map.Entry<Protos.SlaveID, Protos.ExecutorID> entry : executors.entrySet()) {
             driver.sendFrameworkMessage(entry.getValue(), entry.getKey(), message);
         }
     }
 
-    private static byte[] configMapToByteArray(Map<String, String> configs) {
+    private static byte[] configMapToByteArray(Map<String, String> dockerConfigurations, Map<String, String> hostConfigurations) {
         LogstashProtos.SchedulerMessage.Builder builder = LogstashProtos.SchedulerMessage.newBuilder();
 
-        for(Map.Entry<String, String> entry : configs.entrySet()) {
+        for(Map.Entry<String, String> entry : dockerConfigurations.entrySet()) {
+            builder.addLogstashConfig(LogstashProtos.LogstashConfig.newBuilder()
+                    .setConfig(entry.getValue())
+                    .setFrameworkName(entry.getKey()));
+        }
+
+        for(Map.Entry<String, String> entry : hostConfigurations.entrySet()) {
             builder.addLogstashConfig(LogstashProtos.LogstashConfig.newBuilder()
                     .setConfig(entry.getValue())
                     .setFrameworkName(entry.getKey()));
@@ -129,6 +150,15 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus taskStatus) {
         LOGGER.info("Task status update! " + taskStatus.toString());
+
+        if(taskStatus.getState() == Protos.TaskState.TASK_RUNNING) {
+            System.out.println("Slave " + taskStatus.getSlaveId() + ", executor " + taskStatus.getExecutorId());
+            executors.put(taskStatus.getSlaveId(), taskStatus.getExecutorId());
+
+            // Tell the new instance of our configuration
+            byte[] msg = configMapToByteArray(dockerConfigurations, hostConfigurations);
+            schedulerDriver.sendFrameworkMessage(taskStatus.getExecutorId(), taskStatus.getSlaveId(), msg);
+        }
     }
 
     @Override
