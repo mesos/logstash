@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static com.jayway.awaitility.Awaitility.fieldIn;
@@ -24,12 +25,12 @@ public class ConfigMonitorTest {
     @Rule
     public TemporaryFolder configDir = new TemporaryFolder();
 
-    AtomicBoolean done;
+    AtomicInteger notificationCounter;
 
     @Before
     public void setup() {
-        System.out.println("STARTING UP");
-        done = new AtomicBoolean(false);
+        // Start at -1 because we want to ignore the initial notification from ConfigMonitor
+        notificationCounter = new AtomicInteger(-1);
     }
 
     public void awaitRunning(ConfigMonitor monitor) {
@@ -38,6 +39,7 @@ public class ConfigMonitorTest {
 
     public void writeConfig(String configFileName, String content) throws IOException {
         FileUtils.write(getFilePath(configFileName), content);
+        FileUtils.touch(getFilePath(configFileName));
     }
 
     private File getFilePath(String configFileName) {
@@ -46,16 +48,20 @@ public class ConfigMonitorTest {
 
     @Test
     public void getsNotifiedOnFileCreation() throws IOException {
+        // Setup
         ConfigMonitor monitor = new ConfigMonitor(configDir.getRoot().getAbsolutePath());
 
         final Map<String, String> config = startMonitor(monitor);
 
+        // Execute
         writeConfig("my-framework.conf", "foo");
 
+        System.out.println("Awaiting notification");
         awaitNotification(monitor);
 
         System.out.println("ASKING");
 
+        // Verify
         assertEquals(1, config.size());
         assertEquals("foo", config.get("my-framework"));
     }
@@ -73,7 +79,7 @@ public class ConfigMonitorTest {
 
         awaitNotification(monitor);
 
-        assertEquals(config.size(), 0);
+        assertEquals(0, config.size());
     }
 
 
@@ -82,39 +88,41 @@ public class ConfigMonitorTest {
         ConfigMonitor monitor = new ConfigMonitor(configDir.getRoot().getAbsolutePath());
 
         // Write the config before the monitor starts.
-
         writeConfig("my-framework.conf", "foo");
 
         final Map<String, String> config = startMonitor(monitor);
 
-        // Update the config.
+        // Work around because file system watcher on mac is slow
+        // and doesn't notice writes if they happen too fast after eachother
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
 
+        // Modify the config
         writeConfig("my-framework.conf", "bar");
 
         awaitNotification(monitor);
 
-        assertEquals(config.size(), 0);
+        assertEquals(1, config.size());
     }
 
     private void awaitNotification(ConfigMonitor monitor) {
-//        try {
-//            monitor.getThread().wait(3_000);
-//        } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
-//        }
-        await().untilTrue(done);
+        await().untilAtomic(notificationCounter, is(1));
     }
 
     private Map<String, String> startMonitor(ConfigMonitor monitor) {
         final Map<String, String> config = new ConcurrentHashMap<>();
+
         monitor.start(c -> {
+            config.clear();
             config.putAll(c);
-            done.set(true);
+            notificationCounter.incrementAndGet();
         });
 
-
-        done.set(false);
         awaitRunning(monitor);
+
 
         return config;
     }
