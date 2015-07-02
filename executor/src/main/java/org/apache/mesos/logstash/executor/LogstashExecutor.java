@@ -144,7 +144,6 @@ public class LogstashExecutor implements Executor {
                 hostAddress = String.format("http:/%s:2376", a.toString());
                 LOGGER.info("Host address is: " + hostAddress);
             }
-
         } catch (SocketException se) {
             se.printStackTrace();
         }
@@ -180,7 +179,6 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-
     private<T extends Framework> Map<String, T> extractConfigs(List<LogstashConfig> cfgs, Function<LogstashConfig, T> createConfig) {
         Map<String, T> configs = new HashMap<>();
         cfgs.stream()
@@ -188,7 +186,6 @@ public class LogstashExecutor implements Executor {
                         configs.put(cfg.getFrameworkName(), createConfig.apply(cfg)));
         return configs;
     }
-
 
     @Override
     public void shutdown(ExecutorDriver driver) {
