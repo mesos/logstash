@@ -70,7 +70,7 @@ public class DockerInfoTest {
         //
         // Act
         //
-        DockerInfo target = new DockerInfoImpl(dockerClientStub, mock(FrameworkDiscoveryListener.class));
+        DockerInfo target = new DockerInfoImpl(dockerClientStub);
         Set<String> result = target.getRunningContainers();
 
         //
@@ -96,7 +96,7 @@ public class DockerInfoTest {
         //
         // Act
         //
-        DockerInfo target = new DockerInfoImpl(dockerClientStub, frameworkDiscoveryListenerSpy);
+        DockerInfo target = new DockerInfoImpl(dockerClientStub);
 
         //
         // Assert

@@ -18,7 +18,7 @@ public class FrameworkTest {
                         "file { docker-path => \"/var/log/mysql/logs.log\" } " +
                         "}";
 
-        Framework target = new Framework(frameworkName, configuration);
+        Framework target = new DockerFramework(frameworkName, configuration);
 
         assertEquals("/var/log/nginx/logs.log", target.getLogLocations().get(0));
         assertEquals("/var/log/mysql/logs.log", target.getLogLocations().get(1));
@@ -44,7 +44,7 @@ public class FrameworkTest {
                         "file { path => \"/tmp/TEST_CONTAINER_ID/TEST_FRAMEWORK_NAME/var/log/mysql/logs.log\" } " +
                         "}";
 
-        Framework target = new Framework(frameworkName, configuration);
+        Framework target = new DockerFramework(frameworkName, configuration);
         String result = target.generateLogstashConfig("TEST_CONTAINER_ID");
 
         assertEquals(expectedGenareatedConfiguration, result);

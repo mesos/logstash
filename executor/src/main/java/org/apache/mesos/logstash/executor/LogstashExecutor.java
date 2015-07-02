@@ -3,7 +3,6 @@ package org.apache.mesos.logstash.executor;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
-import freemarker.cache.TemplateLoader;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
@@ -12,15 +11,15 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.common.LogstashProtos;
 
-import static java.util.concurrent.TimeUnit.HOURS;
-import static org.apache.mesos.logstash.common.LogstashProtos.*;
-
-import java.io.File;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.function.Function;
+
+import static java.util.concurrent.TimeUnit.HOURS;
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
+import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 
 /**
  * Executor for Logstash.
@@ -29,6 +28,9 @@ import java.util.*;
 public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
+
+    private Map<String, Framework> dockerConfigs;
+    private Map<String, Framework> hostConfigs;
 
     private LogstashConnector logstashConnector = null;
 
@@ -71,7 +73,7 @@ public class LogstashExecutor implements Executor {
 
         String hostAddress = getHostAddress();
 
-        doIt(driver, hostAddress);
+        runLogstash(driver, hostAddress);
 
         try {
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -92,7 +94,7 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private void doIt(final ExecutorDriver executorDriver, String hostAddress) {
+    private void runLogstash(final ExecutorDriver executorDriver, String hostAddress) {
         LOGGER.info("Host address is: " + hostAddress);
 
         DockerClient dockerClient = DefaultDockerClient.builder()
@@ -100,52 +102,37 @@ public class LogstashExecutor implements Executor {
                 .uri(URI.create(hostAddress))
                 .build();
 
-        FrameworkDiscoveryListener frameworkDiscoveryListener = new FrameworkDiscoveryListener() {
-            @Override
-            public void frameworksDiscovered(List<String> frameworkNames) {
-                LOGGER.info(String.format("Sending framework message..."));
-
-                for (String frameworkName : frameworkNames) {
-                    LOGGER.info(String.format("Framework name: %s", frameworkName));
-                }
-
-                Protos.Status status = executorDriver.sendFrameworkMessage(createExecutorMessage(frameworkNames));
-
-                LOGGER.info(String.format("Driver status %s", status));
-            }
-        };
-
         try {
-            createLogstashConnector(dockerClient, frameworkDiscoveryListener);
+            createLogstashConnector(dockerClient);
         }
         catch(IOException e) {
             LOGGER.error(String.format("Couldn't load config template %s", e));
         }
     }
 
-    private void createLogstashConnector(DockerClient dockerClient,
-                                                      FrameworkDiscoveryListener frameworkDiscoveryListener) throws IOException {
+    private void createLogstashConnector(DockerClient dockerClient) throws IOException {
         if(this.logstashConnector == null) {
             Template configTemplate = initTemplatingEngine().getTemplate("conf.ftl");
 
             LOGGER.info("Config template loaded");
-
             LogstashService logstash = new LogstashService(configTemplate);
-
             LOGGER.info("logstash service created");
 
-            DockerInfo dockerInfo = new DockerInfoImpl(dockerClient, frameworkDiscoveryListener);
+            DockerInfo dockerInfo = new DockerInfoImpl(dockerClient, _ignored -> reconfigureLogstash());
             this.logstashConnector = new LogstashConnector(dockerInfo, logstash, new LogfileStreaming(dockerInfo));
 
             LOGGER.info("connector set up");
         }
     }
 
-    private byte[] createExecutorMessage(List<String> frameworkNames) {
-        return ExecutorMessage.newBuilder()
-                .addAllFrameworkName(frameworkNames)
-                .build()
-                .toByteArray();
+    private void reconfigureLogstash() {
+        if(this.logstashConnector != null) {
+            // TODO make sure we pass along the host configs also
+            this.logstashConnector.updatedLogLocations(new ArrayList<>(dockerConfigs.values()));
+        }
+        else {
+            LOGGER.error("Logstash connector not created yet, cannot update configurations");
+        }
     }
 
     private static String getHostAddress() {
@@ -185,13 +172,10 @@ public class LogstashExecutor implements Executor {
         try {
             SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
 
-            Map<String, String> dockerConfigs = extractConfigs(schedulerMessage.getDockerConfigList());
-            Map<String, String> hostConfigs = extractConfigs(schedulerMessage.getHostConfigList());
+            dockerConfigs = extractConfigs(schedulerMessage.getDockerConfigList(), DockerFramework::create);
+            hostConfigs = extractConfigs(schedulerMessage.getHostConfigList(), HostFramework::create);
 
-            if(this.logstashConnector != null) {
-                // TODO fixme when we have determined logic flow to logstash
-                // this.logstashConnector.updatedLogLocations(parseFrameworks(schedulerMessage));
-            }
+            reconfigureLogstash();
 
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler", e);
@@ -200,11 +184,11 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private Map<String,String> extractConfigs(List<LogstashConfig> cfgs) {
-        Map<String, String> configs = new HashMap<>();
+    private Map<String, Framework> extractConfigs(List<LogstashConfig> cfgs, Function<LogstashConfig, Framework> createConfig) {
+        Map<String, Framework> configs = new HashMap<>();
         cfgs.stream()
                 .forEach(cfg ->
-                        configs.put(cfg.getFrameworkName(), cfg.getConfig()));
+                        configs.put(cfg.getFrameworkName(), createConfig.apply(cfg)));
         return configs;
     }
 

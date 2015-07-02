@@ -1,12 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.util.*;
-import java.util.regex.Matcher;
 
 import static org.mockito.Mockito.*;
 import static org.junit.Assert.*;
@@ -33,7 +31,7 @@ public class LogstashConnectorTest {
         final String containerId = "TEST_CONTAINER_ID";
         final String imageName = "TEST_IMAGE_NAME";
         final String configuration = "{input => {}}";
-        List<Framework> frameworks = Collections.singletonList(new Framework(imageName, configuration));
+        List<Framework> frameworks = Collections.singletonList(new DockerFramework(imageName, configuration));
 
         when(dockerInfoStub.getRunningContainers()).thenReturn(Collections.singleton(containerId));
         when(dockerInfoStub.getImageNameOfContainer(containerId)).thenReturn(imageName);

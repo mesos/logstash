@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Created by ero on 22/06/15.
@@ -20,17 +21,14 @@ public class DockerInfoImpl implements DockerInfo {
     private final Logger LOGGER = Logger.getLogger(DockerInfoImpl.class.toString());
 
     private final DockerClient dockerClient;
-    private final FrameworkDiscoveryListener frameworkDiscoveryListener;
+    private final Consumer<List<String>> frameworkDiscoveryListener;
 
-    public DockerInfoImpl(DockerClient dockerClient, FrameworkDiscoveryListener frameworkDiscoveryListener) {
-        this(dockerClient, frameworkDiscoveryListener, 5000);
-    }
-
-    public DockerInfoImpl(DockerClient dockerClient, FrameworkDiscoveryListener frameworkDiscoveryListener, long pollInterval) {
+    public DockerInfoImpl(DockerClient dockerClient, Consumer<List<String>> frameworkListener) {
         this.dockerClient = dockerClient;
-        this.frameworkDiscoveryListener = frameworkDiscoveryListener;
+        this.frameworkDiscoveryListener = frameworkListener;
+
         updateContainerState();
-        startPoll(pollInterval);
+        startPoll(5000);
     }
 
     public Set<String> getRunningContainers() {
@@ -51,7 +49,7 @@ public class DockerInfoImpl implements DockerInfo {
 
     private void notifyFrameworkListener() {
         LOGGER.info("Notifying about running containers");
-        this.frameworkDiscoveryListener.frameworksDiscovered(getContainerImageNames());
+        this.frameworkDiscoveryListener.accept(getContainerImageNames());
     }
 
     private void startPoll(long pollInterval) {
