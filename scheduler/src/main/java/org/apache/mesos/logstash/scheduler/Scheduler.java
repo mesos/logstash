@@ -77,13 +77,13 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         LogstashProtos.SchedulerMessage.Builder builder = LogstashProtos.SchedulerMessage.newBuilder();
 
         for(Map.Entry<String, String> entry : dockerConfigurations.entrySet()) {
-            builder.addLogstashConfig(LogstashProtos.LogstashConfig.newBuilder()
+            builder.addDockerConfig(LogstashProtos.LogstashConfig.newBuilder()
                     .setConfig(entry.getValue())
                     .setFrameworkName(entry.getKey()));
         }
 
         for(Map.Entry<String, String> entry : hostConfigurations.entrySet()) {
-            builder.addLogstashConfig(LogstashProtos.LogstashConfig.newBuilder()
+            builder.addHostConfig(LogstashProtos.LogstashConfig.newBuilder()
                     .setConfig(entry.getValue())
                     .setFrameworkName(entry.getKey()));
         }
