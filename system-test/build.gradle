@@ -59,7 +59,6 @@ containers.each { container ->
 }
 
 // slave needs executor image to run
-dockerComposeUpSlave1.dependsOn project(':executor').pushDockerImage
 dockerComposeUpSlave1.dependsOn dockerComposeStopSlave1
 
 // scheduler image needs scheduler image to run (doesn't need to be pushed though)
@@ -99,7 +98,6 @@ task rmFramework(type: Exec) {
 
 task redeploy(type: Exec) {
     dependsOn rmFramework, configure
-    dependsOn project(':executor').pushDockerImage
     dependsOn project(':scheduler').buildDockerImage
     dependsOn project(':executor').buildDockerImage
 
