@@ -4,7 +4,6 @@ apply plugin: 'groovy'
 
 mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
 
-sourceCompatibility = 1.7
 version = '1.0'
 
 buildscript {

@@ -14,6 +14,7 @@ public abstract class Framework {
     public Framework(String frameworkName, String configuration) {
         this.configuration = configuration;
         this.name = frameworkName;
+        this.logLocations = parseLogLocations(configuration);
     }
 
     public String getName() {
@@ -27,6 +28,8 @@ public abstract class Framework {
     public List<String> getLogLocations() {
         return logLocations;
     }
+
+    public abstract String generateLogstashConfig();
 
     protected abstract List<String> parseLogLocations(String configuration);
 }

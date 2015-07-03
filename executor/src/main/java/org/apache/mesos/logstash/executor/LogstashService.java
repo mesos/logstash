@@ -1,20 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
-
-import freemarker.template.Template;
-import freemarker.template.TemplateException;
-import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.nio.file.Paths;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash
@@ -26,24 +16,32 @@ public class LogstashService {
 
     private Process logstashProcess = null;
 
-    public boolean hasStarted() {
-        return this.logstashProcess != null;
+    public void updateStaticConfig(String staticConfig) {
+        if(staticConfig.equals(this.staticConfig)) {
+            LOGGER.info("Static framework configuration did not change");
+        } else {
+            this.staticConfig = staticConfig;
+            writeConfig("logstash-static.conf", this.staticConfig);
+            assertStarted();
+        }
     }
 
-    public String getStaticConfig() {
-        return staticConfig;
-    }
-
-    public void setStaticConfig(String staticConfig) {
-        this.staticConfig = staticConfig;
-        // TODO reconfigure!
+    public void updateDockerConfig(String config) {
+        if(config.equals(this.dockerConfig)) {
+            LOGGER.info("Docker framework configuration did not change");
+        } else {
+            this.dockerConfig = config;
+            writeConfig("logstash-docker.conf", this.dockerConfig);
+        }
+        assertStarted();
     }
 
     // TODO should be empty string by default
     private String staticConfig = "output { file { path => \"/tmp/logstash-test.log\" }}";
+    private String dockerConfig;
 
-    public void start() {
-        if(this.logstashProcess == null) {
+    private void assertStarted() {
+        if(!hasStarted()) {
             LOGGER.info("Starting logstash...");
             try {
                 this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
@@ -55,24 +53,21 @@ public class LogstashService {
         }
     }
 
-    public void reconfigure(Map<String, DockerFramework> logConfigurations) {
-
+    private void writeConfig(String fileName, String content) {
+        String fullFileName = Paths.get("/tmp", fileName).toString();
         try {
-            PrintWriter printWriter = new PrintWriter("/tmp/logstash.conf", "UTF-8");
-
-            // TODO use a directory to configure logstash and write each Map.Entry as a separate
-            // file instead.
-            printWriter.write(logConfigurations
-                    .entrySet().stream()
-                    .map(e -> e.getValue().generateLogstashConfig(e.getKey()))
-                    .collect(Collectors.joining("\n")));
-
-            printWriter.write(staticConfig);
+            PrintWriter printWriter = new PrintWriter(fullFileName, "UTF-8");
+            printWriter.write(content);
 
             printWriter.close();
         }
         catch(IOException e) {
-            LOGGER.error("Error creating logstash.conf", e);
+            LOGGER.error(String.format("Error creating %s", fullFileName), e);
         }
     }
+
+    private boolean hasStarted() {
+        return this.logstashProcess != null;
+    }
+
 }

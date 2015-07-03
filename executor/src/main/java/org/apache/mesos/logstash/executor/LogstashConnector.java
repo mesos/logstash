@@ -3,8 +3,8 @@ package org.apache.mesos.logstash.executor;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Class responsible for connecting each discovered framework to logstashService
@@ -26,69 +26,34 @@ public class LogstashConnector implements LogConfigurationListener {
     }
 
     @Override
-    public void updatedHostLogConfigurations(List<HostFramework> frameworks) {
-        String concatenated = frameworks.stream()
-                .map(Framework::getConfiguration)
+    public void updatedHostLogConfigurations(Stream<LogstashInfo> logstashInfos) {
+        String config = logstashInfos.map(lif -> new HostFramework(lif))
+                .map(Framework::generateLogstashConfig)
                 .collect(Collectors.joining("\n"));
-        logstashService.setStaticConfig(concatenated);
+
+        logstashService.updateStaticConfig(config);
     }
+
 
     @Override
-    public void updatedDockerLogConfigurations(List<DockerFramework> frameworks) {
+    public void updatedDockerLogConfigurations(Stream<LogstashInfo> logstashInfos) {
 
-        LOGGER.info(String.format("Number of frameworks %d", frameworks.size()));
+        Map<String, LogstashInfo> logstashInfoMap = logstashInfos.collect(Collectors.toMap(LogstashInfo::getName, x -> x));
+        Stream<DockerFramework> frameworks = dockerInfo.getRunningContainers().stream()
+                .map(c -> createDockerFramework(logstashInfoMap, c));
 
-        Map<String, DockerFramework> containerConfiguration = getPerContainerConfiguration(frameworks);
+        // Make sure all new containers are streaming their logs
+        frameworks.peek(fw -> this.logfileStreaming.setupContainerLogfileStreaming(fw));
 
-        LOGGER.info(String.format("Number of containers to configure %d", containerConfiguration.size()));
-        for (String containerId : containerConfiguration.keySet()) {
+        String config = frameworks
+                .map(Framework::generateLogstashConfig)
+                .collect(Collectors.joining("\n"));
 
-            DockerFramework framework = containerConfiguration.get(containerId);
-
-            if (logfileStreaming.isConfigured(containerId)) {
-                LOGGER.info(String.format("Skipping %s (%s) because it is already configured", containerId, framework.getName()));
-                continue;
-            }
-
-            logfileStreaming.setupContainerLogfileStreaming(containerId, framework);
-            logstashService.reconfigure(containerConfiguration);
-            assertStarted();
-        }
+        logstashService.updateDockerConfig(config);
     }
 
-    private void assertStarted() {
-        if (!logstashService.hasStarted()) {
-            logstashService.start();
-        }
-    }
-
-    private Map<String, DockerFramework> getPerContainerConfiguration(List<DockerFramework> frameworks) {
-        Map<String, DockerFramework> containerConfiguration = new HashMap<>();
-        Set<String> runningContainers = dockerInfo.getRunningContainers();
-
-        for (String containerId : runningContainers) {
-            String tempContainerId = containerId;
-            String imageName = dockerInfo.getImageNameOfContainer(tempContainerId);
-
-            DockerFramework framework = getFrameworkOfImage(imageName, frameworks);
-
-            if (framework != null) {
-                LOGGER.info(String.format("Found framework config for image %s", imageName));
-                containerConfiguration.put(tempContainerId, framework);
-            }
-
-            LOGGER.info(String.format("Found no framework config for image %s", imageName));
-        }
-
-        return containerConfiguration;
-    }
-
-    private DockerFramework getFrameworkOfImage(String imageName, List<DockerFramework> frameworks) {
-        for (DockerFramework f : frameworks) {
-            if (imageName.equals(f.getName())) {
-                return f;
-            }
-        }
-        return null;
+    private DockerFramework createDockerFramework(Map<String, LogstashInfo> logstashInfoMap, String containerId) {
+        return new DockerFramework(logstashInfoMap.get(dockerInfo.getImageNameOfContainer(containerId)),
+                new DockerFramework.ContainerId(containerId));
     }
 }

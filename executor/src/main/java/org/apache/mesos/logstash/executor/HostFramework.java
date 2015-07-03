@@ -9,12 +9,14 @@ import java.util.List;
  */
 public class HostFramework extends Framework {
 
-    public HostFramework(LogstashProtos.LogstashConfig cfg) {
-        super(cfg.getFrameworkName(), cfg.getConfig());
+    public HostFramework(LogstashInfo logstashInfo) {
+        super(logstashInfo.getName(), logstashInfo.getConfiguration());
     }
 
-    public static HostFramework create(LogstashProtos.LogstashConfig cfg) {
-        return new HostFramework(cfg);
+    @Override
+    public String generateLogstashConfig() {
+        // TODO implement me
+        return null;
     }
 
     @Override

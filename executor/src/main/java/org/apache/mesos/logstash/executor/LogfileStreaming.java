@@ -20,20 +20,24 @@ public class LogfileStreaming {
         this.logConfigurations = new HashMap<>();
     }
 
-    public void setupContainerLogfileStreaming(String containerId, DockerFramework framework) {
+    public void setupContainerLogfileStreaming(DockerFramework framework) {
+        if(isConfigured(framework)) {
+            LOGGER.info("Ignoring framework " + framework.getName() + " because it has already been configured");
+            return;
+        }
         ArrayList<String> localPaths = new ArrayList<>();
 
         for(String logLocation : framework.getLogLocations()) {
-            String localPath = framework.getLocalLogLocation(containerId, logLocation);
-            this.streamContainerLogFile(containerId, localPath, logLocation);
+            String localPath = framework.getLocalLogLocation(logLocation);
+            this.streamContainerLogFile(framework.getContainerId(), localPath, logLocation);
             localPaths.add(localPath);
         }
 
-        logConfigurations.put(containerId, localPaths.toArray(new String[localPaths.size()]));
+        logConfigurations.put(framework.getContainerId(), localPaths.toArray(new String[localPaths.size()]));
     }
 
-    public boolean isConfigured(String containerId) {
-        return this.logConfigurations.containsKey(containerId);
+    private boolean isConfigured(DockerFramework framework) {
+        return this.logConfigurations.containsKey(framework.getContainerId());
     }
 
     /**

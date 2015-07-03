@@ -8,11 +8,14 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
+import org.jvnet.hk2.internal.Collector;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
@@ -167,10 +170,11 @@ public class LogstashExecutor implements Executor {
         try {
             SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
 
-            dockerConfigs = extractConfigs(schedulerMessage.getDockerConfigList(), DockerFramework::create);
-            hostConfigs = extractConfigs(schedulerMessage.getHostConfigList(), HostFramework::create);
+            Stream<LogstashInfo> dockerInfos = extractConfigs(schedulerMessage.getDockerConfigList().stream());
+            Stream<LogstashInfo> hostInfos = extractConfigs(schedulerMessage.getHostConfigList().stream());
 
-            reconfigureLogstash();
+            this.logstashConnector.updatedDockerLogConfigurations(dockerInfos);
+            this.logstashConnector.updatedHostLogConfigurations(hostInfos);
 
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler", e);
@@ -179,12 +183,8 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private<T extends Framework> Map<String, T> extractConfigs(List<LogstashConfig> cfgs, Function<LogstashConfig, T> createConfig) {
-        Map<String, T> configs = new HashMap<>();
-        cfgs.stream()
-                .forEach(cfg ->
-                        configs.put(cfg.getFrameworkName(), createConfig.apply(cfg)));
-        return configs;
+    private Stream<LogstashInfo> extractConfigs(Stream<LogstashConfig> cfgs) {
+        return cfgs.map(cfg -> new LogstashInfo(cfg.getFrameworkName(), cfg.getConfig()));
     }
 
     @Override

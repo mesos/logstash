@@ -1,7 +1,5 @@
 package org.apache.mesos.logstash.executor;
 
-import org.apache.mesos.logstash.common.LogstashProtos;
-
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,21 +11,28 @@ import java.util.regex.Pattern;
  */
 public class DockerFramework extends Framework {
 
-    public DockerFramework(LogstashProtos.LogstashConfig logstashConfig) {
-        super(logstashConfig.getFrameworkName(), logstashConfig.getConfig());
+    private final ContainerId containerId;
+
+    public DockerFramework(LogstashInfo logstashInfo, ContainerId containerId) {
+        super(logstashInfo.getName(), logstashInfo.getConfiguration());
+        this.containerId = containerId;
+    }
+
+    public String getContainerId() {
+        return this.containerId.id;
     }
 
     /**
      * Produces a valid logstash configuration from a (very similar looking) Framework configuration
-     * @param containerId
      * @return
      */
-    public String generateLogstashConfig(String containerId) {
+    @Override
+    public String generateLogstashConfig() {
         String generatedConfiguration = configuration;
 
         // Replace all log paths with paths to temporary files
         for(String logLocation : logLocations) {
-            String localLocation = getLocalLogLocation(containerId, logLocation);
+            String localLocation = getLocalLogLocation(logLocation);
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
 
@@ -35,9 +40,9 @@ public class DockerFramework extends Framework {
         return generatedConfiguration.replace("docker-path", "path");
     }
 
-    public String getLocalLogLocation(String containerId, String logLocation) {
+    public String getLocalLogLocation(String logLocation) {
         String sanitizedFrameworkName = sanitize(name);
-        return Paths.get("/tmp", containerId, sanitizedFrameworkName, logLocation).toString();
+        return Paths.get("/tmp", containerId.id, sanitizedFrameworkName, logLocation).toString();
     }
 
     @Override
@@ -54,11 +59,15 @@ public class DockerFramework extends Framework {
         return locations;
     }
 
-    public static DockerFramework create(LogstashProtos.LogstashConfig logstashConfig) {
-        return new DockerFramework(logstashConfig);
-    }
-
     private String sanitize(String frameworkName) {
         return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
+    }
+
+    public static class ContainerId {
+        String id;
+
+        public ContainerId(String containerId) {
+            this.id = containerId;
+        }
     }
 }
