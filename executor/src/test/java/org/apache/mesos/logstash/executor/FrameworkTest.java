@@ -1,5 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.mesos.logstash.frameworks.DockerFramework;
+import org.apache.mesos.logstash.frameworks.Framework;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

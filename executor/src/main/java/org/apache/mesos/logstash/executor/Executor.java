@@ -2,9 +2,10 @@ package org.apache.mesos.logstash.executor;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.log4j.Logger;
-import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.LogConfigurationListener;
+import org.apache.mesos.logstash.LogstashInfo;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -16,13 +17,13 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
  * Executor for Logstash.
  */
 @SuppressWarnings("PMD.TooManyMethods")
-public class LogstashExecutor implements Executor {
+public class Executor implements org.apache.mesos.Executor {
 
-    public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
+    public static final Logger LOGGER = Logger.getLogger(Executor.class.toString());
 
     private LogConfigurationListener listener = null;
 
-    public LogstashExecutor(LogConfigurationListener listener) {
+    public Executor(LogConfigurationListener listener) {
         super();
         this.listener = listener;
     }

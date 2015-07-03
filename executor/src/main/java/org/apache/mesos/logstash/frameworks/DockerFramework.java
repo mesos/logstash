@@ -1,4 +1,6 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.frameworks;
+
+import org.apache.mesos.logstash.LogstashInfo;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;

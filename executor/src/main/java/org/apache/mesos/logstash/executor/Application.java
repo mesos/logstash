@@ -4,6 +4,10 @@ import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.LogstashConnector;
+import org.apache.mesos.logstash.LogstashService;
+import org.apache.mesos.logstash.docker.DockerInfoImpl;
+import org.apache.mesos.logstash.logging.LogfileStreaming;
 
 import java.util.Enumeration;
 import java.util.logging.Logger;
@@ -24,7 +28,7 @@ public class Application {
     }
 
     private static void runExecutor(LogstashConnector connector) {
-        MesosExecutorDriver driver = new MesosExecutorDriver(new LogstashExecutor(connector));
+        MesosExecutorDriver driver = new MesosExecutorDriver(new Executor(connector));
 
         Protos.Status status = driver.run();
         if (status.equals(Protos.Status.DRIVER_STOPPED)) {

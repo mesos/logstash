@@ -1,6 +1,10 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.logging;
 
 import org.apache.log4j.Logger;
+import org.apache.mesos.logstash.frameworks.DockerFramework;
+import org.apache.mesos.logstash.docker.DockerInfo;
+import org.apache.mesos.logstash.LogstashConnector;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;

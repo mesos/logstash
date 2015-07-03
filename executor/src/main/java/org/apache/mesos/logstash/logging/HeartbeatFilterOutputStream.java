@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.logging;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;

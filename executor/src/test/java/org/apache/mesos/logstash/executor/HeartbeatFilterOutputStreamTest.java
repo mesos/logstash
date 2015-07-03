@@ -1,5 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.mesos.logstash.logging.HeartbeatFilterOutputStream;
+import org.apache.mesos.logstash.logging.LogDispatcher;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,11 +1,8 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.logging;
 
 import java.io.*;
-import java.net.SocketTimeoutException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 

@@ -1,5 +1,11 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.mesos.logstash.LogstashConnector;
+import org.apache.mesos.logstash.LogstashService;
+import org.apache.mesos.logstash.docker.DockerInfo;
+import org.apache.mesos.logstash.frameworks.DockerFramework;
+import org.apache.mesos.logstash.frameworks.Framework;
+import org.apache.mesos.logstash.logging.LogfileStreaming;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;

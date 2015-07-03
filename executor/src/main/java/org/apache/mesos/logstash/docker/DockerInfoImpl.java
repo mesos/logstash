@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.docker;
 
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.DockerException;

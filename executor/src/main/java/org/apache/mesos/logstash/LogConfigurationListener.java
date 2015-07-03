@@ -1,6 +1,5 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash;
 
-import java.util.List;
 import java.util.stream.Stream;
 
 /**

@@ -1,6 +1,6 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.frameworks;
 
-import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.LogstashInfo;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash;
 
 /**
  * Created by ero on 15/06/15.

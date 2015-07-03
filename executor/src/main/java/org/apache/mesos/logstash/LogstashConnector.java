@@ -1,6 +1,11 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash;
 
 import org.apache.log4j.Logger;
+import org.apache.mesos.logstash.docker.DockerInfo;
+import org.apache.mesos.logstash.frameworks.DockerFramework;
+import org.apache.mesos.logstash.frameworks.Framework;
+import org.apache.mesos.logstash.frameworks.HostFramework;
+import org.apache.mesos.logstash.logging.LogfileStreaming;
 
 import java.util.*;
 import java.util.stream.Collectors;
