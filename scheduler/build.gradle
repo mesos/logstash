@@ -42,6 +42,7 @@ shadowJar {
 }
 
 jar {
+    dependsOn 'createConfig'
     baseName = "logstash-scheduler"
     manifest {
         attributes (
