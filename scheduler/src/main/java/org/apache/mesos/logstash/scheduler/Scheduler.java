@@ -107,6 +107,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
 
     @Override
     public void run() {
+
         driver.run();
     }
 

@@ -4,6 +4,7 @@ import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
+import javax.management.RuntimeErrorException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
@@ -11,6 +12,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -51,11 +55,28 @@ public class ConfigMonitor {
     }
 
     public void start(Consumer< Map<String, String> > onChange) {
-        this.thread = new Thread(() -> this.run(onChange));
+        FutureTask<Boolean> isStarted = new FutureTask<>(() -> {}, true);
+
+
+        LOGGER.info("Config monitor of " + this.configDir.toString() + " starting..");
+        this.thread = new Thread(() -> {
+            this.run(onChange, isStarted);
+        });
         thread.start();
+
+
+        try {
+            isStarted.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+
+        LOGGER.info("Config monitor of " + this.configDir.toString() + " started");
     }
 
-    private void run(Consumer< Map<String, String> > onChange) {
+    private void run(Consumer< Map<String, String> > onChange, FutureTask<Boolean> isStarted) {
         WatchService watcher;
 
         try {
@@ -66,7 +87,7 @@ public class ConfigMonitor {
             return;
         }
 
-        HashMap<String, String> configToNameMap = new HashMap<String, String>();
+        HashMap<String, String> configToNameMap = new HashMap<>();
         try {
             Files
                     .list(configDir)
@@ -79,6 +100,8 @@ public class ConfigMonitor {
         }
 
         onChange.accept(configToNameMap);
+
+        isStarted.run(); // Let creator know we have initialized successfully
 
 
         WatchKey key = null;
