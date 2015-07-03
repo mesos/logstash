@@ -126,7 +126,7 @@ public class DockerInfoTest {
         //
         // Act
         //
-        DockerInfo target = new DockerInfoImpl(dockerClientStub, frameworkDiscoveryListenerSpy, 100);
+        DockerInfo target = new DockerInfoImpl(dockerClientStub);
 
         //
         // Assert

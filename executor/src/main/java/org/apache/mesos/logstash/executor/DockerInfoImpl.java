@@ -21,11 +21,14 @@ public class DockerInfoImpl implements DockerInfo {
     private final Logger LOGGER = Logger.getLogger(DockerInfoImpl.class.toString());
 
     private final DockerClient dockerClient;
-    private final Consumer<List<String>> frameworkDiscoveryListener;
+    private Consumer<List<String>> frameworkDiscoveryListener;
 
-    public DockerInfoImpl(DockerClient dockerClient, Consumer<List<String>> frameworkListener) {
+    public void setContainerDiscoveryConsumer(Consumer<List<String> > consumer) {
+        this.frameworkDiscoveryListener = consumer;
+    }
+
+    public DockerInfoImpl(DockerClient dockerClient) {
         this.dockerClient = dockerClient;
-        this.frameworkDiscoveryListener = frameworkListener;
 
         updateContainerState();
         startPoll(5000);
@@ -49,7 +52,11 @@ public class DockerInfoImpl implements DockerInfo {
 
     private void notifyFrameworkListener() {
         LOGGER.info("Notifying about running containers");
-        this.frameworkDiscoveryListener.accept(getContainerImageNames());
+        if(this.frameworkDiscoveryListener != null) {
+            this.frameworkDiscoveryListener.accept(getContainerImageNames());
+        } else {
+            LOGGER.warn("No listener set!");
+        }
     }
 
     private void startPoll(long pollInterval) {

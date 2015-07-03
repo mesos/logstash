@@ -2,7 +2,7 @@ apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'groovy'
 
-mainClassName = "org.apache.mesos.logstash.executor.LogstashExecutor"
+mainClassName = "org.apache.mesos.logstash.executor.Application"
 
 version = '1.0'
 
@@ -47,7 +47,7 @@ shadowJar {
 jar {
     baseName = "logstash-executor"
     manifest {
-        attributes 'Main-Class': 'org.apache.mesos.logstash.executor.LogstashExecutor',
+        attributes 'Main-Class': 'org.apache.mesos.logstash.executor.Application',
                 'Class-Path': 'logstash-executor-dependencies.jar'
     }
 }
