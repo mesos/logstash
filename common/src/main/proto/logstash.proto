@@ -13,6 +13,3 @@ message SchedulerMessage {
   repeated LogstashConfig hostConfig = 2;
 }
 
-message ExecutorMessage {
-  repeated string frameworkName = 1;
-}
