@@ -14,10 +14,13 @@ import java.util.regex.Pattern;
 public class DockerFramework extends Framework {
 
     private final ContainerId containerId;
+    private List<String> logLocations;
+
 
     public DockerFramework(LogstashInfo logstashInfo, ContainerId containerId) {
         super(logstashInfo.getName(), logstashInfo.getConfiguration());
         this.containerId = containerId;
+        this.logLocations = parseLogLocations(logstashInfo.getConfiguration());
     }
 
     public String getContainerId() {
@@ -47,7 +50,6 @@ public class DockerFramework extends Framework {
         return Paths.get("/tmp", containerId.id, sanitizedFrameworkName, logLocation).toString();
     }
 
-    @Override
     protected List<String> parseLogLocations(String configuration) {
         List<String> locations = new ArrayList<>();
         Pattern pattern = Pattern.compile("docker-path\\s*=>\\s*\"([^}   ]+)\"");
@@ -71,5 +73,9 @@ public class DockerFramework extends Framework {
         public ContainerId(String containerId) {
             this.id = containerId;
         }
+    }
+
+    public List<String> getLogLocations() {
+        return logLocations;
     }
 }

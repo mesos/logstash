@@ -18,9 +18,4 @@ public class HostFramework extends Framework {
     public String generateLogstashConfig() {
         return this.getConfiguration();
     }
-
-    @Override
-    protected List<String> parseLogLocations(String configuration) {
-        return Collections.singletonList("TODO");
-    }
 }

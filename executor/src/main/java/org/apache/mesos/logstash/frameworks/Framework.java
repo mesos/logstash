@@ -9,12 +9,10 @@ import java.util.List;
 public abstract class Framework {
     protected String name;
     protected String configuration;
-    protected List<String> logLocations;
 
     public Framework(String frameworkName, String configuration) {
         this.configuration = configuration;
         this.name = frameworkName;
-        this.logLocations = parseLogLocations(configuration);
     }
 
     public String getName() {
@@ -25,11 +23,5 @@ public abstract class Framework {
         return configuration;
     }
 
-    public List<String> getLogLocations() {
-        return logLocations;
-    }
-
     public abstract String generateLogstashConfig();
-
-    protected abstract List<String> parseLogLocations(String configuration);
 }

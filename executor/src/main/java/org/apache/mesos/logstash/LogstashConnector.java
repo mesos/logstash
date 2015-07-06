@@ -64,6 +64,8 @@ public class LogstashConnector implements LogConfigurationListener {
     }
 
     private Function<String, LogstashInfo> createLookupHelper(Stream<LogstashInfo> logstashInfos) {
+        // TODO we need to make this helper more generic, so that a prefix/suffix match is also valid
+        // i.e if the config name is a prefix or suffix of a containers image name
         Map<String, LogstashInfo> logstashInfoMap = logstashInfos.collect(Collectors.toMap(LogstashInfo::getName, x -> x));
         return c -> logstashInfoMap.get(dockerInfo.getImageNameOfContainer(c));
     }
