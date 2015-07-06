@@ -46,10 +46,14 @@ public class Executor implements org.apache.mesos.Executor {
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
 
+        LOGGER.info("Notifying scheduler that task has launched");
         Protos.TaskStatus status = Protos.TaskStatus.newBuilder()
+                .setExecutorId(task.getExecutor().getExecutorId())
                 .setTaskId(task.getTaskId())
                 .setState(Protos.TaskState.TASK_RUNNING).build();
         driver.sendStatusUpdate(status);
+
+        System.out.println("Task has been launched");
 
         try {
             assert listener != null;
@@ -82,6 +86,7 @@ public class Executor implements org.apache.mesos.Executor {
 
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
+        System.out.println("MESSAGE!!");
         LOGGER.info("Framework message: " + Arrays.toString(data));
 
         try {

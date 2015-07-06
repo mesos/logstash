@@ -43,6 +43,9 @@ public class ConfigMonitor {
 
     public ConfigMonitor(String configDir) {
         this.configDir = FileSystems.getDefault().getPath(configDir);
+
+        // Ensure directory exists
+        this.configDir.toFile().mkdirs();
     }
 
     private static String readStringFromFile(File f) {

@@ -30,7 +30,10 @@ public class Application {
     private static void runExecutor(LogstashConnector connector) {
         MesosExecutorDriver driver = new MesosExecutorDriver(new Executor(connector));
 
+        LOGGER.info("Running executor");
         Protos.Status status = driver.run();
+        LOGGER.info("Executor stopped");
+
         if (status.equals(Protos.Status.DRIVER_STOPPED)) {
             System.exit(0);
         } else {

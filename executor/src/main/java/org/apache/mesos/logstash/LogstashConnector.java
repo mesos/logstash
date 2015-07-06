@@ -8,6 +8,7 @@ import org.apache.mesos.logstash.frameworks.HostFramework;
 import org.apache.mesos.logstash.logging.LogfileStreaming;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,23 +43,26 @@ public class LogstashConnector implements LogConfigurationListener {
 
     @Override
     public void updatedDockerLogConfigurations(Stream<LogstashInfo> logstashInfos) {
+        Function<String, LogstashInfo> lookupConfig = createLookupHelper(logstashInfos);
 
-        Map<String, LogstashInfo> logstashInfoMap = logstashInfos.collect(Collectors.toMap(LogstashInfo::getName, x -> x));
+        // Create frameworks
         Stream<DockerFramework> frameworks = dockerInfo.getRunningContainers().stream()
-                .map(c -> createDockerFramework(logstashInfoMap, c));
+                .filter(c -> lookupConfig.apply(c) != null)
+                .map(c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c)));
 
         // Make sure all new containers are streaming their logs
-        frameworks.peek(fw -> this.logfileStreaming.setupContainerLogfileStreaming(fw));
+        Stream<DockerFramework> frameworks2 = frameworks.peek(fw -> this.logfileStreaming.setupContainerLogfileStreaming(fw));
 
-        String config = frameworks
+        // Generate configs
+        String config = frameworks2
                 .map(Framework::generateLogstashConfig)
                 .collect(Collectors.joining("\n"));
 
         logstashService.updateDockerConfig(config);
     }
 
-    private DockerFramework createDockerFramework(Map<String, LogstashInfo> logstashInfoMap, String containerId) {
-        return new DockerFramework(logstashInfoMap.get(dockerInfo.getImageNameOfContainer(containerId)),
-                new DockerFramework.ContainerId(containerId));
+    private Function<String, LogstashInfo> createLookupHelper(Stream<LogstashInfo> logstashInfos) {
+        Map<String, LogstashInfo> logstashInfoMap = logstashInfos.collect(Collectors.toMap(LogstashInfo::getName, x -> x));
+        return c -> logstashInfoMap.get(dockerInfo.getImageNameOfContainer(c));
     }
 }

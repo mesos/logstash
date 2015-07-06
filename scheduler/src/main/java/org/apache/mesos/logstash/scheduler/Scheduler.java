@@ -1,6 +1,5 @@
 package org.apache.mesos.logstash.scheduler;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.log4j.Logger;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
@@ -39,7 +38,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         this.masterURL = masterURL;
         this.executorImageName = executorImageName;
         this.driver = buildSchedulerDriver();
-
+        this.executors = new HashMap<>();
 
         ConfigMonitor dockerMonitor = new ConfigMonitor("config/docker");
         dockerMonitor.start(this::newDockerConfigAvailable);
@@ -57,18 +56,26 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     }
 
     private void newDockerConfigAvailable(Map<String, String> config) {
+        LOGGER.info("New docker config!");
         this.dockerConfigurations = config;
         broadcastConfig(dockerConfigurations, hostConfigurations);
     }
 
     private void newHostConfigAvailable(Map<String, String> config) {
+        LOGGER.info("New host config!");
         this.hostConfigurations = config;
         broadcastConfig(dockerConfigurations, hostConfigurations);
     }
 
     private void broadcastConfig(Map<String, String> dockerConfigurations, Map<String, String> hostConfigurations) {
+        if(dockerConfigurations == null || hostConfigurations == null) {
+            LOGGER.info("Skipping broadcast, haven't read all configs yet");
+            return;
+        }
+        LOGGER.info("Broadcasting configuration change");
         byte[] message = configMapToByteArray(dockerConfigurations, hostConfigurations);
         for(Map.Entry<Protos.SlaveID, Protos.ExecutorID> entry : executors.entrySet()) {
+            LOGGER.info("Message sent to " + entry.getKey());
             driver.sendFrameworkMessage(entry.getValue(), entry.getKey(), message);
         }
     }
@@ -133,8 +140,10 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
                 String id = taskId(offer);
                 Protos.TaskInfo taskInfo = buildTask(schedulerDriver, offer, id);
 
-                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
+                LOGGER.info("Launching task..");
                 tasks.add(new Task(offer.getHostname(), id));
+                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
+                LOGGER.info("Task launched.");
             } else {
                 LOGGER.info("Offer declined");
                 schedulerDriver.declineOffer(offer.getId());
@@ -153,7 +162,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         LOGGER.info("Task status update! " + taskStatus.toString());
 
         if(taskStatus.getState() == Protos.TaskState.TASK_RUNNING) {
-            System.out.println("Slave " + taskStatus.getSlaveId() + ", executor " + taskStatus.getExecutorId());
+            LOGGER.info("Slave " + taskStatus.getSlaveId() + ", executor " + taskStatus.getExecutorId());
             executors.put(taskStatus.getSlaveId(), taskStatus.getExecutorId());
 
             // Tell the new instance of our configuration
@@ -185,7 +194,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
 
     @Override
     public void error(SchedulerDriver schedulerDriver, String s) {
-        LOGGER.error("It broke.");
+        LOGGER.error("It broke. " + s);
     }
 
     private String taskId(Protos.Offer offer) {
@@ -203,7 +212,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
                 .addAllResources(offer.getResourcesList());
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
-                .setForcePullImage(true)
+                .setForcePullImage(false)
                 .setImage(executorImageName.replace("docker.io/", ""));
 
 

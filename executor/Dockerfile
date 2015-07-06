@@ -17,6 +17,5 @@ ADD ./build/docker/logstash-executor-dependencies.jar /tmp/logstash-executor-dep
 ADD ./build/docker/logstash-executor.jar /tmp/logstash-executor.jar
 
 ADD ./build/resources/main/run_logstash.sh /tmp/run_logstash.sh
-ADD ./build/resources/main/conf.ftl /tmp/conf.ftl
 
 ENTRYPOINT ["java", "-Djava.library.path=/usr/local/lib","-jar", "/tmp/logstash-executor.jar"]
