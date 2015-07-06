@@ -37,7 +37,9 @@ public class LogstashConnector implements LogConfigurationListener {
                 .map(Framework::generateLogstashConfig)
                 .collect(Collectors.joining("\n"));
 
-        logstashService.updateStaticConfig(config);
+        // Dummy input to keep logstash alive in case there is no config available
+        final String DUMMY_INPUT = "\ninput { file { path => '/dev/null' } }\n";
+        logstashService.updateStaticConfig(config + DUMMY_INPUT);
     }
 
 

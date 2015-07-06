@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
@@ -21,9 +22,8 @@ public class LogstashService {
             LOGGER.info("Static framework configuration did not change");
         } else {
             this.staticConfig = staticConfig;
-            writeStaticConfig();
+            assertStarted();
         }
-        assertStarted();
     }
 
     public void updateDockerConfig(String config) {
@@ -31,27 +31,25 @@ public class LogstashService {
             LOGGER.info("Docker framework configuration did not change");
         } else {
             this.dockerConfig = config;
-            writeDockerConfig();
+            assertStarted();
         }
-        assertStarted();
     }
 
-    // TODO should be empty string by default
-    private String staticConfig = "output { file { path => \"/tmp/logstash-test.log\" }}";
-    private String dockerConfig = "";
+    private String staticConfig;
+    private String dockerConfig;
 
     private void assertStarted() {
-        if(!hasStarted()) {
-            LOGGER.info("Starting logstash...");
-            try {
-                writeDockerConfig();
-                writeStaticConfig();
-                this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
-            } catch (IOException e) {
-                LOGGER.error("Something went horribly, horribly wrong:", e);
-            }
-        } else {
-            LOGGER.info("Logstash already started...");
+        if(this.dockerConfig == null || this.staticConfig == null) {
+            LOGGER.warn("Logstash config files haven't been set up yet. Can't start logstash");
+            return;
+        }
+        LOGGER.info("(Re)starting logstash...");
+        try {
+            writeDockerConfig();
+            writeStaticConfig();
+            this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
+        } catch (IOException e) {
+            LOGGER.error("Something went horribly, horribly wrong:", e);
         }
     }
 
@@ -64,7 +62,13 @@ public class LogstashService {
     }
 
     private void writeConfig(String fileName, String content) {
-        String fullFileName = Paths.get("/tmp", fileName).toString();
+        assert fileName.indexOf("/") == -1;// should just be the filename, no path
+
+        // Ensure config dir exists
+        Paths.get("/tmp", "logstash").toFile().mkdirs();
+
+        // Write the config
+        String fullFileName = Paths.get("/tmp", "logstash", fileName).toString();
         try {
             PrintWriter printWriter = new PrintWriter(fullFileName, "UTF-8");
             printWriter.write(content);
@@ -75,9 +79,4 @@ public class LogstashService {
             LOGGER.error(String.format("Error creating %s", fullFileName), e);
         }
     }
-
-    private boolean hasStarted() {
-        return this.logstashProcess != null;
-    }
-
 }
