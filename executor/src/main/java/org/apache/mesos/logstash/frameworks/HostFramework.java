@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.frameworks;
 
 import org.apache.mesos.logstash.LogstashInfo;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,13 +16,11 @@ public class HostFramework extends Framework {
 
     @Override
     public String generateLogstashConfig() {
-        // TODO implement me
-        return null;
+        return this.getConfiguration();
     }
 
     @Override
     protected List<String> parseLogLocations(String configuration) {
-        // TODO implement me
-        return null;
+        return Collections.singletonList("TODO");
     }
 }

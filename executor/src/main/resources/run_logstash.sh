@@ -33,5 +33,5 @@ do
     LOGSTASH_PID=$!
     echo "PID $LOGSTASH_PID"
   fi
-  sleep 1
+  sleep 3
 done

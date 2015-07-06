@@ -21,9 +21,9 @@ public class LogstashService {
             LOGGER.info("Static framework configuration did not change");
         } else {
             this.staticConfig = staticConfig;
-            writeConfig("logstash-static.conf", this.staticConfig);
-            assertStarted();
+            writeStaticConfig();
         }
+        assertStarted();
     }
 
     public void updateDockerConfig(String config) {
@@ -31,19 +31,21 @@ public class LogstashService {
             LOGGER.info("Docker framework configuration did not change");
         } else {
             this.dockerConfig = config;
-            writeConfig("logstash-docker.conf", this.dockerConfig);
+            writeDockerConfig();
         }
         assertStarted();
     }
 
     // TODO should be empty string by default
     private String staticConfig = "output { file { path => \"/tmp/logstash-test.log\" }}";
-    private String dockerConfig;
+    private String dockerConfig = "";
 
     private void assertStarted() {
         if(!hasStarted()) {
             LOGGER.info("Starting logstash...");
             try {
+                writeDockerConfig();
+                writeStaticConfig();
                 this.logstashProcess = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
             } catch (IOException e) {
                 LOGGER.error("Something went horribly, horribly wrong:", e);
@@ -51,6 +53,14 @@ public class LogstashService {
         } else {
             LOGGER.info("Logstash already started...");
         }
+    }
+
+    private void writeStaticConfig() {
+        writeConfig("logstash-static.conf", this.staticConfig);
+    }
+
+    private void writeDockerConfig() {
+        writeConfig("logstash-docker.conf", this.dockerConfig);
     }
 
     private void writeConfig(String fileName, String content) {
