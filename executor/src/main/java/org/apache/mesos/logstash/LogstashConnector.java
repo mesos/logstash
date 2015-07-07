@@ -25,26 +25,20 @@ public class LogstashConnector implements LogConfigurationListener {
 
     private LogfileStreaming logfileStreaming;
 
+    private List<LogstashInfo> cachedDockerInfos;
+
     public LogstashConnector(DockerInfo dockerInfo, LogstashService logstashService, LogfileStreaming logfileStreaming) {
         this.dockerInfo = dockerInfo;
         this.logstashService = logstashService;
         this.logfileStreaming = logfileStreaming;
+        this.dockerInfo.setContainerDiscoveryConsumer(_images -> {
+            LOGGER.info("New containers discovered. Reconfiguring");
+            System.out.println("New containers discovered. Reconfiguring");
+            reconfigureDockerLogs(cachedDockerInfos.stream());
+        });
     }
 
-    @Override
-    public void updatedHostLogConfigurations(Stream<LogstashInfo> logstashInfos) {
-        String config = logstashInfos.map(lif -> new HostFramework(lif))
-                .map(Framework::generateLogstashConfig)
-                .collect(Collectors.joining("\n"));
-
-        // Dummy input to keep logstash alive in case there is no config available
-        final String DUMMY_INPUT = "\ninput { file { path => '/dev/null' } }\n";
-        logstashService.updateStaticConfig(config + DUMMY_INPUT);
-    }
-
-
-    @Override
-    public void updatedDockerLogConfigurations(Stream<LogstashInfo> logstashInfos) {
+    private void reconfigureDockerLogs(Stream<LogstashInfo> logstashInfos) {
         Function<String, LogstashInfo> lookupConfig = createLookupHelper(logstashInfos);
 
         // Create frameworks
@@ -61,6 +55,27 @@ public class LogstashConnector implements LogConfigurationListener {
                 .collect(Collectors.joining("\n"));
 
         logstashService.updateDockerConfig(config);
+    }
+
+    @Override
+    public void updatedHostLogConfigurations(Stream<LogstashInfo> logstashInfos) {
+        String config = logstashInfos.map(lif -> new HostFramework(lif))
+                .map(Framework::generateLogstashConfig)
+                .collect(Collectors.joining("\n"));
+
+        // Dummy input to keep logstash alive in case there is no config available
+        final String DUMMY_INPUT = "\ninput { file { path => '/dev/null' } }\n";
+        logstashService.updateStaticConfig(config + DUMMY_INPUT);
+    }
+
+
+    @Override
+    public void updatedDockerLogConfigurations(Stream<LogstashInfo> logstashInfos) {
+
+        // Make a local copy so that we can immediately reconfigure if we discover new containers!
+        cachedDockerInfos = logstashInfos.collect(Collectors.toList());
+
+        reconfigureDockerLogs(cachedDockerInfos.stream());
     }
 
     private Function<String, LogstashInfo> createLookupHelper(Stream<LogstashInfo> logstashInfos) {

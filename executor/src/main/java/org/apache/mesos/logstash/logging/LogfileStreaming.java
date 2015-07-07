@@ -29,6 +29,9 @@ public class LogfileStreaming {
             LOGGER.info("Ignoring framework " + framework.getName() + " because it has already been configured");
             return;
         }
+        LOGGER.info("Setting up log streaming for " + framework.getName());
+        System.out.println("Setting up log streaming for " + framework.getName());
+
         ArrayList<String> localPaths = new ArrayList<>();
 
         for(String logLocation : framework.getLogLocations()) {
@@ -57,7 +60,7 @@ public class LogfileStreaming {
     }
 
     private com.spotify.docker.client.LogStream createContainerLogStream(String containerId, String logLocation) {
-        final String MONITOR_CMD = String.format("while sleep 3; do echo '%c HEARTBEAT'; done & tail -f %s", LogDispatcher.MAGIC_CHARACTER, logLocation);
+        final String MONITOR_CMD = String.format("touch %s; while sleep 3; do echo '%c HEARTBEAT'; done & tail -f %s", logLocation, LogDispatcher.MAGIC_CHARACTER, logLocation);
 
         LOGGER.info("Running command " + MONITOR_CMD);
         return dockerInfo.execInContainer(containerId, "bash", "-c", MONITOR_CMD);

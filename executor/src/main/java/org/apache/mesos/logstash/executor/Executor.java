@@ -87,7 +87,7 @@ public class Executor implements org.apache.mesos.Executor {
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
         System.out.println("MESSAGE!!");
-        LOGGER.info("Framework message: " + Arrays.toString(data));
+        //LOGGER.info("Framework message: " + Arrays.toString(data));
 
         try {
             SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);

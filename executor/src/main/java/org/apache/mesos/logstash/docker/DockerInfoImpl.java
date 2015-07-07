@@ -51,9 +51,16 @@ public class DockerInfoImpl implements DockerInfo {
     }
 
     private void notifyFrameworkListener() {
+        List<String> imageNames = getContainerImageNames();
+
+        for(String name : imageNames) {
+            System.out.println("Found container running image: " + name);
+            LOGGER.info("Found container running image: " + name);
+        }
+
         LOGGER.info("Notifying about running containers");
         if(this.frameworkDiscoveryListener != null) {
-            this.frameworkDiscoveryListener.accept(getContainerImageNames());
+            this.frameworkDiscoveryListener.accept(imageNames);
         } else {
             LOGGER.warn("No listener set!");
         }
