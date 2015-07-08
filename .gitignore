@@ -18,3 +18,4 @@ local/build.gradle
 .idea
 
 /local.properties
+system-test/.registry

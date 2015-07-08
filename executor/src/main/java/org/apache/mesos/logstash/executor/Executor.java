@@ -55,6 +55,7 @@ public class Executor implements org.apache.mesos.Executor {
 
         System.out.println("Task has been launched");
 
+        // TODO clean up and make the purpose clear
         try {
             assert listener != null;
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {

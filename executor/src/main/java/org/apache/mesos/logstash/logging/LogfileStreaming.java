@@ -60,7 +60,7 @@ public class LogfileStreaming {
     }
 
     private com.spotify.docker.client.LogStream createContainerLogStream(String containerId, String logLocation) {
-        final String MONITOR_CMD = String.format("touch %s; while sleep 3; do echo '%c HEARTBEAT'; done & tail -f %s", logLocation, LogDispatcher.MAGIC_CHARACTER, logLocation);
+        final String MONITOR_CMD = String.format("touch %s; while sleep 3; do echo '%c HEARTBEAT'; done & tail -F %s", logLocation, LogDispatcher.MAGIC_CHARACTER, logLocation);
 
         LOGGER.info("Running command " + MONITOR_CMD);
         return dockerInfo.execInContainer(containerId, "bash", "-c", MONITOR_CMD);

@@ -223,6 +223,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
                 .setFrameworkId(frameworkId)
                 .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecutor.build()))
                 .setName("" + UUID.randomUUID())
+                // TODO verify that this command is actually the one being used (as opposed to the one specified in the docker file)
                 .setCommand(Protos.CommandInfo.newBuilder()
                         .addArguments("java")
                         .addArguments("-Djava.library.path=/usr/local/lib")

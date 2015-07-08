@@ -47,7 +47,7 @@ public class LogstashConnector implements LogConfigurationListener {
                 .map(c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c)));
 
         // Make sure all new containers are streaming their logs
-        Stream<DockerFramework> frameworks2 = frameworks.peek(fw -> this.logfileStreaming.setupContainerLogfileStreaming(fw));
+        Stream<DockerFramework> frameworks2 = frameworks.peek(this.logfileStreaming::setupContainerLogfileStreaming);
 
         // Generate configs
         String config = frameworks2
