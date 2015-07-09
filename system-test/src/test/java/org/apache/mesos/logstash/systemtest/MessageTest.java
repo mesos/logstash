@@ -8,6 +8,10 @@ import org.apache.mesos.mini.state.State;
 import org.junit.*;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+
+import static com.jayway.awaitility.Awaitility.await;
 
 /**
  * Created by peldan on 07/07/15.
@@ -41,12 +45,19 @@ public class MessageTest {
 
     @Test
     public void schedulerStarts() throws Exception {
-        // TODO await startup
+        cluster.waitForState(new Predicate<State>() {
+            @Override
+            public boolean test(State state) {
+                return state.getFramework("logstash") != null;
+            }
+        });
 
         State state = cluster.getStateInfo();
         Framework logstash = state.getFramework("logstash");
 
         Assert.assertNotNull(logstash);
+
+
     }
 
     @Test
