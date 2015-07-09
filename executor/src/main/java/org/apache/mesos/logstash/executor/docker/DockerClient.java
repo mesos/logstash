@@ -1,33 +1,27 @@
-package org.apache.mesos.logstash.docker;
+package org.apache.mesos.logstash.executor.docker;
 
-import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.DockerException;
-import com.spotify.docker.client.LogStream;
-import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.Container;
-import com.spotify.docker.client.messages.ContainerCreation;
 import org.apache.log4j.Logger;
-
+import org.apache.mesos.logstash.executor.logging.LogStream;
 
 import java.util.*;
 import java.util.function.Consumer;
 
-/**
- * Created by ero on 22/06/15.
- */
-public class DockerInfoImpl implements DockerInfo {
+
+public class DockerClient implements ContainerizerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
-    private final Logger LOGGER = Logger.getLogger(DockerInfoImpl.class.toString());
+    private final Logger LOGGER = Logger.getLogger(DockerClient.class.toString());
 
-    private final DockerClient dockerClient;
+    private final com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
 
-    public void setContainerDiscoveryConsumer(Consumer<List<String> > consumer) {
+    public void setDelegate(Consumer<List<String>> consumer) {
         this.frameworkDiscoveryListener = consumer;
     }
 
-    public DockerInfoImpl(DockerClient dockerClient) {
+    public DockerClient(com.spotify.docker.client.DockerClient dockerClient) {
         this.dockerClient = dockerClient;
 
         updateContainerState();
@@ -53,13 +47,12 @@ public class DockerInfoImpl implements DockerInfo {
     private void notifyFrameworkListener() {
         List<String> imageNames = getContainerImageNames();
 
-        for(String name : imageNames) {
-            System.out.println("Found container running image: " + name);
+        for (String name : imageNames) {
             LOGGER.info("Found container running image: " + name);
         }
 
         LOGGER.info("Notifying about running containers");
-        if(this.frameworkDiscoveryListener != null) {
+        if (this.frameworkDiscoveryListener != null) {
             this.frameworkDiscoveryListener.accept(imageNames);
         } else {
             LOGGER.warn("No listener set!");
@@ -67,6 +60,8 @@ public class DockerInfoImpl implements DockerInfo {
     }
 
     private void startPoll(long pollInterval) {
+        // FIXME: We are never stopping this. Maybe consider making this class a service.
+
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -77,6 +72,9 @@ public class DockerInfoImpl implements DockerInfo {
     }
 
     private void updateContainerState() {
+
+        // TODO: Handle state properly.
+
         try {
             List<Container> latestRunningContainers = getContainers();
 
@@ -90,9 +88,7 @@ public class DockerInfoImpl implements DockerInfo {
 
                 notifyFrameworkListener();
             }
-        } catch (DockerException e) {
-            LOGGER.error(String.format("There was an error updating containers: %s", e));
-        } catch (InterruptedException e) {
+        } catch (DockerException | InterruptedException e) {
             LOGGER.error(String.format("There was an error updating containers: %s", e));
         }
     }
@@ -105,47 +101,18 @@ public class DockerInfoImpl implements DockerInfo {
         return containerIdsAndNames;
     }
 
-    public String startContainer(String imageId) {
-        ContainerConfig containerConfig = ContainerConfig.builder()
-                .image(imageId)
-                .build();
-        try {
+    public LogStream exec(String containerId, String... command) {
 
-            ContainerCreation containerCreation = dockerClient.createContainer(containerConfig);
-            dockerClient.startContainer(containerCreation.id());
-            return containerCreation.id();
-
-        } catch (DockerException e) {
-            LOGGER.error(String.format("Error starting container for image %s: %s", imageId, e));
-        } catch (InterruptedException e) {
-            LOGGER.error(String.format("Error starting container for image %s: %s", imageId, e));
-        }
-        return null;
-    }
-
-    public void stopContainer(String containerId) {
-        try {
-            dockerClient.stopContainer(containerId, 0);
-        } catch (DockerException e) {
-            LOGGER.error(String.format("Error stopping container %s: %s", containerId, e));
-        } catch (InterruptedException e) {
-            LOGGER.error(String.format("Error stopping container %s: %s", containerId, e));
-        }
-    }
-
-    public LogStream execInContainer(String containerId, String... command) {
+        // TODO: Handle error properly.
 
         try {
-            String id = dockerClient.execCreate(containerId, command, DockerClient.ExecParameter.STDOUT,
-                    DockerClient.ExecParameter.STDERR);
-            LogStream logStream = dockerClient.execStart(id);
-            return logStream;
+            String id = dockerClient.execCreate(containerId, command, com.spotify.docker.client.DockerClient.ExecParameter.STDOUT, com.spotify.docker.client.DockerClient.ExecParameter.STDERR);
+            return new DockerLogStream(dockerClient.execStart(id));
 
-        } catch (DockerException e) {
+        } catch (DockerException | InterruptedException e) {
             LOGGER.error(String.format("Error executing in container %s: %s", containerId, e));
-        } catch (InterruptedException e) {
-            LOGGER.error(String.format("Error executing container %s: %s", containerId, e));
         }
+
         return null;
     }
 }

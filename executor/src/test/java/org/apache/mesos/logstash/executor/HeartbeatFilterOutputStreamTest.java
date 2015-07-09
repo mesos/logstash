@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
-import org.apache.mesos.logstash.logging.HeartbeatFilterOutputStream;
-import org.apache.mesos.logstash.logging.LogDispatcher;
+import org.apache.mesos.logstash.executor.logging.Constansts;
+import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -11,8 +11,8 @@ import java.io.ByteArrayOutputStream;
 import static org.junit.Assert.*;
 
 public class HeartbeatFilterOutputStreamTest {
-    final String TEST_STRING = String.format("Hello\n%c Ignore me\nWorld!", LogDispatcher.MAGIC_CHARACTER);
 
+    final String TEST_STRING = String.format("Hello\n%c Ignore me\nWorld!", Constansts.MAGIC_CHARACTER);
 
     ByteArrayOutputStream baos;
     HeartbeatFilterOutputStream target;
@@ -30,7 +30,7 @@ public class HeartbeatFilterOutputStreamTest {
 
     @Test
     public void magicCharacterIsOneByteUTF8() throws Exception {
-        final String singleByteString = LogDispatcher.MAGIC_CHARACTER + "";
+        final String singleByteString = Constansts.MAGIC_CHARACTER + "";
         assertEquals(1, singleByteString.getBytes("UTF-8").length);
     }
 
@@ -52,7 +52,7 @@ public class HeartbeatFilterOutputStreamTest {
     public void ignoresMagicCharacterWhenInvokingMultipleTimes() throws Exception {
 
         target.write('a');
-        target.write(LogDispatcher.MAGIC_CHARACTER);
+        target.write(Constansts.MAGIC_CHARACTER);
         target.write('a');
         target.write('a');
         target.write('\n');

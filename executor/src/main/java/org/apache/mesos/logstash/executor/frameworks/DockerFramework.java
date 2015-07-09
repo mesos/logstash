@@ -1,6 +1,4 @@
-package org.apache.mesos.logstash.frameworks;
-
-import org.apache.mesos.logstash.LogstashInfo;
+package org.apache.mesos.logstash.executor.frameworks;
 
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -8,19 +6,17 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by ero on 22/06/15.
- */
-public class DockerFramework extends Framework {
+public class DockerFramework implements Framework {
 
     private final ContainerId containerId;
+    private final FrameworkInfo frameworkInfo;
     private List<String> logLocations;
 
+    public DockerFramework(FrameworkInfo frameworkInfo, ContainerId containerId) {
+        this.frameworkInfo = frameworkInfo;
 
-    public DockerFramework(LogstashInfo logstashInfo, ContainerId containerId) {
-        super(logstashInfo.getName(), logstashInfo.getConfiguration());
         this.containerId = containerId;
-        this.logLocations = parseLogLocations(logstashInfo.getConfiguration());
+        this.logLocations = parseLogLocations(frameworkInfo.getConfiguration());
     }
 
     public String getContainerId() {
@@ -29,14 +25,13 @@ public class DockerFramework extends Framework {
 
     /**
      * Produces a valid logstash configuration from a (very similar looking) Framework configuration
-     * @return
      */
     @Override
-    public String generateLogstashConfig() {
-        String generatedConfiguration = configuration;
+    public String getConfiguration() {
+        String generatedConfiguration = frameworkInfo.getConfiguration();
 
         // Replace all log paths with paths to temporary files
-        for(String logLocation : logLocations) {
+        for (String logLocation : logLocations) {
             String localLocation = getLocalLogLocation(logLocation);
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
@@ -46,17 +41,17 @@ public class DockerFramework extends Framework {
     }
 
     public String getLocalLogLocation(String logLocation) {
-        String sanitizedFrameworkName = sanitize(name);
+        String sanitizedFrameworkName = sanitize(frameworkInfo.getName());
         return Paths.get("/tmp", containerId.id, sanitizedFrameworkName, logLocation).toString();
     }
 
-    protected List<String> parseLogLocations(String configuration) {
+    private List<String> parseLogLocations(String configuration) {
         List<String> locations = new ArrayList<>();
-        Pattern pattern = Pattern.compile("docker-path\\s*=>\\s*\"([^}   ]+)\"");
+        Pattern pattern = Pattern.compile("docker-path\\s*=>\\s*\"([^}\\s]+)\"");
 
         Matcher matcher = pattern.matcher(configuration);
 
-        while(matcher.find()) {
+        while (matcher.find()) {
             locations.add(matcher.group(1));
         }
 
@@ -77,5 +72,9 @@ public class DockerFramework extends Framework {
 
     public List<String> getLogLocations() {
         return logLocations;
+    }
+
+    public String getName() {
+        return frameworkInfo.getName();
     }
 }

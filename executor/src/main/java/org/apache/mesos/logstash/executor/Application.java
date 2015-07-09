@@ -1,38 +1,35 @@
 package org.apache.mesos.logstash.executor;
 
 import com.spotify.docker.client.DefaultDockerClient;
-import com.spotify.docker.client.DockerClient;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.LogstashConnector;
-import org.apache.mesos.logstash.LogstashService;
-import org.apache.mesos.logstash.docker.DockerInfoImpl;
-import org.apache.mesos.logstash.logging.LogfileStreaming;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
+import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
+import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 
+import java.net.*;
 import java.util.Enumeration;
 import java.util.logging.Logger;
-import java.net.*;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 
-/**
- * Created by ero on 03/07/15.
- */
-public class Application {
-    static final Logger LOGGER = Logger.getLogger(Application.class.toString());
+public class Application implements Runnable {
+
+    private static final Logger LOGGER = Logger.getLogger(Application.class.toString());
 
     public static void main(String[] args) {
-        LOGGER.info("Application running!");
-
-        runExecutor(createLogstashConnector());
+        new Application().run();
     }
 
-    private static void runExecutor(LogstashConnector connector) {
-        MesosExecutorDriver driver = new MesosExecutorDriver(new Executor(connector));
+    public void run() {
+        ConfigManager controller = createController();
+        LogstashExecutor executor = new LogstashExecutor(controller);
 
-        LOGGER.info("Running executor");
+        MesosExecutorDriver driver = new MesosExecutorDriver(executor);
+
+        LOGGER.info("Mesos Logstash Executor Started");
         Protos.Status status = driver.run();
-        LOGGER.info("Executor stopped");
+        LOGGER.info("Mesos Logstash Executor Stopped");
 
         if (status.equals(Protos.Status.DRIVER_STOPPED)) {
             System.exit(0);
@@ -41,23 +38,23 @@ public class Application {
         }
     }
 
-
-    private static LogstashConnector createLogstashConnector() {
+    private ConfigManager createController() {
         DockerClient dockerClient = createDockerClient();
-        DockerInfoImpl dockerInfo = new DockerInfoImpl(dockerClient);
-        LogstashService service = new LogstashService();
-        LogfileStreaming streaming = new LogfileStreaming(dockerInfo);
-        return new LogstashConnector(dockerInfo, service, streaming);
+
+        LogstashService logstashService = new LogstashService();
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(dockerClient, new FileLogSteamWriter());
+
+        return new ConfigManager(dockerClient, logstashService, streamManager);
     }
 
-    private static com.spotify.docker.client.DockerClient createDockerClient() {
-        return DefaultDockerClient.builder()
+    private DockerClient createDockerClient() {
+        return new DockerClient(DefaultDockerClient.builder()
                 .readTimeoutMillis(HOURS.toMillis(1))
                 .uri(URI.create(getHostAddress()))
-                .build();
+                .build());
     }
 
-    private static String getHostAddress() {
+    private String getHostAddress() {
         String hostAddress = null;
         try {
             Enumeration<InetAddress> inetAddresses = NetworkInterface.getByName("eth0").getInetAddresses();
