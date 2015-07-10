@@ -14,6 +14,7 @@ public class FileLogSteamWriter implements LogStreamWriter {
 
     private static final Logger LOGGER = Logger.getLogger(FileLogSteamWriter.class);
 
+    @Override
     public void write(String name, LogStream logStream) throws IOException {
 
         Path path = Paths.get(name);
@@ -31,9 +32,8 @@ public class FileLogSteamWriter implements LogStreamWriter {
 
             try {
                 FileOutputStream outputStream = new FileOutputStream(path.toFile(), true);
-                FilterOutputStream filtered = new HeartbeatFilterOutputStream(outputStream);
                 // FIXME: How should we handle stderr?
-                logStream.attach(filtered, new ByteArrayOutputStream());
+                logStream.attach(outputStream, new ByteArrayOutputStream());
             } catch (IOException e) {
                 LOGGER.error("Error writing to file", e);
             }

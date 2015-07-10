@@ -15,8 +15,8 @@ public class FrameworkTest {
 
         //Framework target = new DockerFramework(frameworkName, configuration);
 
-        //assertEquals("/var/log/nginx/logs.log", target.getLogLocations().get(0));
-        //assertEquals("/var/log/mysql/logs.log", target.getLogLocations().get(1));
+        //assertEquals("/var/log/nginx/logs.log", target.getLogFiles().get(0));
+        //assertEquals("/var/log/mysql/logs.log", target.getLogFiles().get(1));
     }
 
     @Test

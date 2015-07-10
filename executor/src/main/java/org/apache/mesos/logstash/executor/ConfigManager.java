@@ -11,6 +11,7 @@ import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -18,53 +19,72 @@ import static org.apache.mesos.logstash.executor.LogType.DOCKER;
 import static org.apache.mesos.logstash.executor.LogType.HOST;
 
 /**
- * Class responsible for connecting each discovered framework to manager
+ * Class responsible for connecting each discovered framework to logstash
  */
 public class ConfigManager implements ConfigEventListener {
 
     public static final Logger LOGGER = Logger.getLogger(ConfigManager.class.toString());
 
-    private LogstashManager manager;
+    private LogstashManager logstash;
     private ContainerizerClient containerizerClient;
     private DockerLogSteamManager dockerLogSteamManager;
     private List<FrameworkInfo> cachedDockerInfos;
 
-    public ConfigManager(ContainerizerClient containerizerClient, LogstashManager manager, DockerLogSteamManager dockerLogSteamManager) {
+    public ConfigManager(ContainerizerClient containerizerClient, LogstashManager logstash, DockerLogSteamManager dockerLogSteamManager) {
         this.containerizerClient = containerizerClient;
-        this.manager = manager;
+        this.logstash = logstash;
         this.dockerLogSteamManager = dockerLogSteamManager;
-        this.containerizerClient.setDelegate(_images -> {
-            LOGGER.info("New containers discovered. Reconfiguring.");
-            reconfigureDockerLogs(cachedDockerInfos.stream());
-        });
-    }
-
-    private void reconfigureDockerLogs(Stream<FrameworkInfo> logstashInfos) {
-        Function<String, FrameworkInfo> lookupConfig = createLookupHelper(logstashInfos);
-
-        // Create frameworks
-        Stream<DockerFramework> frameworks = containerizerClient.getRunningContainers().stream()
-                .filter(c -> lookupConfig.apply(c) != null)
-                .map(c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c)));
-
-        // Make sure all new containers are streaming their logs
-        Stream<DockerFramework> frameworks2 = frameworks.peek(dockerLogSteamManager::setupContainerLogfileStreaming);
-
-        // Generate configs
-        String config = frameworks2
-                .map(Framework::getConfiguration)
-                .collect(Collectors.joining("\n"));
-
-        manager.updateConfig(DOCKER, config);
+        this.containerizerClient.setDelegate(this::onContainerListUpdated);
     }
 
     @Override
     public void onConfigUpdated(LogType type, Stream<FrameworkInfo> info) {
+        LOGGER.info("New config received. Reconfiguring.");
         switch(type) {
             case HOST: updateHost(info); break;
             case DOCKER: updateDocker(info); break;
         }
     }
+
+    private void onContainerListUpdated(List<String> images) {
+        LOGGER.info("New containers discovered. Reconfiguring.");
+        reconfigureDockerLogs(cachedDockerInfos.stream());
+    }
+
+    private void reconfigureDockerLogs(Stream<FrameworkInfo> logstashInfos) {
+
+        // On new configs received or new containers
+
+        // - Find running containers that have a matching config.
+
+        Function<String, FrameworkInfo> lookupConfig = createLookupHelper(logstashInfos);
+
+        Predicate<String> hasKnownConfig = c -> lookupConfig.apply(c) != null;
+        Function<String, DockerFramework> createFramework = c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c));
+
+        Stream<DockerFramework> frameworks = containerizerClient
+                .getRunningContainers()
+                .stream()
+                .filter(hasKnownConfig)
+                .map(createFramework);
+
+        // - For each new running container start streaming logs.
+
+        frameworks = frameworks.peek(dockerLogSteamManager::setupContainerLogfileStreaming);
+
+        // - TODO: For each changed config, stop streaming and reconfigure.
+
+        // - Compile new config (with all local versions of container logs) and place in config folder.
+
+        String config = frameworks
+                .map(Framework::getConfiguration)
+                .collect(Collectors.joining("\n"));
+
+        // - Restart the LogStash process.
+
+        logstash.updateConfig(DOCKER, config);
+    }
+
 
     private void updateHost(Stream<FrameworkInfo> logstashInfos) {
         String config = logstashInfos.map(HostFramework::new)
@@ -73,7 +93,7 @@ public class ConfigManager implements ConfigEventListener {
 
         // Dummy input to keep logstash alive in case there is no config available
         final String DUMMY_INPUT = "\ninput { file { path => '/dev/null' } }\n";
-        manager.updateConfig(HOST, config + DUMMY_INPUT);
+        logstash.updateConfig(HOST, config + DUMMY_INPUT);
     }
 
     private void updateDocker(Stream<FrameworkInfo> logstashInfos) {

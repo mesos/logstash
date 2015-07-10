@@ -1,10 +1,13 @@
 package org.apache.mesos.logstash.executor.frameworks;
 
+import org.apache.mesos.logstash.executor.docker.DockerLogPath;
+
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class DockerFramework implements Framework {
 
@@ -32,17 +35,12 @@ public class DockerFramework implements Framework {
 
         // Replace all log paths with paths to temporary files
         for (String logLocation : logLocations) {
-            String localLocation = getLocalLogLocation(logLocation);
+            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getName(), logLocation).getExecutorLogPath();
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
 
         // replace 'magic' string docker-path with normal path string
         return generatedConfiguration.replace("docker-path", "path");
-    }
-
-    public String getLocalLogLocation(String logLocation) {
-        String sanitizedFrameworkName = sanitize(frameworkInfo.getName());
-        return Paths.get("/tmp", containerId.id, sanitizedFrameworkName, logLocation).toString();
     }
 
     private List<String> parseLogLocations(String configuration) {
@@ -58,20 +56,17 @@ public class DockerFramework implements Framework {
         return locations;
     }
 
-    private String sanitize(String frameworkName) {
-        return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
-    }
-
     public static class ContainerId {
         String id;
-
         public ContainerId(String containerId) {
             this.id = containerId;
         }
     }
 
-    public List<String> getLogLocations() {
-        return logLocations;
+    public List<DockerLogPath> getLogFiles() {
+        return logLocations.stream()
+                .map((path) -> new DockerLogPath(this.containerId.id, this.getName(), path))
+                .collect(Collectors.toList());
     }
 
     public String getName() {

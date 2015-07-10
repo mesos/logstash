@@ -9,6 +9,10 @@
         </layout>
     </appender>
 
+    <logger name="org.apache.http.wire">
+        <level value="INFO" />
+    </logger>
+
     <root>
         <appender-ref ref="console"/>
     </root>

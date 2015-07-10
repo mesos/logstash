@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.executor.docker;
 
 
+import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 
 import java.io.IOException;
@@ -16,6 +17,7 @@ public class DockerLogStream implements LogStream {
 
     @Override
     public void attach(OutputStream stdout, OutputStream stderr) throws IOException {
-        innerLogStream.attach(stdout, stderr);
+        // Filter out heartbeats that keep the socket alive.
+        innerLogStream.attach(new HeartbeatFilterOutputStream(stdout), stderr);
     }
 }

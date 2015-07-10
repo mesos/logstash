@@ -4,6 +4,7 @@ import com.spotify.docker.client.DefaultDockerClient;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
+import org.apache.mesos.logstash.executor.docker.DockerStreamer;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 
@@ -42,7 +43,7 @@ public class Application implements Runnable {
         DockerClient dockerClient = createDockerClient();
 
         LogstashService logstashService = new LogstashService();
-        DockerLogSteamManager streamManager = new DockerLogSteamManager(dockerClient, new FileLogSteamWriter());
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(), dockerClient));
 
         return new ConfigManager(dockerClient, logstashService, streamManager);
     }

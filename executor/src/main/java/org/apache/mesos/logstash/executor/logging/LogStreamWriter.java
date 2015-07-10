@@ -1,7 +1,8 @@
 package org.apache.mesos.logstash.executor.logging;
 
-/**
- * Created by thb on 08/07/15.
- */
+import java.io.IOException;
+
+
 public interface LogStreamWriter {
+    void write(String name, LogStream logStream) throws IOException;
 }
