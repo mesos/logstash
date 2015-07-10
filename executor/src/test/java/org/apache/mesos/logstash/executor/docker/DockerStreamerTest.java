@@ -61,7 +61,6 @@ public class DockerStreamerTest {
     }
 
     @Test
-    @Ignore
     public void filesAreStreamedToTheExecutor() throws DockerException, InterruptedException {
 
 
