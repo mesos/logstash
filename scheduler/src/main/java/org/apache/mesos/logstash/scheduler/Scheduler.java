@@ -21,6 +21,8 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     private Clock clock = new Clock();
     private Set<Task> tasks = new HashSet<>();
 
+    private List<ExecutorMessageListener> executorMessageListeners = new ArrayList<>();
+
     private final String masterURL; // the URL of the mesos masterURL
     private final String executorImageName;
 
@@ -39,7 +41,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         this.masterURL = masterURL;
         this.executorImageName = executorImageName;
         this.driver = buildSchedulerDriver();
-        this.executors = new HashMap<>();
+        this.executors = Collections.synchronizedMap(new HashMap<>());
 
         ConfigMonitor dockerMonitor = new ConfigMonitor("config/docker");
         dockerMonitor.start(this::newDockerConfigAvailable);
@@ -188,6 +190,11 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         try {
             LogstashProtos.ExecutorMessage msg = LogstashProtos.ExecutorMessage.parseFrom(bytes);
 
+
+            for (ExecutorMessageListener executorMessageListener : executorMessageListeners) {
+                executorMessageListener.onNewMessageReceived(msg);
+            }
+
             LOGGER.info("Received message from executor: Type: " + msg.getType() + " Content: " + msg.getContent());
 
 
@@ -268,7 +275,18 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     }
 
     public void stop() {
+        this.removeAllExecutorMessageListeners();
         // FIXME: Is the driver thread safe?
         driver.stop();
+    }
+
+
+    public synchronized void addExecutorMessageListener(ExecutorMessageListener executorMessageListener) {
+        this.executorMessageListeners.add(executorMessageListener);
+    }
+
+    public void removeAllExecutorMessageListeners() {
+        this.executorMessageListeners.clear();
+
     }
 }
