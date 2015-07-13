@@ -59,8 +59,6 @@ public class ConfigMonitorTest {
         System.out.println("Awaiting notification");
         awaitNotification(monitor);
 
-        System.out.println("ASKING");
-
         // Verify
         assertEquals(1, config.size());
         assertEquals("foo", config.get("my-framework"));

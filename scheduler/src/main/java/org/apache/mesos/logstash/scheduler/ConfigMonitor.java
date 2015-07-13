@@ -130,7 +130,12 @@ public class ConfigMonitor {
                     WatchEvent<Path> ev = (WatchEvent<Path>)event;
                     Path filename = ev.context();
 
-                    String filenameString = filename.toString().replace(".conf", "");
+                    String filenameString = filename.toString();
+                    if(!filenameString.endsWith(".conf")) {
+                        continue;
+                    }
+                    filenameString = filenameString.replace(".conf", "");
+
 
                     if(kind == ENTRY_DELETE) {
                         configToNameMap.remove(filenameString);
