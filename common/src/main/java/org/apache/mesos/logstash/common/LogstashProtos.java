@@ -708,6 +708,20 @@ public final class LogstashProtos {
      */
     org.apache.mesos.logstash.common.LogstashProtos.LogstashConfigOrBuilder getHostConfigOrBuilder(
         int index);
+
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    boolean hasCommand();
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    java.lang.String getCommand();
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getCommandBytes();
   }
   /**
    * Protobuf type {@code org.apache.mesos.logstash.common.SchedulerMessage}
@@ -777,6 +791,12 @@ public final class LogstashProtos {
               hostConfig_.add(input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.PARSER, extensionRegistry));
               break;
             }
+            case 26: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000001;
+              command_ = bs;
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -822,6 +842,7 @@ public final class LogstashProtos {
       return PARSER;
     }
 
+    private int bitField0_;
     public static final int DOCKERCONFIG_FIELD_NUMBER = 1;
     private java.util.List<org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig> dockerConfig_;
     /**
@@ -892,9 +913,52 @@ public final class LogstashProtos {
       return hostConfig_.get(index);
     }
 
+    public static final int COMMAND_FIELD_NUMBER = 3;
+    private java.lang.Object command_;
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    public boolean hasCommand() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    public java.lang.String getCommand() {
+      java.lang.Object ref = command_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          command_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string command = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getCommandBytes() {
+      java.lang.Object ref = command_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        command_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       dockerConfig_ = java.util.Collections.emptyList();
       hostConfig_ = java.util.Collections.emptyList();
+      command_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -927,6 +991,9 @@ public final class LogstashProtos {
       for (int i = 0; i < hostConfig_.size(); i++) {
         output.writeMessage(2, hostConfig_.get(i));
       }
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(3, getCommandBytes());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -943,6 +1010,10 @@ public final class LogstashProtos {
       for (int i = 0; i < hostConfig_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, hostConfig_.get(i));
+      }
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, getCommandBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -1075,6 +1146,8 @@ public final class LogstashProtos {
         } else {
           hostConfigBuilder_.clear();
         }
+        command_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -1102,6 +1175,7 @@ public final class LogstashProtos {
       public org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage buildPartial() {
         org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage result = new org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage(this);
         int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         if (dockerConfigBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             dockerConfig_ = java.util.Collections.unmodifiableList(dockerConfig_);
@@ -1120,6 +1194,11 @@ public final class LogstashProtos {
         } else {
           result.hostConfig_ = hostConfigBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.command_ = command_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -1186,6 +1265,11 @@ public final class LogstashProtos {
               hostConfigBuilder_.addAllMessages(other.hostConfig_);
             }
           }
+        }
+        if (other.hasCommand()) {
+          bitField0_ |= 0x00000004;
+          command_ = other.command_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -1706,6 +1790,82 @@ public final class LogstashProtos {
         return hostConfigBuilder_;
       }
 
+      private java.lang.Object command_ = "";
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public boolean hasCommand() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public java.lang.String getCommand() {
+        java.lang.Object ref = command_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            command_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getCommandBytes() {
+        java.lang.Object ref = command_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          command_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public Builder setCommand(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        command_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public Builder clearCommand() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        command_ = getDefaultInstance().getCommand();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string command = 3;</code>
+       */
+      public Builder setCommandBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        command_ = value;
+        onChanged();
+        return this;
+      }
+
       // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.SchedulerMessage)
     }
 
@@ -1715,6 +1875,655 @@ public final class LogstashProtos {
     }
 
     // @@protoc_insertion_point(class_scope:org.apache.mesos.logstash.common.SchedulerMessage)
+  }
+
+  public interface ExecutorMessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.apache.mesos.logstash.common.ExecutorMessage)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>required string type = 1;</code>
+     */
+    boolean hasType();
+    /**
+     * <code>required string type = 1;</code>
+     */
+    java.lang.String getType();
+    /**
+     * <code>required string type = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getTypeBytes();
+
+    /**
+     * <code>required string content = 2;</code>
+     */
+    boolean hasContent();
+    /**
+     * <code>required string content = 2;</code>
+     */
+    java.lang.String getContent();
+    /**
+     * <code>required string content = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getContentBytes();
+  }
+  /**
+   * Protobuf type {@code org.apache.mesos.logstash.common.ExecutorMessage}
+   */
+  public static final class ExecutorMessage extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:org.apache.mesos.logstash.common.ExecutorMessage)
+      ExecutorMessageOrBuilder {
+    // Use ExecutorMessage.newBuilder() to construct.
+    private ExecutorMessage(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private ExecutorMessage(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final ExecutorMessage defaultInstance;
+    public static ExecutorMessage getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public ExecutorMessage getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private ExecutorMessage(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000001;
+              type_ = bs;
+              break;
+            }
+            case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              bitField0_ |= 0x00000002;
+              content_ = bs;
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.class, org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<ExecutorMessage> PARSER =
+        new com.google.protobuf.AbstractParser<ExecutorMessage>() {
+      public ExecutorMessage parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new ExecutorMessage(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<ExecutorMessage> getParserForType() {
+      return PARSER;
+    }
+
+    private int bitField0_;
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private java.lang.Object type_;
+    /**
+     * <code>required string type = 1;</code>
+     */
+    public boolean hasType() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>required string type = 1;</code>
+     */
+    public java.lang.String getType() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          type_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string type = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTypeBytes() {
+      java.lang.Object ref = type_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        type_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONTENT_FIELD_NUMBER = 2;
+    private java.lang.Object content_;
+    /**
+     * <code>required string content = 2;</code>
+     */
+    public boolean hasContent() {
+      return ((bitField0_ & 0x00000002) == 0x00000002);
+    }
+    /**
+     * <code>required string content = 2;</code>
+     */
+    public java.lang.String getContent() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          content_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>required string content = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getContentBytes() {
+      java.lang.Object ref = content_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        content_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private void initFields() {
+      type_ = "";
+      content_ = "";
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      if (!hasType()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      if (!hasContent()) {
+        memoizedIsInitialized = 0;
+        return false;
+      }
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(1, getTypeBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        output.writeBytes(2, getContentBytes());
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(1, getTypeBytes());
+      }
+      if (((bitField0_ & 0x00000002) == 0x00000002)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(2, getContentBytes());
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.apache.mesos.logstash.common.ExecutorMessage}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.apache.mesos.logstash.common.ExecutorMessage)
+        org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.class, org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.Builder.class);
+      }
+
+      // Construct using org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        type_ = "";
+        bitField0_ = (bitField0_ & ~0x00000001);
+        content_ = "";
+        bitField0_ = (bitField0_ & ~0x00000002);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor;
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage getDefaultInstanceForType() {
+        return org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.getDefaultInstance();
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage build() {
+        org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage buildPartial() {
+        org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage result = new org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage(this);
+        int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
+        if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.type_ = type_;
+        if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
+          to_bitField0_ |= 0x00000002;
+        }
+        result.content_ = content_;
+        result.bitField0_ = to_bitField0_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage) {
+          return mergeFrom((org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage other) {
+        if (other == org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.getDefaultInstance()) return this;
+        if (other.hasType()) {
+          bitField0_ |= 0x00000001;
+          type_ = other.type_;
+          onChanged();
+        }
+        if (other.hasContent()) {
+          bitField0_ |= 0x00000002;
+          content_ = other.content_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        if (!hasType()) {
+          
+          return false;
+        }
+        if (!hasContent()) {
+          
+          return false;
+        }
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private java.lang.Object type_ = "";
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public boolean hasType() {
+        return ((bitField0_ & 0x00000001) == 0x00000001);
+      }
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public java.lang.String getType() {
+        java.lang.Object ref = type_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            type_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTypeBytes() {
+        java.lang.Object ref = type_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          type_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public Builder setType(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public Builder clearType() {
+        bitField0_ = (bitField0_ & ~0x00000001);
+        type_ = getDefaultInstance().getType();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string type = 1;</code>
+       */
+      public Builder setTypeBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000001;
+        type_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object content_ = "";
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public boolean hasContent() {
+        return ((bitField0_ & 0x00000002) == 0x00000002);
+      }
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public java.lang.String getContent() {
+        java.lang.Object ref = content_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          if (bs.isValidUtf8()) {
+            content_ = s;
+          }
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getContentBytes() {
+        java.lang.Object ref = content_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          content_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public Builder setContent(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        content_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public Builder clearContent() {
+        bitField0_ = (bitField0_ & ~0x00000002);
+        content_ = getDefaultInstance().getContent();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>required string content = 2;</code>
+       */
+      public Builder setContentBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000002;
+        content_ = value;
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.ExecutorMessage)
+    }
+
+    static {
+      defaultInstance = new ExecutorMessage(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:org.apache.mesos.logstash.common.ExecutorMessage)
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
@@ -1727,6 +2536,11 @@ public final class LogstashProtos {
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_org_apache_mesos_logstash_common_SchedulerMessage_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -1739,12 +2553,14 @@ public final class LogstashProtos {
       "\n\035src/main/proto/logstash.proto\022 org.apa" +
       "che.mesos.logstash.common\"7\n\016LogstashCon" +
       "fig\022\025\n\rframeworkName\030\001 \002(\t\022\016\n\006config\030\002 \002" +
-      "(\t\"\240\001\n\020SchedulerMessage\022F\n\014dockerConfig\030" +
+      "(\t\"\261\001\n\020SchedulerMessage\022F\n\014dockerConfig\030" +
       "\001 \003(\01320.org.apache.mesos.logstash.common" +
       ".LogstashConfig\022D\n\nhostConfig\030\002 \003(\01320.or" +
       "g.apache.mesos.logstash.common.LogstashC" +
-      "onfigB2\n org.apache.mesos.logstash.commo" +
-      "nB\016LogstashProtos"
+      "onfig\022\017\n\007command\030\003 \001(\t\"0\n\017ExecutorMessag" +
+      "e\022\014\n\004type\030\001 \002(\t\022\017\n\007content\030\002 \002(\tB2\n org." +
+      "apache.mesos.logstash.commonB\016LogstashPr",
+      "otos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -1769,7 +2585,13 @@ public final class LogstashProtos {
     internal_static_org_apache_mesos_logstash_common_SchedulerMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_SchedulerMessage_descriptor,
-        new java.lang.String[] { "DockerConfig", "HostConfig", });
+        new java.lang.String[] { "DockerConfig", "HostConfig", "Command", });
+    internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor =
+      getDescriptor().getMessageTypes().get(2);
+    internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor,
+        new java.lang.String[] { "Type", "Content", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 
 import java.util.stream.Stream;
@@ -69,16 +70,33 @@ public class LogstashExecutor implements Executor {
         try {
             SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
 
+            if (schedulerMessage.hasCommand()){ // currently we assume that commands
+                handleCommand(driver,schedulerMessage);
+            }
+
             Stream<FrameworkInfo> dockerInfos = extractConfigs(schedulerMessage.getDockerConfigList().stream());
             listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
 
             Stream<FrameworkInfo> hostInfos = extractConfigs(schedulerMessage.getHostConfigList().stream());
             listener.onConfigUpdated(LogType.HOST, hostInfos);
 
-            LOGGER.info("Logstash configuration updated.");
+            if (schedulerMessage.getDockerConfigList().size() > 0 || schedulerMessage.getHostConfigList().size() > 0){
+                LOGGER.info("Logstash configuration updated.");
+            }
+
 
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler.", e);
+        }
+    }
+
+    private void handleCommand(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
+        LOGGER.info("Logstash received command: " + schedulerMessage.getCommand());
+        if (schedulerMessage.getCommand().equals("INTERNAL_STATUS")){
+            LogstashProtos.ExecutorMessage.Builder builder = LogstashProtos.ExecutorMessage.newBuilder();
+            builder.setType("INTERNAL_STATUS").setContent("FOOOOOOO");
+
+            driver.sendFrameworkMessage(builder.build().toByteArray());
         }
     }
 

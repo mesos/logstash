@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.scheduler;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.log4j.Logger;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
@@ -171,9 +172,28 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         }
     }
 
+    public void requestInternalStatus(){
+
+        byte[] message = LogstashProtos.SchedulerMessage.newBuilder().setCommand("INTERNAL_STATUS").build().toByteArray();
+
+        for(Map.Entry<Protos.SlaveID, Protos.ExecutorID > executor : executors.entrySet()){
+            driver.sendFrameworkMessage(executor.getValue(),executor.getKey(), message);
+        }
+    }
+
     @Override
     public void frameworkMessage(SchedulerDriver schedulerDriver, Protos.ExecutorID executorID, Protos.SlaveID slaveID, byte[] bytes) {
         LOGGER.info("Message received");
+
+        try {
+            LogstashProtos.ExecutorMessage msg = LogstashProtos.ExecutorMessage.parseFrom(bytes);
+
+            LOGGER.info("Received message from executor: Type: " + msg.getType() + " Content: " + msg.getContent());
+
+
+        } catch (InvalidProtocolBufferException e) {
+            e.printStackTrace();
+        }
     }
 
 

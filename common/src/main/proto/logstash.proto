@@ -11,5 +11,10 @@ message LogstashConfig {
 message SchedulerMessage {
   repeated LogstashConfig dockerConfig = 1;
   repeated LogstashConfig hostConfig = 2;
+  optional string command = 3;
 }
 
+message ExecutorMessage {
+  required string type = 1;
+  required string content = 2;
+}
