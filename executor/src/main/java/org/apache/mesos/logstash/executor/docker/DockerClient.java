@@ -81,6 +81,7 @@ public class DockerClient implements ContainerizerClient {
             Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(latestRunningContainers);
 
             if (!latestRunningContainerIdAndNames.keySet().equals(this.runningContainers.keySet())) {
+                LOGGER.info("Container list changed!");
 
                 this.runningContainers = latestRunningContainerIdAndNames;
 

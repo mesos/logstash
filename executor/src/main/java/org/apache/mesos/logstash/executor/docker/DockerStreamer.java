@@ -22,6 +22,8 @@ public class DockerStreamer {
     }
 
     public void startStreaming(DockerLogPath path) {
+        LOGGER.info("Stream from " + path.getContainerLogPath() + " to " + path.getExecutorLogPath());
+
         try {
             LogStream logStream = createContainerLogStream(path.getContainerId(), path.getContainerLogPath());
             writer.write(path.getExecutorLogPath(), logStream);

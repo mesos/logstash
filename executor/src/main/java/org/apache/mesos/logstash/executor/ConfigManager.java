@@ -91,9 +91,7 @@ public class ConfigManager implements ConfigEventListener {
                 .map(Framework::getConfiguration)
                 .collect(Collectors.joining("\n"));
 
-        // Dummy input to keep logstash alive in case there is no config available
-        final String DUMMY_INPUT = "\ninput { file { path => '/dev/null' } }\n";
-        logstash.updateConfig(HOST, config + DUMMY_INPUT);
+        logstash.updateConfig(HOST, config);
     }
 
     private void updateDocker(Stream<FrameworkInfo> logstashInfos) {
