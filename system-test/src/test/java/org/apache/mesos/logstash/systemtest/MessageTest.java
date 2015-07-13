@@ -42,7 +42,7 @@ public class MessageTest {
 
         DockerClient dockerClient = config.dockerClient;
 
-        // TODO move out into a Rule
+        // TODO move out into a Rule (should belong to mini-mesos)
         // Make our framework executor available inside the mesos cluster
         String[] dindImages = {"mesos/logstash-executor"};
         pushDindImagesToPrivateRegistry(dockerClient, dindImages, config);
@@ -56,17 +56,10 @@ public class MessageTest {
         t.start();
 
         // TODO move out into a Rule
-        // wait for our framework
-        cluster.waitForState(new Predicate<State>() {
-            @Override
-            public boolean test(State state) {
-                return state.getFramework("logstash") != null;
-            }
-        });
-
+        waitForLogstashFramework();
+        waitForExcutorTaskIsRunning();
 
     }
-
 
     @AfterClass
     public static void stopScheduler() {
@@ -80,10 +73,8 @@ public class MessageTest {
         assertEquals("logstash framework should run 1 task", 1, state.getFramework("logstash").getTasks().size());
         assertEquals("LOGSTASH_SERVER", state.getFramework("logstash").getTasks().get(0).getName());
         assertEquals("TASK_RUNNING", state.getFramework("logstash").getTasks().get(0).getState());
-
-
-
     }
+
 
     @Ignore
     @Test
@@ -99,6 +90,29 @@ public class MessageTest {
 
         scheduler.requestInternalStatus();
 
+    }
+
+
+    private static void waitForLogstashFramework() {
+        // wait for our framework
+        cluster.waitForState(new Predicate<State>() {
+            @Override
+            public boolean test(State state) {
+                return state.getFramework("logstash") != null;
+            }
+        });
+    }
+
+    private static void waitForExcutorTaskIsRunning() {
+        // wait for our executor
+        cluster.waitForState(new Predicate<State>() {
+            @Override
+            public boolean test(State state) {
+                return state.getFramework("logstash") != null
+                        && state.getFramework("logstash").getTasks().size() > 0
+                        && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState());
+            }
+        });
     }
 
 
