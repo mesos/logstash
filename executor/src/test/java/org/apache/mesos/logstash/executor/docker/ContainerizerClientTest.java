@@ -1,5 +1,6 @@
-package org.apache.mesos.logstash.executor;
+package org.apache.mesos.logstash.executor.docker;
 
+import com.google.common.collect.Lists;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.Container;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
@@ -12,6 +13,9 @@ import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -69,7 +73,8 @@ public class ContainerizerClientTest {
         //
         // Act
         //
-        ContainerizerClient target = new DockerClient(dockerClientStub);
+        DockerClient target = new DockerClient(dockerClientStub);
+        target.updateContainerState();
         Set<String> result = target.getRunningContainers();
 
         //
@@ -78,6 +83,8 @@ public class ContainerizerClientTest {
         assertTrue(result.contains(container1));
         assertTrue(result.contains(container2));
     }
+
+
 
     @Test
     public void testGetNotifiedAboutCurrentRunningContainers() {
@@ -89,59 +96,58 @@ public class ContainerizerClientTest {
         // Arrange
         //
         this.mockListCommand(containerIds);
-        //FrameworkDiscoveryListener frameworkDiscoveryListenerSpy = mock(FrameworkDiscoveryListener.class);
         ArgumentCaptor<List> containersCapture = ArgumentCaptor.forClass(List.class);
+        Consumer<List<String>> consumerMock = mock(Consumer.class);
+
+
 
         //
         // Act
         //
-        ContainerizerClient target = new DockerClient(dockerClientStub);
+        DockerClient target = new DockerClient(dockerClientStub);
+        target.setDelegate(consumerMock);
+        target.updateContainerState();
 
         //
         // Assert
         //
-        //verify(frameworkDiscoveryListenerSpy).frameworksDiscovered(containersCapture.capture());
+
+        verify(consumerMock).accept(containersCapture.capture());
+            // Second call with both containers
         assertEquals(imageName, containersCapture.getValue().get(0));
     }
 
     @Test
     public void testGetNotifiedAboutNewRunningContainers() {
+
         final String container1 = "TEST_CONTAINER_ID1";
         final String container2 = "TEST_CONTAINER_ID2";
         final String imageName1 = "TEST_IMAGE_NAME1";
         final String imageName2 = "TEST_IMAGE_NAME2";
-        final List<Container> containerIds = new ArrayList<Container>() {{
-            add(getContainer(container1, imageName1));
-            add(getContainer(container2, imageName2));
-        }};
 
-        //
-        // Arrange
-        //
-        this.mockListCommand(Collections.singletonList(getContainer(container1, imageName1)), containerIds);
+        List<Container> firstResponse = Collections.singletonList(getContainer(container1, imageName1));
+        // at second call it will return a new container id (container2)
+        final List<Container> secondResponse = Lists.newArrayList(getContainer(container1, imageName1), getContainer(container2, imageName2));
+
+        Consumer<List<String>> consumerMock = mock(Consumer.class);
+        this.mockListCommand(firstResponse, secondResponse);
         //final FrameworkDiscoveryListener frameworkDiscoveryListenerSpy = mock(FrameworkDiscoveryListener.class);
         final ArgumentCaptor<List> containersCapture = ArgumentCaptor.forClass(List.class);
 
-        //
-        // Act
-        //
-        ContainerizerClient target = new DockerClient(dockerClientStub);
+        DockerClient target = new DockerClient(dockerClientStub);
+        target.setDelegate(consumerMock);
 
-        //
-        // Assert
-        //
-        await().until(new Runnable() {
-            @Override
-            public void run() {
-                //verify(frameworkDiscoveryListenerSpy, times(2)).frameworksDiscovered(containersCapture.capture());
+        target.updateContainerState();
+        target.updateContainerState();
 
-                //First call with only one container
-                assertEquals(imageName1, containersCapture.getAllValues().get(0).get(0));
 
-                //Second call with both containers
-                assertTrue(containersCapture.getAllValues().get(1).contains(imageName1));
-                assertTrue(containersCapture.getAllValues().get(1).contains(imageName2));
-            }
-        });
+
+
+        verify(consumerMock, times(2)).accept(containersCapture.capture());
+        assertEquals(imageName1, containersCapture.getAllValues().get(0).get(0));
+
+        //Second call with both containers
+        assertTrue(containersCapture.getAllValues().get(1).contains(imageName1));
+        assertTrue(containersCapture.getAllValues().get(1).contains(imageName2));
     }
 }

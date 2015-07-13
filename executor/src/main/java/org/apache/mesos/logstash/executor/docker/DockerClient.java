@@ -23,10 +23,20 @@ public class DockerClient implements ContainerizerClient {
 
     public DockerClient(com.spotify.docker.client.DockerClient dockerClient) {
         this.dockerClient = dockerClient;
-
-        updateContainerState();
-        startPoll(5000);
     }
+
+    public void startMonitoringContainerState(){
+        // FIXME: We are never stopping this. Maybe consider making this class a service.
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                updateContainerState();
+            }
+        }, 0, (long) 5000);
+    }
+
 
     public Set<String> getRunningContainers() {
         return this.runningContainers.keySet();
@@ -59,19 +69,7 @@ public class DockerClient implements ContainerizerClient {
         }
     }
 
-    private void startPoll(long pollInterval) {
-        // FIXME: We are never stopping this. Maybe consider making this class a service.
-
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                updateContainerState();
-            }
-        }, 0, pollInterval);
-    }
-
-    private void updateContainerState() {
+    void updateContainerState() {
 
         // TODO: Handle state properly.
 
@@ -89,7 +87,7 @@ public class DockerClient implements ContainerizerClient {
                 notifyFrameworkListener();
             }
         } catch (DockerException | InterruptedException e) {
-            LOGGER.error(String.format("There was an error updating containers: %s", e));
+            throw new IllegalStateException("Failed to update container states", e);
         }
     }
 

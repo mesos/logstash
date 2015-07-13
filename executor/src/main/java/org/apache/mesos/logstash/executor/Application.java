@@ -23,7 +23,11 @@ public class Application implements Runnable {
     }
 
     public void run() {
-        ConfigManager controller = createController();
+        DockerClient dockerClient = createDockerClient();
+        ConfigManager controller = createController(dockerClient);
+
+        dockerClient.startMonitoringContainerState(); // we start after the controller is initiated because it's sets a frameworkListener
+
         LogstashExecutor executor = new LogstashExecutor(controller);
 
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
@@ -39,8 +43,8 @@ public class Application implements Runnable {
         }
     }
 
-    private ConfigManager createController() {
-        DockerClient dockerClient = createDockerClient();
+    private ConfigManager createController(DockerClient dockerClient) {
+
 
         LogstashService logstashService = new LogstashService();
         DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(), dockerClient));
