@@ -40,7 +40,7 @@ public class DockerFramework implements Framework {
         }
 
         // replace 'magic' string docker-path with normal path string
-        return generatedConfiguration.replace("docker-path", "path");
+        return "# " + getName() + "\n" + generatedConfiguration.replace("docker-path", "path");
     }
 
     private List<String> parseLogLocations(String configuration) {
