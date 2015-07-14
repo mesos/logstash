@@ -14,7 +14,14 @@ message SchedulerMessage {
   optional string command = 3;
 }
 
+
+message GlobalStateInfo {
+  repeated string runningContainer = 1;
+  repeated string processedContainer = 2;
+  repeated string configuredDockerFramework = 3;
+}
+
 message ExecutorMessage {
   required string type = 1;
-  required string content = 2;
+  optional GlobalStateInfo globalStateInfo = 2;
 }

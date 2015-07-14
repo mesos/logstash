@@ -1877,6 +1877,871 @@ public final class LogstashProtos {
     // @@protoc_insertion_point(class_scope:org.apache.mesos.logstash.common.SchedulerMessage)
   }
 
+  public interface GlobalStateInfoOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:org.apache.mesos.logstash.common.GlobalStateInfo)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    com.google.protobuf.ProtocolStringList
+        getRunningContainerList();
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    int getRunningContainerCount();
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    java.lang.String getRunningContainer(int index);
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getRunningContainerBytes(int index);
+
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    com.google.protobuf.ProtocolStringList
+        getProcessedContainerList();
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    int getProcessedContainerCount();
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    java.lang.String getProcessedContainer(int index);
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getProcessedContainerBytes(int index);
+
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    com.google.protobuf.ProtocolStringList
+        getConfiguredDockerFrameworkList();
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    int getConfiguredDockerFrameworkCount();
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    java.lang.String getConfiguredDockerFramework(int index);
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getConfiguredDockerFrameworkBytes(int index);
+  }
+  /**
+   * Protobuf type {@code org.apache.mesos.logstash.common.GlobalStateInfo}
+   */
+  public static final class GlobalStateInfo extends
+      com.google.protobuf.GeneratedMessage implements
+      // @@protoc_insertion_point(message_implements:org.apache.mesos.logstash.common.GlobalStateInfo)
+      GlobalStateInfoOrBuilder {
+    // Use GlobalStateInfo.newBuilder() to construct.
+    private GlobalStateInfo(com.google.protobuf.GeneratedMessage.Builder<?> builder) {
+      super(builder);
+      this.unknownFields = builder.getUnknownFields();
+    }
+    private GlobalStateInfo(boolean noInit) { this.unknownFields = com.google.protobuf.UnknownFieldSet.getDefaultInstance(); }
+
+    private static final GlobalStateInfo defaultInstance;
+    public static GlobalStateInfo getDefaultInstance() {
+      return defaultInstance;
+    }
+
+    public GlobalStateInfo getDefaultInstanceForType() {
+      return defaultInstance;
+    }
+
+    private final com.google.protobuf.UnknownFieldSet unknownFields;
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+        getUnknownFields() {
+      return this.unknownFields;
+    }
+    private GlobalStateInfo(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      initFields();
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!parseUnknownField(input, unknownFields,
+                                     extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                runningContainer_ = new com.google.protobuf.LazyStringArrayList();
+                mutable_bitField0_ |= 0x00000001;
+              }
+              runningContainer_.add(bs);
+              break;
+            }
+            case 18: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                processedContainer_ = new com.google.protobuf.LazyStringArrayList();
+                mutable_bitField0_ |= 0x00000002;
+              }
+              processedContainer_.add(bs);
+              break;
+            }
+            case 26: {
+              com.google.protobuf.ByteString bs = input.readBytes();
+              if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+                configuredDockerFramework_ = new com.google.protobuf.LazyStringArrayList();
+                mutable_bitField0_ |= 0x00000004;
+              }
+              configuredDockerFramework_.add(bs);
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e.getMessage()).setUnfinishedMessage(this);
+      } finally {
+        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          runningContainer_ = runningContainer_.getUnmodifiableView();
+        }
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+          processedContainer_ = processedContainer_.getUnmodifiableView();
+        }
+        if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+          configuredDockerFramework_ = configuredDockerFramework_.getUnmodifiableView();
+        }
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.class, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder.class);
+    }
+
+    public static com.google.protobuf.Parser<GlobalStateInfo> PARSER =
+        new com.google.protobuf.AbstractParser<GlobalStateInfo>() {
+      public GlobalStateInfo parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new GlobalStateInfo(input, extensionRegistry);
+      }
+    };
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<GlobalStateInfo> getParserForType() {
+      return PARSER;
+    }
+
+    public static final int RUNNINGCONTAINER_FIELD_NUMBER = 1;
+    private com.google.protobuf.LazyStringList runningContainer_;
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    public com.google.protobuf.ProtocolStringList
+        getRunningContainerList() {
+      return runningContainer_;
+    }
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    public int getRunningContainerCount() {
+      return runningContainer_.size();
+    }
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    public java.lang.String getRunningContainer(int index) {
+      return runningContainer_.get(index);
+    }
+    /**
+     * <code>repeated string runningContainer = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getRunningContainerBytes(int index) {
+      return runningContainer_.getByteString(index);
+    }
+
+    public static final int PROCESSEDCONTAINER_FIELD_NUMBER = 2;
+    private com.google.protobuf.LazyStringList processedContainer_;
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    public com.google.protobuf.ProtocolStringList
+        getProcessedContainerList() {
+      return processedContainer_;
+    }
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    public int getProcessedContainerCount() {
+      return processedContainer_.size();
+    }
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    public java.lang.String getProcessedContainer(int index) {
+      return processedContainer_.get(index);
+    }
+    /**
+     * <code>repeated string processedContainer = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getProcessedContainerBytes(int index) {
+      return processedContainer_.getByteString(index);
+    }
+
+    public static final int CONFIGUREDDOCKERFRAMEWORK_FIELD_NUMBER = 3;
+    private com.google.protobuf.LazyStringList configuredDockerFramework_;
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    public com.google.protobuf.ProtocolStringList
+        getConfiguredDockerFrameworkList() {
+      return configuredDockerFramework_;
+    }
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    public int getConfiguredDockerFrameworkCount() {
+      return configuredDockerFramework_.size();
+    }
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    public java.lang.String getConfiguredDockerFramework(int index) {
+      return configuredDockerFramework_.get(index);
+    }
+    /**
+     * <code>repeated string configuredDockerFramework = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getConfiguredDockerFrameworkBytes(int index) {
+      return configuredDockerFramework_.getByteString(index);
+    }
+
+    private void initFields() {
+      runningContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      processedContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      configuredDockerFramework_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+    }
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      getSerializedSize();
+      for (int i = 0; i < runningContainer_.size(); i++) {
+        output.writeBytes(1, runningContainer_.getByteString(i));
+      }
+      for (int i = 0; i < processedContainer_.size(); i++) {
+        output.writeBytes(2, processedContainer_.getByteString(i));
+      }
+      for (int i = 0; i < configuredDockerFramework_.size(); i++) {
+        output.writeBytes(3, configuredDockerFramework_.getByteString(i));
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    private int memoizedSerializedSize = -1;
+    public int getSerializedSize() {
+      int size = memoizedSerializedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      {
+        int dataSize = 0;
+        for (int i = 0; i < runningContainer_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(runningContainer_.getByteString(i));
+        }
+        size += dataSize;
+        size += 1 * getRunningContainerList().size();
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < processedContainer_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(processedContainer_.getByteString(i));
+        }
+        size += dataSize;
+        size += 1 * getProcessedContainerList().size();
+      }
+      {
+        int dataSize = 0;
+        for (int i = 0; i < configuredDockerFramework_.size(); i++) {
+          dataSize += com.google.protobuf.CodedOutputStream
+            .computeBytesSizeNoTag(configuredDockerFramework_.getByteString(i));
+        }
+        size += dataSize;
+        size += 1 * getConfiguredDockerFrameworkList().size();
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSerializedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    protected java.lang.Object writeReplace()
+        throws java.io.ObjectStreamException {
+      return super.writeReplace();
+    }
+
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseDelimitedFrom(input, extensionRegistry);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input);
+    }
+    public static org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return PARSER.parseFrom(input, extensionRegistry);
+    }
+
+    public static Builder newBuilder() { return Builder.create(); }
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder(org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo prototype) {
+      return newBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() { return newBuilder(this); }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code org.apache.mesos.logstash.common.GlobalStateInfo}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessage.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:org.apache.mesos.logstash.common.GlobalStateInfo)
+        org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.class, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder.class);
+      }
+
+      // Construct using org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessage.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+        }
+      }
+      private static Builder create() {
+        return new Builder();
+      }
+
+      public Builder clear() {
+        super.clear();
+        runningContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        processedContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        configuredDockerFramework_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        return this;
+      }
+
+      public Builder clone() {
+        return create().mergeFrom(buildPartial());
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return org.apache.mesos.logstash.common.LogstashProtos.internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor;
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo getDefaultInstanceForType() {
+        return org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance();
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo build() {
+        org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo buildPartial() {
+        org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo result = new org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo(this);
+        int from_bitField0_ = bitField0_;
+        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          runningContainer_ = runningContainer_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        }
+        result.runningContainer_ = runningContainer_;
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
+          processedContainer_ = processedContainer_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000002);
+        }
+        result.processedContainer_ = processedContainer_;
+        if (((bitField0_ & 0x00000004) == 0x00000004)) {
+          configuredDockerFramework_ = configuredDockerFramework_.getUnmodifiableView();
+          bitField0_ = (bitField0_ & ~0x00000004);
+        }
+        result.configuredDockerFramework_ = configuredDockerFramework_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo) {
+          return mergeFrom((org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo other) {
+        if (other == org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance()) return this;
+        if (!other.runningContainer_.isEmpty()) {
+          if (runningContainer_.isEmpty()) {
+            runningContainer_ = other.runningContainer_;
+            bitField0_ = (bitField0_ & ~0x00000001);
+          } else {
+            ensureRunningContainerIsMutable();
+            runningContainer_.addAll(other.runningContainer_);
+          }
+          onChanged();
+        }
+        if (!other.processedContainer_.isEmpty()) {
+          if (processedContainer_.isEmpty()) {
+            processedContainer_ = other.processedContainer_;
+            bitField0_ = (bitField0_ & ~0x00000002);
+          } else {
+            ensureProcessedContainerIsMutable();
+            processedContainer_.addAll(other.processedContainer_);
+          }
+          onChanged();
+        }
+        if (!other.configuredDockerFramework_.isEmpty()) {
+          if (configuredDockerFramework_.isEmpty()) {
+            configuredDockerFramework_ = other.configuredDockerFramework_;
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            ensureConfiguredDockerFrameworkIsMutable();
+            configuredDockerFramework_.addAll(other.configuredDockerFramework_);
+          }
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo) e.getUnfinishedMessage();
+          throw e;
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int bitField0_;
+
+      private com.google.protobuf.LazyStringList runningContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureRunningContainerIsMutable() {
+        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          runningContainer_ = new com.google.protobuf.LazyStringArrayList(runningContainer_);
+          bitField0_ |= 0x00000001;
+         }
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public com.google.protobuf.ProtocolStringList
+          getRunningContainerList() {
+        return runningContainer_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public int getRunningContainerCount() {
+        return runningContainer_.size();
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public java.lang.String getRunningContainer(int index) {
+        return runningContainer_.get(index);
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getRunningContainerBytes(int index) {
+        return runningContainer_.getByteString(index);
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public Builder setRunningContainer(
+          int index, java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureRunningContainerIsMutable();
+        runningContainer_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public Builder addRunningContainer(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureRunningContainerIsMutable();
+        runningContainer_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public Builder addAllRunningContainer(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureRunningContainerIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, runningContainer_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public Builder clearRunningContainer() {
+        runningContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000001);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string runningContainer = 1;</code>
+       */
+      public Builder addRunningContainerBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureRunningContainerIsMutable();
+        runningContainer_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList processedContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureProcessedContainerIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          processedContainer_ = new com.google.protobuf.LazyStringArrayList(processedContainer_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public com.google.protobuf.ProtocolStringList
+          getProcessedContainerList() {
+        return processedContainer_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public int getProcessedContainerCount() {
+        return processedContainer_.size();
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public java.lang.String getProcessedContainer(int index) {
+        return processedContainer_.get(index);
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getProcessedContainerBytes(int index) {
+        return processedContainer_.getByteString(index);
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public Builder setProcessedContainer(
+          int index, java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureProcessedContainerIsMutable();
+        processedContainer_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public Builder addProcessedContainer(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureProcessedContainerIsMutable();
+        processedContainer_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public Builder addAllProcessedContainer(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureProcessedContainerIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, processedContainer_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public Builder clearProcessedContainer() {
+        processedContainer_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000002);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string processedContainer = 2;</code>
+       */
+      public Builder addProcessedContainerBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureProcessedContainerIsMutable();
+        processedContainer_.add(value);
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.LazyStringList configuredDockerFramework_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureConfiguredDockerFrameworkIsMutable() {
+        if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+          configuredDockerFramework_ = new com.google.protobuf.LazyStringArrayList(configuredDockerFramework_);
+          bitField0_ |= 0x00000004;
+         }
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public com.google.protobuf.ProtocolStringList
+          getConfiguredDockerFrameworkList() {
+        return configuredDockerFramework_.getUnmodifiableView();
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public int getConfiguredDockerFrameworkCount() {
+        return configuredDockerFramework_.size();
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public java.lang.String getConfiguredDockerFramework(int index) {
+        return configuredDockerFramework_.get(index);
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getConfiguredDockerFrameworkBytes(int index) {
+        return configuredDockerFramework_.getByteString(index);
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public Builder setConfiguredDockerFramework(
+          int index, java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureConfiguredDockerFrameworkIsMutable();
+        configuredDockerFramework_.set(index, value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public Builder addConfiguredDockerFramework(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureConfiguredDockerFrameworkIsMutable();
+        configuredDockerFramework_.add(value);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public Builder addAllConfiguredDockerFramework(
+          java.lang.Iterable<java.lang.String> values) {
+        ensureConfiguredDockerFrameworkIsMutable();
+        com.google.protobuf.AbstractMessageLite.Builder.addAll(
+            values, configuredDockerFramework_);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public Builder clearConfiguredDockerFramework() {
+        configuredDockerFramework_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        bitField0_ = (bitField0_ & ~0x00000004);
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>repeated string configuredDockerFramework = 3;</code>
+       */
+      public Builder addConfiguredDockerFrameworkBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureConfiguredDockerFrameworkIsMutable();
+        configuredDockerFramework_.add(value);
+        onChanged();
+        return this;
+      }
+
+      // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.GlobalStateInfo)
+    }
+
+    static {
+      defaultInstance = new GlobalStateInfo(true);
+      defaultInstance.initFields();
+    }
+
+    // @@protoc_insertion_point(class_scope:org.apache.mesos.logstash.common.GlobalStateInfo)
+  }
+
   public interface ExecutorMessageOrBuilder extends
       // @@protoc_insertion_point(interface_extends:org.apache.mesos.logstash.common.ExecutorMessage)
       com.google.protobuf.MessageOrBuilder {
@@ -1896,18 +2761,17 @@ public final class LogstashProtos {
         getTypeBytes();
 
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    boolean hasContent();
+    boolean hasGlobalStateInfo();
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    java.lang.String getContent();
+    org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo getGlobalStateInfo();
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    com.google.protobuf.ByteString
-        getContentBytes();
+    org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder getGlobalStateInfoOrBuilder();
   }
   /**
    * Protobuf type {@code org.apache.mesos.logstash.common.ExecutorMessage}
@@ -1968,9 +2832,16 @@ public final class LogstashProtos {
               break;
             }
             case 18: {
-              com.google.protobuf.ByteString bs = input.readBytes();
+              org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder subBuilder = null;
+              if (((bitField0_ & 0x00000002) == 0x00000002)) {
+                subBuilder = globalStateInfo_.toBuilder();
+              }
+              globalStateInfo_ = input.readMessage(org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.PARSER, extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(globalStateInfo_);
+                globalStateInfo_ = subBuilder.buildPartial();
+              }
               bitField0_ |= 0x00000002;
-              content_ = bs;
               break;
             }
           }
@@ -2055,51 +2926,30 @@ public final class LogstashProtos {
       }
     }
 
-    public static final int CONTENT_FIELD_NUMBER = 2;
-    private java.lang.Object content_;
+    public static final int GLOBALSTATEINFO_FIELD_NUMBER = 2;
+    private org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo globalStateInfo_;
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    public boolean hasContent() {
+    public boolean hasGlobalStateInfo() {
       return ((bitField0_ & 0x00000002) == 0x00000002);
     }
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    public java.lang.String getContent() {
-      java.lang.Object ref = content_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        if (bs.isValidUtf8()) {
-          content_ = s;
-        }
-        return s;
-      }
+    public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo getGlobalStateInfo() {
+      return globalStateInfo_;
     }
     /**
-     * <code>required string content = 2;</code>
+     * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
      */
-    public com.google.protobuf.ByteString
-        getContentBytes() {
-      java.lang.Object ref = content_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        content_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder getGlobalStateInfoOrBuilder() {
+      return globalStateInfo_;
     }
 
     private void initFields() {
       type_ = "";
-      content_ = "";
+      globalStateInfo_ = org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance();
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -2108,10 +2958,6 @@ public final class LogstashProtos {
       if (isInitialized == 0) return false;
 
       if (!hasType()) {
-        memoizedIsInitialized = 0;
-        return false;
-      }
-      if (!hasContent()) {
         memoizedIsInitialized = 0;
         return false;
       }
@@ -2126,7 +2972,7 @@ public final class LogstashProtos {
         output.writeBytes(1, getTypeBytes());
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
-        output.writeBytes(2, getContentBytes());
+        output.writeMessage(2, globalStateInfo_);
       }
       getUnknownFields().writeTo(output);
     }
@@ -2143,7 +2989,7 @@ public final class LogstashProtos {
       }
       if (((bitField0_ & 0x00000002) == 0x00000002)) {
         size += com.google.protobuf.CodedOutputStream
-          .computeBytesSize(2, getContentBytes());
+          .computeMessageSize(2, globalStateInfo_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -2254,6 +3100,7 @@ public final class LogstashProtos {
       }
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessage.alwaysUseFieldBuilders) {
+          getGlobalStateInfoFieldBuilder();
         }
       }
       private static Builder create() {
@@ -2264,7 +3111,11 @@ public final class LogstashProtos {
         super.clear();
         type_ = "";
         bitField0_ = (bitField0_ & ~0x00000001);
-        content_ = "";
+        if (globalStateInfoBuilder_ == null) {
+          globalStateInfo_ = org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance();
+        } else {
+          globalStateInfoBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000002);
         return this;
       }
@@ -2301,7 +3152,11 @@ public final class LogstashProtos {
         if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
           to_bitField0_ |= 0x00000002;
         }
-        result.content_ = content_;
+        if (globalStateInfoBuilder_ == null) {
+          result.globalStateInfo_ = globalStateInfo_;
+        } else {
+          result.globalStateInfo_ = globalStateInfoBuilder_.build();
+        }
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -2323,10 +3178,8 @@ public final class LogstashProtos {
           type_ = other.type_;
           onChanged();
         }
-        if (other.hasContent()) {
-          bitField0_ |= 0x00000002;
-          content_ = other.content_;
-          onChanged();
+        if (other.hasGlobalStateInfo()) {
+          mergeGlobalStateInfo(other.getGlobalStateInfo());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -2334,10 +3187,6 @@ public final class LogstashProtos {
 
       public final boolean isInitialized() {
         if (!hasType()) {
-          
-          return false;
-        }
-        if (!hasContent()) {
           
           return false;
         }
@@ -2439,80 +3288,120 @@ public final class LogstashProtos {
         return this;
       }
 
-      private java.lang.Object content_ = "";
+      private org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo globalStateInfo_ = org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance();
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder> globalStateInfoBuilder_;
       /**
-       * <code>required string content = 2;</code>
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
        */
-      public boolean hasContent() {
+      public boolean hasGlobalStateInfo() {
         return ((bitField0_ & 0x00000002) == 0x00000002);
       }
       /**
-       * <code>required string content = 2;</code>
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
        */
-      public java.lang.String getContent() {
-        java.lang.Object ref = content_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          if (bs.isValidUtf8()) {
-            content_ = s;
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo getGlobalStateInfo() {
+        if (globalStateInfoBuilder_ == null) {
+          return globalStateInfo_;
+        } else {
+          return globalStateInfoBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
+       */
+      public Builder setGlobalStateInfo(org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo value) {
+        if (globalStateInfoBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
           }
-          return s;
+          globalStateInfo_ = value;
+          onChanged();
         } else {
-          return (java.lang.String) ref;
+          globalStateInfoBuilder_.setMessage(value);
         }
-      }
-      /**
-       * <code>required string content = 2;</code>
-       */
-      public com.google.protobuf.ByteString
-          getContentBytes() {
-        java.lang.Object ref = content_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          content_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>required string content = 2;</code>
-       */
-      public Builder setContent(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        content_ = value;
-        onChanged();
+        bitField0_ |= 0x00000002;
         return this;
       }
       /**
-       * <code>required string content = 2;</code>
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
        */
-      public Builder clearContent() {
+      public Builder setGlobalStateInfo(
+          org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder builderForValue) {
+        if (globalStateInfoBuilder_ == null) {
+          globalStateInfo_ = builderForValue.build();
+          onChanged();
+        } else {
+          globalStateInfoBuilder_.setMessage(builderForValue.build());
+        }
+        bitField0_ |= 0x00000002;
+        return this;
+      }
+      /**
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
+       */
+      public Builder mergeGlobalStateInfo(org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo value) {
+        if (globalStateInfoBuilder_ == null) {
+          if (((bitField0_ & 0x00000002) == 0x00000002) &&
+              globalStateInfo_ != org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance()) {
+            globalStateInfo_ =
+              org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.newBuilder(globalStateInfo_).mergeFrom(value).buildPartial();
+          } else {
+            globalStateInfo_ = value;
+          }
+          onChanged();
+        } else {
+          globalStateInfoBuilder_.mergeFrom(value);
+        }
+        bitField0_ |= 0x00000002;
+        return this;
+      }
+      /**
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
+       */
+      public Builder clearGlobalStateInfo() {
+        if (globalStateInfoBuilder_ == null) {
+          globalStateInfo_ = org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.getDefaultInstance();
+          onChanged();
+        } else {
+          globalStateInfoBuilder_.clear();
+        }
         bitField0_ = (bitField0_ & ~0x00000002);
-        content_ = getDefaultInstance().getContent();
-        onChanged();
         return this;
       }
       /**
-       * <code>required string content = 2;</code>
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
        */
-      public Builder setContentBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-        content_ = value;
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder getGlobalStateInfoBuilder() {
+        bitField0_ |= 0x00000002;
         onChanged();
-        return this;
+        return getGlobalStateInfoFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
+       */
+      public org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder getGlobalStateInfoOrBuilder() {
+        if (globalStateInfoBuilder_ != null) {
+          return globalStateInfoBuilder_.getMessageOrBuilder();
+        } else {
+          return globalStateInfo_;
+        }
+      }
+      /**
+       * <code>optional .org.apache.mesos.logstash.common.GlobalStateInfo globalStateInfo = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilder<
+          org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder> 
+          getGlobalStateInfoFieldBuilder() {
+        if (globalStateInfoBuilder_ == null) {
+          globalStateInfoBuilder_ = new com.google.protobuf.SingleFieldBuilder<
+              org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfo.Builder, org.apache.mesos.logstash.common.LogstashProtos.GlobalStateInfoOrBuilder>(
+                  getGlobalStateInfo(),
+                  getParentForChildren(),
+                  isClean());
+          globalStateInfo_ = null;
+        }
+        return globalStateInfoBuilder_;
       }
 
       // @@protoc_insertion_point(builder_scope:org.apache.mesos.logstash.common.ExecutorMessage)
@@ -2537,6 +3426,11 @@ public final class LogstashProtos {
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
       internal_static_org_apache_mesos_logstash_common_SchedulerMessage_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor;
+  private static
+    com.google.protobuf.GeneratedMessage.FieldAccessorTable
+      internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor;
   private static
     com.google.protobuf.GeneratedMessage.FieldAccessorTable
@@ -2557,10 +3451,14 @@ public final class LogstashProtos {
       "\001 \003(\01320.org.apache.mesos.logstash.common" +
       ".LogstashConfig\022D\n\nhostConfig\030\002 \003(\01320.or" +
       "g.apache.mesos.logstash.common.LogstashC" +
-      "onfig\022\017\n\007command\030\003 \001(\t\"0\n\017ExecutorMessag" +
-      "e\022\014\n\004type\030\001 \002(\t\022\017\n\007content\030\002 \002(\tB2\n org." +
-      "apache.mesos.logstash.commonB\016LogstashPr",
-      "otos"
+      "onfig\022\017\n\007command\030\003 \001(\t\"j\n\017GlobalStateInf" +
+      "o\022\030\n\020runningContainer\030\001 \003(\t\022\032\n\022processed" +
+      "Container\030\002 \003(\t\022!\n\031configuredDockerFrame",
+      "work\030\003 \003(\t\"k\n\017ExecutorMessage\022\014\n\004type\030\001 " +
+      "\002(\t\022J\n\017globalStateInfo\030\002 \001(\01321.org.apach" +
+      "e.mesos.logstash.common.GlobalStateInfoB" +
+      "2\n org.apache.mesos.logstash.commonB\016Log" +
+      "stashProtos"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2586,12 +3484,18 @@ public final class LogstashProtos {
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_SchedulerMessage_descriptor,
         new java.lang.String[] { "DockerConfig", "HostConfig", "Command", });
-    internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor =
+    internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor =
       getDescriptor().getMessageTypes().get(2);
+    internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessage.FieldAccessorTable(
+        internal_static_org_apache_mesos_logstash_common_GlobalStateInfo_descriptor,
+        new java.lang.String[] { "RunningContainer", "ProcessedContainer", "ConfiguredDockerFramework", });
+    internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor =
+      getDescriptor().getMessageTypes().get(3);
     internal_static_org_apache_mesos_logstash_common_ExecutorMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessage.FieldAccessorTable(
         internal_static_org_apache_mesos_logstash_common_ExecutorMessage_descriptor,
-        new java.lang.String[] { "Type", "Content", });
+        new java.lang.String[] { "Type", "GlobalStateInfo", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

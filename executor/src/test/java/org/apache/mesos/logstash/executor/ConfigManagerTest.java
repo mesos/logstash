@@ -5,10 +5,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
+import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Set;
@@ -27,7 +27,7 @@ public class ConfigManagerTest {
         logstash = mock(LogstashManager.class);
         DockerLogSteamManager streamManager = mock(DockerLogSteamManager.class);
 
-        configManager = new ConfigManager(client, logstash, streamManager);
+        configManager = new ConfigManager(client, logstash, streamManager, new DockerInfoCache());
     }
 
     @Test

@@ -35,6 +35,10 @@ public class DockerLogSteamManager {
         LOGGER.info("Done processing: " + framework.getName());
     }
 
+    public Set<String> getProcessedContainers() {
+        return processedContainers;
+    }
+
     private boolean isAlreadySteaming(DockerFramework framework) {
         return processedContainers.contains(framework.getContainerId());
     }

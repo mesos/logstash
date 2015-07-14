@@ -7,6 +7,7 @@ import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
+import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
 
 import java.util.stream.Stream;
 
@@ -18,9 +19,11 @@ public class LogstashExecutor implements Executor {
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
     private final ConfigEventListener listener;
+    private final GlobalStateInfo globalStateInfo;
 
-    public LogstashExecutor(ConfigEventListener listener) {
+    public LogstashExecutor(ConfigEventListener listener, GlobalStateInfo globalStateInfo) {
         this.listener = listener;
+        this.globalStateInfo = globalStateInfo;
     }
 
     @Override
@@ -92,11 +95,8 @@ public class LogstashExecutor implements Executor {
 
     private void handleCommand(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
         LOGGER.info("Logstash received command: " + schedulerMessage.getCommand());
-        if (schedulerMessage.getCommand().equals("INTERNAL_STATUS")){
-            LogstashProtos.ExecutorMessage.Builder builder = LogstashProtos.ExecutorMessage.newBuilder();
-            builder.setType("INTERNAL_STATUS").setContent("FOOOOOOO");
-
-            driver.sendFrameworkMessage(builder.build().toByteArray());
+        if (schedulerMessage.getCommand().equals("REPORT_INTERNAL_STATUS")){
+            driver.sendFrameworkMessage(globalStateInfo.getStateAsExecutorMessage().toByteArray());
         }
     }
 

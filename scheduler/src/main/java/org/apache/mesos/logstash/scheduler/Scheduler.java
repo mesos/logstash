@@ -176,7 +176,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
 
     public void requestInternalStatus(){
 
-        byte[] message = LogstashProtos.SchedulerMessage.newBuilder().setCommand("INTERNAL_STATUS").build().toByteArray();
+        byte[] message = LogstashProtos.SchedulerMessage.newBuilder().setCommand("REPORT_INTERNAL_STATUS").build().toByteArray();
 
         for(Map.Entry<Protos.SlaveID, Protos.ExecutorID > executor : executors.entrySet()){
             driver.sendFrameworkMessage(executor.getValue(),executor.getKey(), message);
@@ -195,7 +195,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
                 executorMessageListener.onNewMessageReceived(msg);
             }
 
-            LOGGER.info("Received message from executor: Type: " + msg.getType() + " Content: " + msg.getContent());
+            LOGGER.info("Received message from executor: Type: " + msg.getType() + " Content: " + (msg.hasGlobalStateInfo() ? msg.getGlobalStateInfo() : ""));
 
 
         } catch (InvalidProtocolBufferException e) {

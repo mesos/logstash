@@ -44,7 +44,7 @@ public class MessageTest extends AbstractLogstashFrameworkTest{
 
 
         Assert.assertEquals(1, executorMessages.size());
-        Assert.assertEquals("INTERNAL_STATUS", executorMessages.get(0).getType());
+        Assert.assertEquals("GlobalStateInfo", executorMessages.get(0).getType());
     }
 
 

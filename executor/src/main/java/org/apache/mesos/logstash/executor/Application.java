@@ -5,8 +5,10 @@ import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerStreamer;
+import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
+import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
 
 import java.net.*;
 import java.util.Enumeration;
@@ -24,13 +26,16 @@ public class Application implements Runnable {
 
     public void run() {
         DockerClient dockerClient = createDockerClient();
-        ConfigManager controller = createController(dockerClient);
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(), dockerClient));
+        DockerInfoCache dockerInfoCache = new DockerInfoCache();
+
+        ConfigManager controller = createController(dockerClient, streamManager,dockerInfoCache);
+        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager, dockerInfoCache);
+
+        LogstashExecutor executor = new LogstashExecutor(controller, globalStateInfo);
+        MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 
         dockerClient.startMonitoringContainerState(); // we start after the controller is initiated because it's sets a frameworkListener
-
-        LogstashExecutor executor = new LogstashExecutor(controller);
-
-        MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 
         LOGGER.info("Mesos Logstash Executor Started");
         Protos.Status status = driver.run();
@@ -43,13 +48,10 @@ public class Application implements Runnable {
         }
     }
 
-    private ConfigManager createController(DockerClient dockerClient) {
-
-
+    private ConfigManager createController(DockerClient dockerClient, DockerLogSteamManager streamManager, DockerInfoCache dockerInfoCache) {
         LogstashService logstashService = new LogstashService();
-        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(), dockerClient));
 
-        return new ConfigManager(dockerClient, logstashService, streamManager);
+        return new ConfigManager(dockerClient, logstashService, streamManager, dockerInfoCache);
     }
 
     private DockerClient createDockerClient() {
