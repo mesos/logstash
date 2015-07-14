@@ -18,4 +18,7 @@ ADD ./build/docker/logstash-executor.jar /tmp/logstash-executor.jar
 
 ADD ./build/resources/main/run_logstash.sh /tmp/run_logstash.sh
 
+# See https://github.com/elastic/logstash/issues/3127
+RUN ln -s /lib/x86_64-linux-gnu/libcrypt.so.1 /usr/lib/x86_64-linux-gnu/libcrypt.so
+
 ENTRYPOINT ["java", "-Djava.library.path=/usr/local/lib","-jar", "/tmp/logstash-executor.jar"]
