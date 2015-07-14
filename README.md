@@ -11,16 +11,18 @@ other frameworks and have LogStash parse and send your logs to ElasticSearch.
 - ☑ Automatic discovery of running frameworks, streaming logs from containers.
 - ☑ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
 - ☑ External LogStash Configuration (config files propagated from Master to Slaves)
-- ☐ Support for outputting to Elastic Search
+- ☑ Support for outputting to Elastic Search
 - ☐ Basic Error Handling
 - ☐ Installation Documentation
 - ☐ Design Documentation
+- ☐ Basic DCOS compliance (Alpha stage)
 
 ## Version 2 - ?
 
 - ☐ Loss-less logging. Thoroughly ensure that no log messages are lost. (e.g. when a container has rolling log files)
 - ☐ DCOS certification
 - ☐ Enhanced Error Handling
+- ☐ Allow reconfiguring running frameworks
 
 ## Version 3 - ?
 
