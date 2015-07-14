@@ -72,6 +72,7 @@ public class LogstashExecutor implements Executor {
 
         try {
             SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
+            LOGGER.debug("SchedulerMessage:\n" + schedulerMessage);
 
             if (schedulerMessage.hasCommand()){ // currently we assume that commands
                 handleCommand(driver,schedulerMessage);
