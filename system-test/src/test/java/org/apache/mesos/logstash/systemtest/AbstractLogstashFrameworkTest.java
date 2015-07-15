@@ -10,15 +10,17 @@ import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
 import org.apache.mesos.mini.state.State;
 import org.apache.mesos.mini.util.Predicate;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
+import org.junit.*;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -26,7 +28,7 @@ import static org.junit.Assert.assertThat;
 
 
 public abstract class AbstractLogstashFrameworkTest {
-    public static final MesosClusterConfig config = MesosClusterConfig.builder()
+    public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
             // Note: Logstash-mesos uses container discovery, and mesos-local runs all
             // the executors in the same docker host. So it is safest to just use 1 slave for now..
             .numberOfSlaves(1)
@@ -36,24 +38,53 @@ public abstract class AbstractLogstashFrameworkTest {
             .build();
 
     @ClassRule
-    public static MesosCluster cluster = new MesosCluster(config);
+    public static MesosCluster cluster = new MesosCluster(clusterConfig);
+
 
     public static Scheduler scheduler;
+    public static ConfigFolder configFolder;
+
+    private static TemporaryFolder folder ;
+    protected List<String> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
 
     @BeforeClass
-    public static void startScheduler() {
+    public static void publishExecutorInMesosCluster() throws IOException {
 
-        DockerClient dockerClient = config.dockerClient;
+        DockerClient dockerClient = clusterConfig.dockerClient;
+
 
         // TODO move out into a Rule (should belong to mini-mesos)
         // Make our framework executor available inside the mesos cluster
         String[] dindImages = {"mesos/logstash-executor"};
-        pushDindImagesToPrivateRegistry(dockerClient, dindImages, config);
+        pushDindImagesToPrivateRegistry(dockerClient, dindImages, clusterConfig);
         pullDindImagesAndRetagWithoutRepoAndLatestTag(dockerClient, cluster.getMesosContainer().getMesosContainerID(), dindImages);
+    }
 
-        scheduler = new Scheduler(cluster.getMesosContainer().getMesosMasterURL(), "mesos/logstash-executor");
+    @After
+    public void stopContainers() {
+
+
+        String stopString = "docker stop " + containersToBeStopped.stream().collect(Collectors.joining(" "));
+
+        String execId = clusterConfig.dockerClient.execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
+                .withCmd("bash", "-c", stopString).exec().getId();
+
+        clusterConfig.dockerClient.execStartCmd(execId).exec();
+    }
+
+    @Before
+    public void startLogstashFramework() throws IOException {
+        folder = new TemporaryFolder();
+        folder.create();
+
+        File dockerConf  = folder.newFolder("docker");
+        File hostConf  = folder.newFolder("host");
+
+        configFolder = new ConfigFolder(dockerConf, hostConf);
+
+        scheduler = new Scheduler(cluster.getMesosContainer().getMesosMasterURL(), "mesos/logstash-executor", folder.getRoot().getAbsolutePath());
         Thread t = new Thread(scheduler::run);
 
         t.setName("Mesos-Logstash-Scheduler");
@@ -63,7 +94,12 @@ public abstract class AbstractLogstashFrameworkTest {
         // TODO move out into a Rule
         waitForLogstashFramework();
         waitForExcutorTaskIsRunning();
+    }
 
+
+    @After
+    public void stopLogstashFramework(){
+        scheduler.stop();
     }
 
     @AfterClass
@@ -133,7 +169,7 @@ public abstract class AbstractLogstashFrameworkTest {
      */
     public List<LogstashProtos.ExecutorMessage> requestInternalStatusAndWaitForResponse() {
         int seconds = 10;
-        int numberOfExpectedMessages = config.numberOfSlaves;
+        int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
         executorMessageListener.clearAllMessages();
         scheduler.requestInternalStatus();
 
@@ -149,5 +185,16 @@ public abstract class AbstractLogstashFrameworkTest {
             }
         });
         return new ArrayList<>(executorMessageListener.getExecutorMessages());
+    }
+
+
+    static class ConfigFolder {
+        final File dockerConfDir;
+        final File hostConfDir;
+
+        ConfigFolder(File dockerConfDir, File hostConfDir) {
+            this.dockerConfDir = dockerConfDir;
+            this.hostConfDir = hostConfDir;
+        }
     }
 }
