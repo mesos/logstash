@@ -69,8 +69,10 @@ public class LogstashService implements LogstashManager {
         writeConfig("logstash-docker.conf", this.dockerConfig);
     }
 
-    private void writeConfig(String fileName, String content) {
+    private synchronized void writeConfig(String fileName, String content) {
         assert !fileName.contains("/");// should just be the filename, no path
+
+        LOGGER.debug(String.format("Writing file: %s with content: %s", fileName, content));
 
         // TODO: Make sure this does not fail.
         // Ensure config dir exists

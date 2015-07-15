@@ -38,15 +38,18 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     private Protos.FrameworkID frameworkId;
 
     public Scheduler(String masterURL, String executorImageName) {
+        this(masterURL, executorImageName, "config");
+    }
+    public Scheduler(String masterURL, String executorImageName, String configDir) {
         this.masterURL = masterURL;
         this.executorImageName = executorImageName;
         this.driver = buildSchedulerDriver();
         this.executors = Collections.synchronizedMap(new HashMap<>());
 
-        ConfigMonitor dockerMonitor = new ConfigMonitor("config/docker");
+        ConfigMonitor dockerMonitor = new ConfigMonitor(configDir + "/docker");
         dockerMonitor.start(this::newDockerConfigAvailable);
 
-        ConfigMonitor hostMonitor = new ConfigMonitor("config/host");
+        ConfigMonitor hostMonitor = new ConfigMonitor(configDir + "/host");
         hostMonitor.start(this::newHostConfigAvailable);
     }
 
@@ -58,13 +61,13 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         return new MesosSchedulerDriver(this, frameworkInfo, getMesosUrl());
     }
 
-    private void newDockerConfigAvailable(Map<String, String> config) {
+    private synchronized void newDockerConfigAvailable(Map<String, String> config) {
         LOGGER.info("New docker config!");
         this.dockerConfigurations = config;
         broadcastConfig(dockerConfigurations, hostConfigurations);
     }
 
-    private void newHostConfigAvailable(Map<String, String> config) {
+    private synchronized void newHostConfigAvailable(Map<String, String> config) {
         LOGGER.info("New host config!");
         this.hostConfigurations = config;
         broadcastConfig(dockerConfigurations, hostConfigurations);
@@ -161,7 +164,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
     }
 
     @Override
-    public void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus taskStatus) {
+    public synchronized void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus taskStatus) {
         LOGGER.info("Task status update! " + taskStatus.toString());
 
         if(taskStatus.getState() == Protos.TaskState.TASK_RUNNING) {
@@ -249,7 +252,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
                 .setExecutorId(Protos.ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
                 .setFrameworkId(frameworkId)
                 .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecutor.build()))
-                .setName("" + UUID.randomUUID())
+                .setName("Logstash_" + UUID.randomUUID())
                 // TODO verify that this command is actually the one being used (as opposed to the one specified in the docker file)
                 .setCommand(Protos.CommandInfo.newBuilder()
                         .addArguments("java")
