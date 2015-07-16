@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -20,7 +21,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 
-
+@Ignore
 public class ConfigMonitorTest {
     @Rule
     public TemporaryFolder configDir = new TemporaryFolder();
