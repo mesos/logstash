@@ -1,6 +1,7 @@
 apply plugin: 'java'
 
 dependencies {
+    compile project(':common')
     compile project(':scheduler')
     compile project(':executor')
 
