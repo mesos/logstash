@@ -32,7 +32,7 @@ public abstract class AbstractLogstashFrameworkTest {
     public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
             // Note: Logstash-mesos uses container discovery, and mesos-local runs all
             // the executors in the same docker host. So it is safest to just use 1 slave for now..
-            .numberOfSlaves(1)
+            .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
 //            .imagesToBuild(new MesosClusterConfig.ImageToBuild(new File("../executor"), "logstash-executor"))
             .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
 //            .dockerInDockerImages(new String[]{"logstash-executor"})
