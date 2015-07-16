@@ -1,51 +1,32 @@
 package org.apache.mesos.logstash.scheduler;
 
-import com.sun.nio.file.SensitivityWatchEventModifier;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
-import javax.management.RuntimeErrorException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
-/**
- * Created by peldan on 01/07/15.
- */
 public class ConfigMonitor {
-    private Path configDir;
-
-    public boolean isRunning() {
-        return isRunning;
-    }
-
-    private boolean isRunning;
-
-    public Thread getThread() {
-        return thread;
-    }
-
-    private Thread thread;
 
     public static final Logger LOGGER = Logger.getLogger(Scheduler.class);
 
+    private Path configDir;
 
-    public ConfigMonitor(String configDir) {
+    @Autowired
+    public ConfigMonitor(@Qualifier("configDir") String configDir) {
         this.configDir = FileSystems.getDefault().getPath(configDir);
-
-        // Ensure directory exists
-        this.configDir.toFile().mkdirs();
     }
 
     private static String readStringFromFile(File f) {
@@ -57,29 +38,33 @@ public class ConfigMonitor {
         }
     }
 
-    public void start(Consumer< Map<String, String> > onChange) {
-        FutureTask<Boolean> isStarted = new FutureTask<>(() -> {}, true);
+    public void start(Consumer<Map<String, String>> onChange) {
 
+        // Ensure directory exists
+        this.configDir.toFile().mkdirs();
+
+        FutureTask<Boolean> isStarted = new FutureTask<>(() -> {
+        }, true);
 
         LOGGER.info("Config monitor of " + this.configDir.toString() + " starting..");
-        this.thread = new Thread(() -> {
+
+        // TODO: This thread is never properly stopped. Does not really matter if the JVM is killed, but we should clean up.
+        Thread thread = new Thread(() -> {
             this.run(onChange, isStarted);
         });
-        thread.start();
 
+        thread.start();
 
         try {
             isStarted.get();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        } catch (ExecutionException e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
 
         LOGGER.info("Config monitor of " + this.configDir.toString() + " started");
     }
 
-    private void run(Consumer< Map<String, String> > onChange, FutureTask<Boolean> isStarted) {
+    private void run(Consumer<Map<String, String>> onChange, FutureTask<Boolean> isStarted) {
         WatchService watcher;
 
         try {
@@ -107,59 +92,57 @@ public class ConfigMonitor {
         isStarted.run(); // Let creator know we have initialized successfully
 
 
-        WatchKey key = null;
-        try {
-            while (true) {
-                isRunning = true;
+        WatchKey key;
+        while (true) {
 
-                try {
-                    key = watcher.poll(1, TimeUnit.SECONDS);
-                } catch (InterruptedException x) {
-                    return;
+            try {
+                key = watcher.poll(1, TimeUnit.SECONDS);
+            } catch (InterruptedException x) {
+                // TODO: Log this event
+                return;
+            }
+
+            if (key == null) continue;
+
+            boolean didChange = false;
+            for (WatchEvent<?> event : key.pollEvents()) {
+                WatchEvent.Kind<?> kind = event.kind();
+
+                if (kind == OVERFLOW) {
+                    continue;
                 }
-                if(key == null) continue;
 
-                boolean didChange = false;
-                for (WatchEvent<?> event: key.pollEvents()) {
-                    WatchEvent.Kind<?> kind = event.kind();
+                WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                Path filename = ev.context();
 
-                    if (kind == OVERFLOW) {
-                        continue;
-                    }
+                String filenameString = filename.toString();
+                if (!filenameString.endsWith(".conf")) {
+                    continue;
+                }
 
-                    WatchEvent<Path> ev = (WatchEvent<Path>)event;
-                    Path filename = ev.context();
+                filenameString = filenameString.replace(".conf", "");
 
-                    String filenameString = filename.toString();
-                    if(!filenameString.endsWith(".conf")) {
-                        continue;
-                    }
-                    filenameString = filenameString.replace(".conf", "");
-
-
-                    if(kind == ENTRY_DELETE) {
-                        configToNameMap.remove(filenameString);
+                if (kind == ENTRY_DELETE) {
+                    configToNameMap.remove(filenameString);
+                    didChange = true;
+                } else {
+                    if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
+                        configToNameMap.put(filenameString, readStringFromFile(configDir.resolve(filename).toFile()));
                         didChange = true;
                     }
-                    else {
-                        if(kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
-                            configToNameMap.put(filenameString, readStringFromFile(configDir.resolve(filename).toFile()));
-                            didChange = true;
-                        }
-                    }
-                }
-
-                if(didChange) {
-                    onChange.accept(configToNameMap);
-                }
-
-                if(key != null) {
-                    if(!key.reset()) return;
                 }
             }
+
+            if (didChange) {
+                onChange.accept(configToNameMap);
+            }
+
+            if (!key.reset()) return;
         }
-        finally {
-            isRunning = false;
-        }
+    }
+
+    public void save(String name, String input) throws IOException {
+        File file = FileUtils.getFile(this.configDir.toFile(), name + ".conf");
+        FileUtils.write(file, input, false);
     }
 }

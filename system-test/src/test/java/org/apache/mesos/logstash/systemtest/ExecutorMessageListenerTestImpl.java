@@ -1,22 +1,16 @@
 package org.apache.mesos.logstash.systemtest;
 
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.scheduler.ExecutorMessageListener;
+import org.apache.mesos.logstash.scheduler.ui.Executor;
+import org.apache.mesos.logstash.scheduler.FrameworkMessageListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 
-public class ExecutorMessageListenerTestImpl implements ExecutorMessageListener {
+public class ExecutorMessageListenerTestImpl implements FrameworkMessageListener {
     List<ExecutorMessage> messages = Collections.synchronizedList(new ArrayList<ExecutorMessage>());
-
-    @Override
-    public synchronized void onNewMessageReceived(ExecutorMessage message) {
-        messages.add(message);
-    }
-
 
     public synchronized List<ExecutorMessage> getExecutorMessages(){
         return messages;
@@ -24,5 +18,10 @@ public class ExecutorMessageListenerTestImpl implements ExecutorMessageListener 
 
     public synchronized void clearAllMessages(){
         messages.clear();
+    }
+
+    @Override
+    public void frameworkMessage(Executor executor, ExecutorMessage message) {
+        messages.add(message);
     }
 }

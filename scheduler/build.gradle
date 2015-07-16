@@ -1,20 +1,16 @@
-apply plugin: 'application'
+apply plugin: 'java'
 apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'groovy'
-
-import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
-import com.bmuschko.gradle.docker.tasks.image.DockerPushImage
-
-mainClassName = "org.apache.mesos.logstash.scheduler.Application"
+apply plugin: 'spring-boot'
 
 buildscript {
     repositories {
-        jcenter{ url "http://jcenter.bintray.com/" }
+        jcenter { url "http://jcenter.bintray.com/" }
     }
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:2.2'
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE"
     }
 }
 
@@ -23,17 +19,34 @@ run {
     jvmArgs "-Djava.library.path=/usr/local/lib"
 }
 
-dependencies {
-    compile 'commons-io:commons-io:2.4'
-    compile 'org.apache.mesos:mesos:0.22.1'
-    compile "commons-cli:commons-cli:1.0"
-    compile 'commons-lang:commons-lang:2.6'
-    compile "log4j:log4j:1.2.16"
+configurations {
+    compile.exclude module: "spring-boot-starter-tomcat"
+}
 
+dependencies {
     compile project(':common')
 
+    compile 'org.apache.mesos:mesos:0.22.1'
+
+    compile 'commons-io:commons-io:2.4'
+    compile 'commons-lang:commons-lang:2.6'
+
+    compile 'org.slf4j:slf4j-api:1.7.12'
+    runtime 'ch.qos.logback:logback-classic:1.1.3'
+
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf")
+    compile("org.springframework.boot:spring-boot-starter-websocket")
+    compile("org.springframework:spring-messaging")
+
+    compile 'org.webjars:react:0.13.3'
+    compile 'org.webjars:react-router:0.13.2'
+    compile 'org.webjars.bower:stomp-websocket:2.3.4'
+    compile 'org.webjars:sockjs-client:1.0.0'
+    compile 'org.webjars:highcharts:4.1.6'
+
     testCompile 'com.jayway.awaitility:awaitility:1.6.3'
-    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile 'junit:junit:4.11'
 }
 
 shadowJar {
@@ -46,9 +59,9 @@ jar {
     dependsOn 'createConfig'
     baseName = "logstash-scheduler"
     manifest {
-        attributes (
-            'Main-Class': 'org.apache.mesos.logstash.scheduler.Application',
-            'Class-Path':'logstash-scheduler-dependencies.jar'
+        attributes(
+                'Main-Class': 'org.apache.mesos.logstash.scheduler.Application',
+                'Class-Path': 'logstash-scheduler-dependencies.jar'
         )
     }
 }
@@ -56,11 +69,11 @@ jar {
 task copyJar(type: Copy) {
     dependsOn 'shadowJar', 'jar'
 
-    into        'build/docker'
+    into 'build/docker'
 
 
-    from        "build/libs/logstash-scheduler-${project.version}.jar"
-    from        "build/libs/logstash-scheduler-dependencies-${project.version}-all.jar"
+    from "build/libs/logstash-scheduler-${project.version}.jar"
+    from "build/libs/logstash-scheduler-dependencies-${project.version}-all.jar"
 
     rename { String fileName ->
         fileName.replace("-${project.version}-all", "").replace("-${project.version}", "")

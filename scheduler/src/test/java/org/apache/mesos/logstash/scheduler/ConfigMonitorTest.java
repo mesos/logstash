@@ -92,7 +92,7 @@ public class ConfigMonitorTest {
         final Map<String, String> config = startMonitor(monitor);
 
         // Work around because file system watcher on mac is slow
-        // and doesn't notice writes if they happen too fast after eachother
+        // and doesn't notice writes if they happen too fast after each other
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {

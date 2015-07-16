@@ -1,6 +1,3 @@
-Properties props = new Properties()
-props.load(new FileInputStream(projectDir.absolutePath + "/local.properties"))
-
 subprojects {
     apply plugin: 'java'
 
@@ -14,10 +11,6 @@ subprojects {
         maven {
             url "https://jitpack.io"
         }
-    }
-
-    props.each { key, value ->
-        ext.set(key, value)
     }
 }
 

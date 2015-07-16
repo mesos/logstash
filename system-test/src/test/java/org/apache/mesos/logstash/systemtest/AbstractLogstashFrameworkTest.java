@@ -3,8 +3,10 @@ package org.apache.mesos.logstash.systemtest;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
+import org.apache.mesos.logstash.scheduler.ConfigManager;
+import org.apache.mesos.logstash.scheduler.ConfigMonitor;
+import org.apache.mesos.logstash.scheduler.MesosDriver;
 import org.apache.mesos.logstash.scheduler.Scheduler;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
@@ -49,6 +51,7 @@ public abstract class AbstractLogstashFrameworkTest {
     protected List<String> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
+    private MesosDriver driver;
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
@@ -92,8 +95,20 @@ public abstract class AbstractLogstashFrameworkTest {
 
         configFolder = new ConfigFolder(dockerConf, hostConf);
 
-        scheduler = new Scheduler(cluster.getMesosContainer().getMesosMasterURL(), "mesos/logstash-executor", folder.getRoot().getAbsolutePath());
-        Thread t = new Thread(scheduler::run);
+        driver = new MesosDriver(cluster.getMesosContainer().getMesosMasterURL());
+
+        ConfigManager configManager = new ConfigManager(
+                new ConfigMonitor(dockerConf.getAbsolutePath()),
+                new ConfigMonitor(hostConf.getAbsolutePath())
+        );
+
+        scheduler = new Scheduler(driver, configManager);
+
+        scheduler.start();
+        configManager.start();
+
+        Thread t = new Thread(() -> driver.run(scheduler));
+
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
         printRunningContainers();
         System.out.println("*********************************************************************");
@@ -119,14 +134,16 @@ public abstract class AbstractLogstashFrameworkTest {
 
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
         String runningDockerContainers = DockerUtil.consumeInputStream(execCmdStream);
+
         System.out.println(runningDockerContainers);
+
         return runningDockerContainers;
     }
 
 
     @After
     public void stopLogstashFramework(){
-        scheduler.stop();
+        driver.stop();
     }
 
     @AfterClass

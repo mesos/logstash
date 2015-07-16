@@ -1,0 +1,113 @@
+html,
+body,
+.container,
+#app {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.page {
+    padding: 20px 30px;
+}
+
+.mesos-logo {
+    position: absolute;
+    right: 30px;
+    top: 30px;
+    z-index: 2;
+}
+
+.splitPage {
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+}
+
+.splitPage__left {
+    background-color: #181717;
+    width: 300px;
+    flex: 0 0 auto;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.splitPage__right {
+    background-color: #DFDFDF;
+    flex: 1 1 auto;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.menu__header {
+    background-color: #8ad039;
+    height: 70px;
+    color: white;
+    display: flex;
+    padding: 0 30px;
+    align-items: center;
+}
+
+.menu__list {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu__list-item {
+    padding: 15px 30px;
+    background-color: #222222;
+    color: white;
+    text-decoration: none;
+}
+
+.menu__list-item:hover {
+    background-color: #DFDFDF;
+}
+
+.menu__footer {
+    height: 40px;
+    flex: 0 0 auto;
+    display: flex;
+    background-color: gray;
+}
+
+.menu__footer-item {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.configForm {
+    display: block;
+    width: 100%;
+}
+
+.configForm__name {
+    display: block;
+    width: 100%;
+}
+
+.configForm__input {
+    display: block;
+    min-height: 100px;
+    width: 100%;
+}
+
+.configList {
+    list-style-type: none;
+    padding: 0;
+}
+
+.config {
+    list-style-type: none;
+}

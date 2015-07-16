@@ -1,75 +1,91 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.commons.cli.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Scope;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
-public final class Application {
+@SpringBootApplication
+@EnableAutoConfiguration
+@ComponentScan
+public class Application {
 
-    private static final Logger LOGGER = Logger.getLogger(Scheduler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
-
-    private static Options OPTIONS = new Options() {{
-        addOption("m", "masterURL host or IP", true, "masterURL host or IP");
-    }};
+    private static String masterURL = null;
 
     protected Application() {}
 
     public static void main(String[] args) throws IOException {
 
-        LOGGER.info("Command line arguments: ");
+        readConfigFromCommandLine(args);
 
-        for (String arg : args) {
-            LOGGER.info(arg);
-        }
-
-        CommandLine cmdLine = parseCommandLineArgs(args);
-        String masterHost = cmdLine.getOptionValue("m", null);
-
-        if (masterHost == null) {
-            printUsage(OPTIONS);
-            return;
-        }
-
-        InputStream is = Application.class.getClassLoader().getResourceAsStream("executor-name.txt");
-        String executorImageName = IOUtils.toString(is);
-
-        LOGGER.info("Executor Name: " + executorImageName);
-
-        final Scheduler scheduler = new Scheduler(masterHost, executorImageName);
-
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                scheduler.stop();
-            }
-        }));
-
-        LOGGER.info("Starting Logstash on Mesos");
-
-        scheduler.run();
+        SpringApplication app = new SpringApplication(Application.class);
+        app.setShowBanner(false);
+        app.run(args);
     }
 
-    private static void printUsage(Options options) {
-        LOGGER.info("User doesn't know what he is doing");
-
-        HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp(Configuration.FRAMEWORK_NAME, options);
+    @Bean
+    @Scope("prototype")
+    public ExecutorService getExecutor() {
+        return Executors.newSingleThreadExecutor();
     }
 
-    private static CommandLine parseCommandLineArgs(String[] args) {
-        try {
-            CommandLineParser parser = new BasicParser();
-            return parser.parse(OPTIONS, args);
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
+    @Bean
+    @Qualifier("masterURL")
+    public String getMasterURL() {
+        return masterURL;
+    }
+
+    @Bean
+    @Qualifier("host")
+    public ConfigMonitor createHostMonitor() {
+        return new ConfigMonitor("config/host");
+    }
+
+    @Bean
+    @Qualifier("docker")
+    public ConfigMonitor createDockerMonitor() {
+        return new ConfigMonitor("config/docker");
+    }
+
+    @Bean
+    public Driver getDriver() {
+        // FIXME: Hack for testing frontend.
+        if (true) {
+            return new NoopDriver();
         }
+        else {
+            return new MesosDriver(masterURL);
+        }
+    }
+
+    private static void readConfigFromCommandLine(String... args) {
+        List<String> argList = Arrays.asList(args);
+        int index = argList.indexOf("-m");
+
+        if (index != -1 && argList.size() >= index) {
+            masterURL = argList.get(index + 1);
+            LOGGER.debug("MasterURL configured as: '%s'", masterURL);
+        }
+        else {
+            printUsage();
+        }
+    }
+
+    private static void printUsage() {
+        System.err.println("Usage: logstash-scheduler -m <master-url>");
+        System.exit(1);
     }
 }

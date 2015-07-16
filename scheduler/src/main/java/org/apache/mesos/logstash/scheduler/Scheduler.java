@@ -1,255 +1,199 @@
 package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.log4j.Logger;
-import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.ExecutorID;
+import org.apache.mesos.Protos.SlaveID;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
+import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
+import org.apache.mesos.logstash.scheduler.ui.Executor;
+import org.apache.mesos.logstash.scheduler.util.Clock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
+import static java.util.Collections.synchronizedCollection;
+import static java.util.Collections.synchronizedSet;
+import static org.apache.mesos.Protos.TaskState.TASK_FINISHED;
+import static org.apache.mesos.Protos.TaskState.TASK_LOST;
+import static org.apache.mesos.Protos.TaskState.TASK_RUNNING;
 
-    public static final Logger LOGGER = Logger.getLogger(Scheduler.class);
+@Component
+public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
-    private static final int MESOS_PORT = 5050;
+    private static final String TASK_NAME = "LOGSTASH_SERVER";
+    private static final String TASK_DATE_FORMAT = "yyyyMMdd'T'HHmmss.SSS'Z'";
 
-    public static final String TASK_DATE_FORMAT = "yyyyMMdd'T'HHmmss.SSS'Z'";
+    private final Driver driver;
+    private final ConfigManager configManager;
+    private final Set<Executor> executors;
+    private final Collection<FrameworkMessageListener> listeners;
 
-    private Clock clock = new Clock();
-    private Set<Task> tasks = new HashSet<>();
+    private final Clock clock;
+    private final Set<Task> tasks;
 
-    private List<ExecutorMessageListener> executorMessageListeners = new ArrayList<>();
-
-    private final String masterURL; // the URL of the mesos masterURL
-    private final String executorImageName;
-
-    private final MesosSchedulerDriver driver;
-
-    // one-to-one map of slave and corresponding executor
-    private Map<Protos.SlaveID, Protos.ExecutorID> executors;
-    private Map<String, String> dockerConfigurations;
-    private Map<String, String> hostConfigurations;
-
-    // As per the DCOS Service Specification, setting the failover timeout to a large value;
-    private static final double FAILOVER_TIMEOUT = 86400000;
     private Protos.FrameworkID frameworkId;
 
-    public Scheduler(String masterURL, String executorImageName) {
-        this(masterURL, executorImageName, "config");
-    }
-    public Scheduler(String masterURL, String executorImageName, String configDir) {
-        this.masterURL = masterURL;
-        this.executorImageName = executorImageName;
-        this.driver = buildSchedulerDriver();
-        this.executors = Collections.synchronizedMap(new HashMap<>());
 
-        ConfigMonitor dockerMonitor = new ConfigMonitor(configDir + "/docker");
-        dockerMonitor.start(this::newDockerConfigAvailable);
-
-        ConfigMonitor hostMonitor = new ConfigMonitor(configDir + "/host");
-        hostMonitor.start(this::newHostConfigAvailable);
+    @Autowired
+    public Scheduler(Driver driver, ConfigManager configManager) {
+        this.driver = driver;
+        this.configManager = configManager;
+        this.executors = synchronizedSet(new HashSet<>());
+        this.listeners = synchronizedCollection(new ArrayList<>());
+        clock = new Clock();
+        tasks = new HashSet<>();
     }
 
-    private MesosSchedulerDriver buildSchedulerDriver() {
-        final Protos.FrameworkInfo frameworkInfo = buildFramework();
 
-        LOGGER.info("Connecting to masterURL " + getMesosUrl());
-
-        return new MesosSchedulerDriver(this, frameworkInfo, getMesosUrl());
+    @PostConstruct
+    public void start() {
+        configManager.registerListener(this);
     }
 
-    private synchronized void newDockerConfigAvailable(Map<String, String> config) {
-        LOGGER.info("New docker config!");
-        this.dockerConfigurations = config;
-        broadcastConfig(dockerConfigurations, hostConfigurations);
+
+    public void registerListener(FrameworkMessageListener listener) {
+        listeners.add(listener);
     }
 
-    private synchronized void newHostConfigAvailable(Map<String, String> config) {
-        LOGGER.info("New host config!");
-        this.hostConfigurations = config;
-        broadcastConfig(dockerConfigurations, hostConfigurations);
+
+    @Override
+    public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
+        // FIXME: We are required to persist this between runs for DCOS.
+        this.frameworkId = frameworkID;
     }
 
-    private void broadcastConfig(Map<String, String> dockerConfigurations, Map<String, String> hostConfigurations) {
-        if(dockerConfigurations == null || hostConfigurations == null) {
-            LOGGER.info("Skipping broadcast, haven't read all configs yet");
-            return;
+
+    @Override
+    public void resourceOffers(SchedulerDriver schedulerDriver, List<Protos.Offer> list) {
+        for (Protos.Offer offer : list) {
+            LOGGER.debug("Received offer from slave " + offer.getSlaveId() + ", " + offer.getHostname());
+
+            if (shouldAcceptOffer(offer)) {
+                LOGGER.info("Accepting Offer. id=" + offer.getId());
+
+                String id = formatTaskId(offer);
+                Protos.TaskInfo taskInfo = buildTask(offer, id);
+
+                tasks.add(new Task(offer.getHostname(), id));
+                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
+            } else {
+                LOGGER.info("Declining Offer. id=" + offer.getId());
+                schedulerDriver.declineOffer(offer.getId());
+            }
         }
-        LOGGER.info("Broadcasting configuration change");
-        byte[] message = configMapToByteArray(dockerConfigurations, hostConfigurations);
-        for(Map.Entry<Protos.SlaveID, Protos.ExecutorID> entry : executors.entrySet()) {
-            LOGGER.info("Message sent to " + entry.getKey());
-            driver.sendFrameworkMessage(entry.getValue(), entry.getKey(), message);
+    }
+
+
+    @Override
+    public synchronized void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus status) {
+        LOGGER.info("Task status update! " + status.toString());
+
+        if (status.getState() == TASK_RUNNING) {
+
+            LOGGER.info("Executor Started. slaveId=" + status.getSlaveId() + ", executorId=" + status.getExecutorId());
+
+            // Add the executor to the set of active executors.
+            executors.add(Executor.fromTaskStatus(status));
+
+            // Send it the newest configuration.
+            byte[] config = marshallConfig(configManager.getConfig());
+            sendMessage(Executor.fromTaskStatus(status), config);
+        } else if (status.getState() == TASK_FINISHED || status.getState() == TASK_LOST) {
+
+            LOGGER.info("Executor Removed. slaveId=" + status.getSlaveId() + ", executorId=" + status.getExecutorId());
+
+            // Remove the executor from the set of active executors.
+            executors.remove(Executor.fromTaskStatus(status));
         }
     }
 
-    private static byte[] configMapToByteArray(Map<String, String> dockerConfigurations, Map<String, String> hostConfigurations) {
+
+    @Override
+    public void configUpdated(ConfigManager.ConfigPair config) {
+        // Configs have changed. Notify all executors.
+        byte[] message = marshallConfig(config);
+        executors.stream().forEach(executor -> sendMessage(executor, message));
+    }
+
+
+    private byte[] marshallConfig(ConfigManager.ConfigPair config) {
         LogstashProtos.SchedulerMessage.Builder builder = LogstashProtos.SchedulerMessage.newBuilder();
 
-        for(Map.Entry<String, String> entry : dockerConfigurations.entrySet()) {
+        for (Map.Entry<String, String> entry : config.getDockerConfig().entrySet()) {
             builder.addDockerConfig(LogstashProtos.LogstashConfig.newBuilder()
                     .setConfig(entry.getValue())
                     .setFrameworkName(entry.getKey()));
         }
 
-        for(Map.Entry<String, String> entry : hostConfigurations.entrySet()) {
+        for (Map.Entry<String, String> entry : config.getHostConfig().entrySet()) {
             builder.addHostConfig(LogstashProtos.LogstashConfig.newBuilder()
                     .setConfig(entry.getValue())
                     .setFrameworkName(entry.getKey()));
         }
 
         return builder.build().toByteArray();
-
     }
 
-    private Protos.FrameworkInfo buildFramework() {
-        final Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder();
-        frameworkBuilder.setName(Configuration.FRAMEWORK_NAME);
-        frameworkBuilder.setUser("root"); // TODO: change, (thb) meaning what
-        frameworkBuilder.setCheckpoint(true);
-        frameworkBuilder.setFailoverTimeout(FAILOVER_TIMEOUT);
-        return frameworkBuilder.build();
+
+    private void sendMessage(Executor executor, byte[] config) {
+        driver.sendFrameworkMessage(executor.getExecutorID(), executor.getSlaveID(), config);
     }
 
-    public String getMesosUrl() {
-        return this.masterURL + ":" + MESOS_PORT;
-    }
 
     @Override
-    public void run() {
+    public void frameworkMessage(SchedulerDriver schedulerDriver, ExecutorID executorID, SlaveID slaveID, byte[] bytes) {
 
-        driver.run();
-    }
-
-    @Override
-    public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
-        LOGGER.info("Registered against Mesos");
-        this.frameworkId = frameworkID;
-    }
-
-    @Override
-    public void reregistered(SchedulerDriver schedulerDriver, Protos.MasterInfo masterInfo) {
-        LOGGER.info("Reregistered against Mesos");
-    }
-
-    @Override
-    public void resourceOffers(SchedulerDriver schedulerDriver, List<Protos.Offer> list) {
-        for (Protos.Offer offer : list) {
-            LOGGER.info("Received offer from slave " + offer.getSlaveId() + ", " + offer.getHostname());
-
-            if (shouldAcceptOffer(offer)) {
-                LOGGER.info("Offer accepted");
-
-                String id = taskId(offer);
-                Protos.TaskInfo taskInfo = buildTask(schedulerDriver, offer, id);
-
-                LOGGER.info("Launching task..");
-                tasks.add(new Task(offer.getHostname(), id));
-                schedulerDriver.launchTasks(Collections.singleton(offer.getId()), Collections.singleton(taskInfo));
-                LOGGER.info("Task launched.");
-            } else {
-                LOGGER.info("Offer declined");
-                schedulerDriver.declineOffer(offer.getId());
-            }
-        }
-    }
-
-    @Override
-    public void offerRescinded(SchedulerDriver schedulerDriver, Protos.OfferID offerID) {
-        LOGGER.info("Offer rescinded");
-
-    }
-
-    @Override
-    public synchronized void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus taskStatus) {
-        LOGGER.info("Task status update! " + taskStatus.toString());
-
-        if(taskStatus.getState() == Protos.TaskState.TASK_RUNNING) {
-            LOGGER.info("Slave " + taskStatus.getSlaveId() + ", executor " + taskStatus.getExecutorId());
-            executors.put(taskStatus.getSlaveId(), taskStatus.getExecutorId());
-
-            // Tell the new instance of our configuration
-            byte[] msg = configMapToByteArray(dockerConfigurations, hostConfigurations);
-            schedulerDriver.sendFrameworkMessage(taskStatus.getExecutorId(), taskStatus.getSlaveId(), msg);
-        }
-    }
-
-    public void requestInternalStatus(){
-
-        byte[] message = LogstashProtos.SchedulerMessage.newBuilder().setCommand("REPORT_INTERNAL_STATUS").build().toByteArray();
-
-        for(Map.Entry<Protos.SlaveID, Protos.ExecutorID > executor : executors.entrySet()){
-            driver.sendFrameworkMessage(executor.getValue(),executor.getKey(), message);
-        }
-    }
-
-    @Override
-    public void frameworkMessage(SchedulerDriver schedulerDriver, Protos.ExecutorID executorID, Protos.SlaveID slaveID, byte[] bytes) {
-        LOGGER.info("Message received");
+        Executor executor = new Executor(slaveID, executorID);
+        ExecutorMessage message;
 
         try {
-            LogstashProtos.ExecutorMessage msg = LogstashProtos.ExecutorMessage.parseFrom(bytes);
-
-
-            for (ExecutorMessageListener executorMessageListener : executorMessageListeners) {
-                executorMessageListener.onNewMessageReceived(msg);
-            }
-
-            LOGGER.info("Received message from executor: Type: " + msg.getType() + " Content: " + (msg.hasGlobalStateInfo() ? msg.getGlobalStateInfo() : ""));
-
-
+            message = ExecutorMessage.parseFrom(bytes);
         } catch (InvalidProtocolBufferException e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to parse framework message.", e);
+            return;
         }
+
+        LOGGER.info("Received Framework Message: type=" + message.getType() + ", content='" + (message.hasGlobalStateInfo() ? message.getGlobalStateInfo() : "") + "'");
+        listeners.stream().forEach(l -> l.frameworkMessage(executor, message));
     }
 
 
-    @Override
-    public void disconnected(SchedulerDriver schedulerDriver) {
-        LOGGER.error("Disconnected :(");
-    }
-
-    @Override
-    public void slaveLost(SchedulerDriver schedulerDriver, Protos.SlaveID slaveID) {
-        LOGGER.error("Slave losta");
-    }
-
-    @Override
-    public void executorLost(SchedulerDriver schedulerDriver, Protos.ExecutorID executorID, Protos.SlaveID slaveID, int i) {
-        LOGGER.error("Executor losta");
-    }
-
-    @Override
-    public void error(SchedulerDriver schedulerDriver, String s) {
-        LOGGER.error("It broke. " + s);
-    }
-
-    private String taskId(Protos.Offer offer) {
+    private String formatTaskId(Protos.Offer offer) {
         String date = new SimpleDateFormat(TASK_DATE_FORMAT).format(clock.now());
-        return String.format(Configuration.FRAMEWORK_NAME + "_%s_%s", offer.getHostname(), date);
+        return String.format(Constants.FRAMEWORK_NAME + "_%s_%s", offer.getHostname(), date);
     }
 
-    private Protos.TaskInfo buildTask(SchedulerDriver driver, Protos.Offer offer, String id) {
 
-        LOGGER.info("BUILDING task!");
+    private Protos.TaskInfo buildTask(Protos.Offer offer, String id) {
+
+        LOGGER.info("Building Task");
+
         Protos.TaskInfo.Builder taskInfoBuilder = Protos.TaskInfo.newBuilder()
-                .setName(Configuration.TASK_NAME)
+                .setName(TASK_NAME)
                 .setTaskId(Protos.TaskID.newBuilder().setValue(id))
                 .setSlaveId(offer.getSlaveId())
+
+                // FIXME: Only accept the recources we need.
                 .addAllResources(offer.getResourcesList());
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
                 .setForcePullImage(false)
-                .setImage(executorImageName.replace("docker.io/", ""));
+                .setImage("mesos/logstash-executor");
 
 
-        LOGGER.info("Using Executor to start Logstash cloud mesos on slaves");
+        LOGGER.info("Using Executor to run Logstash cloud mesos on slaves");
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-                .setExecutorId(Protos.ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
+                .setExecutorId(ExecutorID.newBuilder().setValue(UUID.randomUUID().toString()))
                 .setFrameworkId(frameworkId)
                 .setContainer(Protos.ContainerInfo.newBuilder().setType(Protos.ContainerInfo.Type.DOCKER).setDocker(dockerExecutor.build()))
                 .setName("Logstash_" + UUID.randomUUID())
@@ -267,29 +211,65 @@ public class Scheduler implements org.apache.mesos.Scheduler, Runnable {
         return taskInfoBuilder.build();
     }
 
+
     private boolean shouldAcceptOffer(Protos.Offer offer) {
-        // Don't start the same framework multiple times on the same host
+        // Don't run the same framework multiple times on the same host
+
+        // FIXME (thb): What if we never actually manage to get an executor running on
+        // this host or it fails after a while. We will never try again.
         for (Task task : tasks) {
             if (task.getHostname().equals(offer.getHostname())) {
                 return false;
             }
         }
+
+        // FIXME: What if the offer does not contain enough resources?
+        // e.g. only 32MB mem when we need 200MB
         return true;
     }
 
-    public void stop() {
-        this.removeAllExecutorMessageListeners();
-        // FIXME: Is the driver thread safe?
-        driver.stop();
+
+    public void requestInternalStatus() {
+
+        byte[] message = SchedulerMessage.newBuilder()
+                .setCommand("REPORT_INTERNAL_STATUS")
+                .build()
+                .toByteArray();
+
+        executors.stream().forEach(executor -> sendMessage(executor, message));
     }
 
 
-    public synchronized void addExecutorMessageListener(ExecutorMessageListener executorMessageListener) {
-        this.executorMessageListeners.add(executorMessageListener);
+    @Override
+    public void reregistered(SchedulerDriver schedulerDriver, Protos.MasterInfo masterInfo) {
+        LOGGER.info("Re-registered with master. ip=" + masterInfo.getId());
     }
 
-    public void removeAllExecutorMessageListeners() {
-        this.executorMessageListeners.clear();
 
+    @Override
+    public void disconnected(SchedulerDriver schedulerDriver) {
+        LOGGER.warn("Disconnected from master.");
+    }
+
+
+    @Override
+    public void error(SchedulerDriver schedulerDriver, String errorMessage) {
+        LOGGER.error("Cluster Error. " + errorMessage);
+    }
+
+
+    @Override
+    public void offerRescinded(SchedulerDriver schedulerDriver, Protos.OfferID offerID) {
+        LOGGER.info("Offer Rescinded");
+    }
+
+
+    @Override
+    public void slaveLost(SchedulerDriver schedulerDriver, SlaveID slaveID) {
+    }
+
+
+    @Override
+    public void executorLost(SchedulerDriver schedulerDriver, ExecutorID executorID, SlaveID slaveID, int exitStatus) {
     }
 }

@@ -55,12 +55,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     @Before
     public void addExecutorMessageListener() {
         executorMessageListener = new ExecutorMessageListenerTestImpl();
-        scheduler.addExecutorMessageListener(executorMessageListener);
-    }
-
-    @After
-    public void removeExecutorMessageListener() {
-        scheduler.removeAllExecutorMessageListeners();
+        scheduler.registerListener(executorMessageListener);
     }
 
 
@@ -79,7 +74,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
         createAndStartDummyContainer();
 
-        List<ExecutorMessage> executorMessages = requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
+        requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
             @Override
             public boolean test(List<ExecutorMessage> executorMessages) {
                 return 1 == executorMessages.size() && 2 == executorMessages.get(0).getGlobalStateInfo().getRunningContainerCount();
@@ -144,23 +139,20 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
 
         try {
-            await().atMost(90, TimeUnit.SECONDS).until(new Callable<Boolean>() {
-                @Override
-                public Boolean call() throws Exception {
-                    try {
-                        InputStream execCmdStream = dockerClient.execStartCmd(finalExecCreateCmdResponse.getId()).exec();
-                        String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
-                        if (logstashOut != null && logstashOut.contains(logString)) {
-                            System.out.println("Logstash output: " + logstashOut);
-                            return true;
-                        }
-                        return false;
-
-                    } catch (InternalServerErrorException e) {
-                        System.out.println("ERROR while polling logstash executor (" + executorId + "): " + e);
-
-                        return false;
+            await().atMost(90, TimeUnit.SECONDS).until(() -> {
+                try {
+                    InputStream execCmdStream = dockerClient.execStartCmd(finalExecCreateCmdResponse.getId()).exec();
+                    String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
+                    if (logstashOut != null && logstashOut.contains(logString)) {
+                        System.out.println("Logstash output: " + logstashOut);
+                        return true;
                     }
+                    return false;
+
+                } catch (InternalServerErrorException e) {
+                    System.out.println("ERROR while polling logstash executor (" + executorId + "): " + e);
+
+                    return false;
                 }
             });
         } catch (ConditionTimeoutException e) {
@@ -216,6 +208,4 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
         return containerId;
     }
-
-
 }
