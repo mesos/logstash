@@ -38,6 +38,19 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
             "codec => \"plain\" \n" +
             "flush_interval => 0}}"; // the flush interval is important for our test
 
+    @Before
+    public void giveTimeToDockerDaemonCleanup() {
+
+        // Sometimes we have lingering 'zombie'-containers that
+        // cause tests to fail. Ensure docker has time to stop all
+        // containers between every test
+
+        try {
+            Thread.sleep(3_000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     @Before
     public void addExecutorMessageListener() {

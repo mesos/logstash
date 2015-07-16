@@ -15,7 +15,7 @@ dependencies {
 
 
 
-task systemTest(type: Test) {
+test {
     include '**/*SystemTest*'
     testLogging {
         showStandardStreams = true
@@ -27,5 +27,5 @@ task systemTest(type: Test) {
 
 
 // bring up the cluster before tests
-systemTest.dependsOn project(':executor').buildDockerImage
+test.dependsOn project(':executor').buildDockerImage
 
