@@ -9,7 +9,11 @@ subprojects {
     version = '1.0'
 
     repositories {
+        mavenLocal()
         mavenCentral()
+        maven {
+            url "https://jitpack.io"
+        }
     }
 
     props.each { key, value ->

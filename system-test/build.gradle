@@ -4,116 +4,28 @@ dependencies {
     compile project(':scheduler')
     compile project(':executor')
 
-    testCompile project(':mini-mesos')
 
     testCompile 'junit:junit:4.11'
     testCompile 'com.github.docker-java:docker-java:1.3.0'
     testCompile 'com.mashape.unirest:unirest-java:1.4.5'
     testCompile 'com.jayway.awaitility:awaitility:1.6.3'
-    testCompile 'org.apache.commons-lang:commons-lang:2.6'
-}
-
-//
-//  Configuration
-//
-task copyDockerComposeConfig(type: Copy) {
-    from 'src/templates'
-    into "${project.buildDir}/resources/test/mesos-ls/"
-
-    include 'docker-compose.yml.template'
-
-    rename { file -> 'docker-compose.yml' }
-
-    expand(scheduler: schedulerImageName)
-}
-
-task copyMesosSlaveConfig(type: Copy) {
-    from "${project.projectDir}/src/test/resources/mesos-ls/"
-    into "${project.buildDir}/resources/test/mesos-ls/"
-}
-
-task configure {
-    dependsOn copyMesosSlaveConfig, copyDockerComposeConfig
+//    testCompile 'org.apache.commons-lang:commons-lang:2.6'
+    testCompile 'com.github.ContainerSolutions:mini-mesos:e0021ade99fb570d1771ca6721ab812d40cfa033'
 }
 
 
-//
-//  Docker Compose Tasks
-//
-def composeCommands = ["stop", "build", "rm", "up"]
-def containers = ["mesosmaster", "slave1", "scheduler"]
 
-containers.each { container ->
-    composeCommands.each { command ->
-        task "dockerCompose${command.capitalize()}${container.capitalize()}"(type: Exec) {
-            dependsOn configure
-            doFirst {
-                println "Issuing docker-compose $command $container"
-            }
-            workingDir "${project.buildDir}/resources/test/mesos-ls"
-            if(command == "up") {
-                commandLine 'docker-compose', "up", "-d", container
-            }
-            else {
-                commandLine 'docker-compose', command, container
-            }
-        }
+task systemTest(type: Test) {
+    include '**/*SystemTest*'
+    testLogging {
+        showStandardStreams = true
     }
-}
+    outputs.upToDateWhen { false }
 
-// slave needs executor image to run
-dockerComposeUpSlave1.dependsOn dockerComposeStopSlave1
-
-// scheduler image needs scheduler image to run (doesn't need to be pushed though)
-dockerComposeUpScheduler.dependsOn project(':scheduler').buildDockerImage
-dockerComposeUpScheduler.dependsOn dockerComposeStopScheduler
-
-
-//
-//  Cluster Tasks
-//
-task clusterStatus(type: Exec) {
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-    commandLine 'docker-compose', "ps"
-}
-
-task clusterUp(dependsOn: dockerComposeUpSlave1)
-
-task clusterDown(type: Exec) {
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-    commandLine 'docker-compose', "stop"
-}
-
-
-//
-// Redeploying
-//
-task stopFramework(type: Exec) {
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-    commandLine 'docker-compose', "stop", "slave1", "scheduler"
-}
-
-task rmFramework(type: Exec) {
-    dependsOn stopFramework
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-    commandLine 'docker-compose', "rm", "-f", "slave1", "scheduler"
-}
-
-task redeploy(type: Exec) {
-    dependsOn rmFramework, configure
-    dependsOn project(':scheduler').buildDockerImage
-    dependsOn project(':executor').buildDockerImage
-
-    mustRunAfter clusterUp // IMPORTANT!
-
-    workingDir "${project.buildDir}/resources/test/mesos-ls"
-    commandLine 'docker-compose', "up", "-d", "slave1", "scheduler"
+    jvmArgs "-Djava.library.path=/usr/local/lib"
 }
 
 
 // bring up the cluster before tests
-test.dependsOn clusterUp, redeploy
+systemTest.dependsOn project(':executor').buildDockerImage
 
-// bring it down after tests
-test.finalizedBy clusterDown
-//sclusterDown.finalizedBy clusterRm

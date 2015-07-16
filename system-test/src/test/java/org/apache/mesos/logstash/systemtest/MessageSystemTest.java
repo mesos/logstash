@@ -24,7 +24,7 @@ import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 
 
-public class MessageTest extends AbstractLogstashFrameworkTest {
+public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
     public static final String BUSYBOX_CONF =
             "input {\n" +

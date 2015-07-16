@@ -1,3 +1,0 @@
-[submodule "mini-mesos"]
-	path = mini-mesos
-	url = https://github.com/ContainerSolutions/mini-mesos
