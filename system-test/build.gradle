@@ -10,7 +10,7 @@ dependencies {
     testCompile 'com.mashape.unirest:unirest-java:1.4.5'
     testCompile 'com.jayway.awaitility:awaitility:1.6.3'
 //    testCompile 'org.apache.commons-lang:commons-lang:2.6'
-    testCompile 'com.github.ContainerSolutions:mini-mesos:e0021ade99fb570d1771ca6721ab812d40cfa033'
+    testCompile 'com.github.ContainerSolutions:mini-mesos:-SNAPSHOT'
 }
 
 
