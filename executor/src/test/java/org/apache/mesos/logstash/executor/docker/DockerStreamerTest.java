@@ -22,6 +22,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+@Ignore
 public class DockerStreamerTest {
 
     private DockerStreamer streamer;
