@@ -47,7 +47,7 @@ public class ConfigManagerTest {
 
         configManager.onConfigUpdated(LogType.DOCKER, frameworks.stream());
 
-        verify(logstash, times(1)).updateConfig(LogType.DOCKER, "bas-config\nfoo-config\nfoo-config");
+        verify(logstash, times(1)).updateConfig(LogType.DOCKER, "# bas\nbas-config\n# foo\nfoo-config\n# foo\nfoo-config");
     }
 
 }
