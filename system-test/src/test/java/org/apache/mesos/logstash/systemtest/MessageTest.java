@@ -3,18 +3,19 @@ package org.apache.mesos.logstash.systemtest;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.jayway.awaitility.core.ConditionTimeoutException;
 import org.apache.commons.io.FileUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.state.State;
+import org.apache.mesos.mini.util.Predicate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -23,19 +24,19 @@ import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 
 
-public class MessageTest extends AbstractLogstashFrameworkTest{
+public class MessageTest extends AbstractLogstashFrameworkTest {
 
     public static final String BUSYBOX_CONF =
             "input {\n" +
-            "  file {\n" +
-            "    docker-path => \"/tmp/testlogs/systemtest.log\"\n" +
-            "    start_position => \"beginning\"\n" +
-            "    debug => true\n" +
-            "  }\n" +
-            "}\n";
+                    "  file {\n" +
+                    "    docker-path => \"/tmp/testlogs/systemtest.log\"\n" +
+                    "    start_position => \"beginning\"\n" +
+                    "    debug => true\n" +
+                    "  }\n" +
+                    "}\n";
     private static final String HOST_CONF = "output { file {path=>\"/tmp/logstash.out\" \n" +
-                                                            "codec => \"plain\" \n" +
-                                                            "flush_interval => 0}}"; // the flush interval is important for our test
+            "codec => \"plain\" \n" +
+            "flush_interval => 0}}"; // the flush interval is important for our test
 
 
     @Before
@@ -63,14 +64,14 @@ public class MessageTest extends AbstractLogstashFrameworkTest{
     @Test
     public void logstashDiscoversOtherRunningContainers() throws Exception {
 
-        State state = cluster.getStateInfo();
-
         createAndStartDummyContainer();
 
-        List<ExecutorMessage> executorMessages = requestInternalStatusAndWaitForResponse();
-        LogstashProtos.GlobalStateInfo globalStateInfo = executorMessages.get(0).getGlobalStateInfo();
-        assertEquals(2, globalStateInfo.getRunningContainerCount()); // the executor itself is running in a container
-
+        List<ExecutorMessage> executorMessages = requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
+            @Override
+            public boolean test(List<ExecutorMessage> executorMessages) {
+                return 1 == executorMessages.size() && 2 == executorMessages.get(0).getGlobalStateInfo().getRunningContainerCount();
+            }
+        });
     }
 
 
@@ -117,7 +118,7 @@ public class MessageTest extends AbstractLogstashFrameworkTest{
     }
 
 
-    private void waitForLogstashToProcessLogEvents( final String logString, String executorId) {
+    private void waitForLogstashToProcessLogEvents(final String logString, String executorId) {
         DockerClient dockerClient = clusterConfig.dockerClient;
         ExecCreateCmdResponse execCreateCmdResponse;
 
@@ -128,26 +129,34 @@ public class MessageTest extends AbstractLogstashFrameworkTest{
 
         final ExecCreateCmdResponse finalExecCreateCmdResponse = execCreateCmdResponse;
 
-        await().atMost(90, TimeUnit.SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                try {
-                    InputStream execCmdStream = dockerClient.execStartCmd(finalExecCreateCmdResponse.getId()).exec();
-                    String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
-                    if (logstashOut != null && logstashOut.contains(logString)) {
-                        System.out.println("Logstash output: " + logstashOut);
-                        return true;
+
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(new Callable<Boolean>() {
+                @Override
+                public Boolean call() throws Exception {
+                    try {
+                        InputStream execCmdStream = dockerClient.execStartCmd(finalExecCreateCmdResponse.getId()).exec();
+                        String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
+                        if (logstashOut != null && logstashOut.contains(logString)) {
+                            System.out.println("Logstash output: " + logstashOut);
+                            return true;
+                        }
+                        return false;
+
+                    } catch (InternalServerErrorException e) {
+                        System.out.println("ERROR while polling logstash executor (" + executorId + "): " + e);
+
+                        return false;
                     }
-                    System.out.println("Unmatched logstash output: " + logstashOut);
-                    return false;
-
-                } catch (InternalServerErrorException e) {
-                    System.out.println("ERROR while polling logstash executor: " + e);
-
-                    return false;
                 }
-            }
-        });
+            });
+        } catch (ConditionTimeoutException e) {
+            InputStream execCmdStream = dockerClient.execStartCmd(finalExecCreateCmdResponse.getId()).exec();
+            String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
+            System.out.println("Unmatched logstash output of executor ("+executorId+"): " + logstashOut);
+
+            throw e;
+        }
     }
 
     private String getExecutorContainerId() {
@@ -161,7 +170,7 @@ public class MessageTest extends AbstractLogstashFrameworkTest{
                 .withCmd("bash", "-c", "docker ps | grep logstash | awk '{ print $1 }'").exec();
 
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
-        return DockerUtil.consumeInputStream(execCmdStream).replaceAll("[^a-z0-9]*","");
+        return DockerUtil.consumeInputStream(execCmdStream).replaceAll("[^a-z0-9]*", "");
     }
 
     private void simulateLogEvent(String logString) {

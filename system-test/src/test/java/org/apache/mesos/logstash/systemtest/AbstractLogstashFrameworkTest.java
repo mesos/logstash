@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.scheduler.Scheduler;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
@@ -65,13 +66,20 @@ public abstract class AbstractLogstashFrameworkTest {
     @After
     public void stopContainers() {
 
+        if (containersToBeStopped.isEmpty()){
+            return;
+        }
 
-        String stopString = "docker stop " + containersToBeStopped.stream().collect(Collectors.joining(" "));
+        String stopString = "docker stop -t=0 " + containersToBeStopped.stream().collect(Collectors.joining(" "));
+
+        System.out.println("STOPPING test containers: " + stopString);
 
         String execId = clusterConfig.dockerClient.execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
                 .withCmd("bash", "-c", stopString).exec().getId();
 
-        clusterConfig.dockerClient.execStartCmd(execId).exec();
+        InputStream inputStream = clusterConfig.dockerClient.execStartCmd(execId).exec();
+        String output = DockerUtil.consumeInputStream(inputStream);
+        System.out.println(output);
     }
 
     @Before
@@ -86,6 +94,9 @@ public abstract class AbstractLogstashFrameworkTest {
 
         scheduler = new Scheduler(cluster.getMesosContainer().getMesosMasterURL(), "mesos/logstash-executor", folder.getRoot().getAbsolutePath());
         Thread t = new Thread(scheduler::run);
+        System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
+        printRunningContainers();
+        System.out.println("*********************************************************************");
 
         t.setName("Mesos-Logstash-Scheduler");
         t.setDaemon(true);
@@ -94,6 +105,22 @@ public abstract class AbstractLogstashFrameworkTest {
         // TODO move out into a Rule
         waitForLogstashFramework();
         waitForExcutorTaskIsRunning();
+    }
+
+
+    private String printRunningContainers() {
+        DockerClient dockerClient = clusterConfig.dockerClient;
+        ExecCreateCmdResponse execCreateCmdResponse;
+        InputStream execCmdStream;
+
+        execCreateCmdResponse = dockerClient.execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
+                .withAttachStdout(true)
+                .withCmd("bash", "-c", "docker ps").exec();
+
+        execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
+        String runningDockerContainers = DockerUtil.consumeInputStream(execCmdStream);
+        System.out.println(runningDockerContainers);
+        return runningDockerContainers;
     }
 
 
@@ -167,17 +194,27 @@ public abstract class AbstractLogstashFrameworkTest {
      *
      * @return Messages
      */
-    public List<LogstashProtos.ExecutorMessage> requestInternalStatusAndWaitForResponse() {
+    public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(Predicate<List<ExecutorMessage>> predicate) {
         int seconds = 10;
         int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
         executorMessageListener.clearAllMessages();
         scheduler.requestInternalStatus();
 
-        await("Waiting for " + numberOfExpectedMessages + " internal status report messages from executor").atMost(seconds, TimeUnit.SECONDS).until(new Callable<Boolean>() {
+        await("Waiting for " + numberOfExpectedMessages + " internal status report messages from executor").atMost(seconds, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 try {
-                    return executorMessageListener.getExecutorMessages().size() >= numberOfExpectedMessages;
+                    if (executorMessageListener.getExecutorMessages().size() >= numberOfExpectedMessages) {
+
+                        if (predicate.test(executorMessageListener.getExecutorMessages())) {
+                            return true;
+                        } else {
+                            executorMessageListener.clearAllMessages();
+                            scheduler.requestInternalStatus();
+                            return false;
+                        }
+                    }
+                    return false;
                 } catch (InternalServerErrorException e) {
                     // This probably means that the mesos cluster isn't ready yet..
                     return false;
@@ -185,6 +222,22 @@ public abstract class AbstractLogstashFrameworkTest {
             }
         });
         return new ArrayList<>(executorMessageListener.getExecutorMessages());
+    }
+
+    /**
+     * We assume that the messages already received are already processed and we can clear the messages list before
+     * we query the internal state. Further we assume that there is only one response/message from each executor.
+     *
+     *
+     * @return Messages
+     */
+    public List<ExecutorMessage> requestInternalStatusAndWaitForResponse() {
+        return  requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
+            @Override
+            public boolean test(List<ExecutorMessage> executorMessages) {
+                return true;
+            }
+        });
     }
 
 
