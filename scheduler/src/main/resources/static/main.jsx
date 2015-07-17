@@ -39,7 +39,6 @@ let SplitPage = React.createClass({
     }
 });
 
-
 let WebSocketClient = function(topic) {
     return {
         componentWillMount() {
@@ -171,12 +170,14 @@ let NodePage = React.createClass({
 let ConfigPage = React.createClass({
     getInitialState() {
         return {
-            configs: []
+            configs: [],
+            hostConfig: null
         };
     },
 
     componentWillMount() {
         let component = this;
+
         RestClient.get("/api/configs", function(error, data) {
             if (error) {
                 console.error(error);
@@ -184,10 +185,19 @@ let ConfigPage = React.createClass({
             }
 
             component.setState({configs: data});
-        })
+        });
+
+        RestClient.get("/api/host-config", function(error, data) {
+            if (error) {
+                console.error(error);
+                return;
+            }
+            component.setState({hostConfig: data.input || ""});
+        });
     },
 
     render() {
+        let self = this;
         let configs = this.state.configs;
         let renderConfig = function(c) {
             return (
@@ -196,30 +206,42 @@ let ConfigPage = React.createClass({
                         <input type="hidden" name="_method" value="PUT"/>
                         <input type="hidden" className="configForm__name" name="name" value={c.name} />
                         <h3>{c.name}</h3>
-                        <textarea className="configForm__input" name="input" placeholder="Input Logstash Config">{c.input}</textarea>
+                        <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)" defaultValue={c.input}></textarea>
                         <br />
                         <button type="submit">Update</button>
                     </form>
                 </li>
             );
         };
+        console.log(self.state.hostConfig);
         return (
             <div className="page">
-                <h1>Config</h1>
-                <div>
+                <h1>Configurations</h1>
+
+                <h2>Host Configuration</h2>
+                {self.state.hostConfig === null ? "Loading..." :
+                    <form action="/api/host-config" method="POST">
+                        <input type="hidden" name="_method" value="PUT"/>
+                        <input type="hidden" className="configForm__name" name="name" value="ui" />
+                        <textarea className="configForm__input" name="input" placeholder="Logstash Config" defaultValue={self.state.hostConfig}></textarea>
+                        <br />
+                        <button type="submit">Update</button>
+                    </form>
+                }
+                <h2>Docker Configurations</h2>
+                {configs === null ? "Loading..." :
                     <ul className="configList">
                         {configs.map(renderConfig)}
                     </ul>
-                </div>
-                <div>
-                    <h2>New Framework Config</h2>
-                    <form className="configForm" action="/api/configs" method="POST">
-                        <input className="configForm__name" name="name" placeholder="docker image name" /><br />
-                        <textarea className="configForm__input" name="input" placeholder="Input Logstash Config"></textarea>
-                        <br />
-                        <button type="submit">Create</button>
-                    </form>
-                </div>
+                }
+
+                <h2>New Docker Configuration</h2>
+                <form className="configForm" action="/api/configs" method="POST">
+                    <input className="configForm__name" name="name" placeholder="docker image name" /><br />
+                    <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)"></textarea>
+                    <br />
+                    <button type="submit">Create</button>
+                </form>
             </div>);
     }
 });

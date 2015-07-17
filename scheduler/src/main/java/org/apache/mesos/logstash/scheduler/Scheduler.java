@@ -2,13 +2,10 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Protos;
-import org.apache.mesos.Protos.ExecutorID;
-import org.apache.mesos.Protos.SlaveID;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
-import org.apache.mesos.logstash.scheduler.ui.Executor;
 import org.apache.mesos.logstash.scheduler.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +16,11 @@ import javax.annotation.PostConstruct;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static java.util.Collections.unmodifiableSet;
+import static org.apache.mesos.Protos.*;
 import static java.util.Collections.synchronizedCollection;
 import static java.util.Collections.synchronizedSet;
-import static org.apache.mesos.Protos.TaskState.TASK_FINISHED;
-import static org.apache.mesos.Protos.TaskState.TASK_LOST;
-import static org.apache.mesos.Protos.TaskState.TASK_RUNNING;
+import static org.apache.mesos.Protos.TaskState.*;
 
 @Component
 public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListener {
@@ -34,13 +31,13 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
 
     private final Driver driver;
     private final ConfigManager configManager;
-    private final Set<Executor> executors;
+    private final Set<ExecutorInfo> executors;
     private final Collection<FrameworkMessageListener> listeners;
 
     private final Clock clock;
     private final Set<Task> tasks;
 
-    private Protos.FrameworkID frameworkId;
+    private FrameworkID frameworkId;
 
 
     @Autowired
@@ -66,7 +63,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
 
 
     @Override
-    public void registered(SchedulerDriver schedulerDriver, Protos.FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
+    public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkID, Protos.MasterInfo masterInfo) {
         // FIXME: We are required to persist this between runs for DCOS.
         this.frameworkId = frameworkID;
     }
@@ -94,25 +91,25 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
 
 
     @Override
-    public synchronized void statusUpdate(SchedulerDriver schedulerDriver, Protos.TaskStatus status) {
-        LOGGER.info("Task status update! " + status.toString());
+    public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
+        LOGGER.info("Task status update received. executorId={}", status.hasExecutorId());
 
         if (status.getState() == TASK_RUNNING) {
 
-            LOGGER.info("Executor Started. slaveId=" + status.getSlaveId() + ", executorId=" + status.getExecutorId());
+            LOGGER.info("Executor Started. slaveId={}, executorId={}", status.getSlaveId(), status.getExecutorId());
 
             // Add the executor to the set of active executors.
-            executors.add(Executor.fromTaskStatus(status));
+            executors.add(ExecutorInfo.fromTaskStatus(status));
 
             // Send it the newest configuration.
             byte[] config = marshallConfig(configManager.getConfig());
-            sendMessage(Executor.fromTaskStatus(status), config);
+            sendMessage(ExecutorInfo.fromTaskStatus(status), config);
         } else if (status.getState() == TASK_FINISHED || status.getState() == TASK_LOST) {
 
-            LOGGER.info("Executor Removed. slaveId=" + status.getSlaveId() + ", executorId=" + status.getExecutorId());
+            LOGGER.info("Executor Removed. slaveId={}, executorId={}", status.getSlaveId(), status.getExecutorId());
 
             // Remove the executor from the set of active executors.
-            executors.remove(Executor.fromTaskStatus(status));
+            executors.remove(ExecutorInfo.fromTaskStatus(status));
         }
     }
 
@@ -144,7 +141,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
     }
 
 
-    private void sendMessage(Executor executor, byte[] config) {
+    private void sendMessage(ExecutorInfo executor, byte[] config) {
         driver.sendFrameworkMessage(executor.getExecutorID(), executor.getSlaveID(), config);
     }
 
@@ -152,7 +149,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
     @Override
     public void frameworkMessage(SchedulerDriver schedulerDriver, ExecutorID executorID, SlaveID slaveID, byte[] bytes) {
 
-        Executor executor = new Executor(slaveID, executorID);
+        ExecutorInfo executor = new ExecutorInfo(slaveID, executorID);
         ExecutorMessage message;
 
         try {
@@ -182,7 +179,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
                 .setTaskId(Protos.TaskID.newBuilder().setValue(id))
                 .setSlaveId(offer.getSlaveId())
 
-                // FIXME: Only accept the recources we need.
+                // FIXME: Only accept the resources we need.
                 .addAllResources(offer.getResourcesList());
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
@@ -237,6 +234,16 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
                 .toByteArray();
 
         executors.stream().forEach(executor -> sendMessage(executor, message));
+    }
+
+
+    public String getId() {
+        return frameworkId != null ? frameworkId.getValue() : "Unknown Framework ID";
+    }
+
+
+    public Set<ExecutorInfo> getExecutors() {
+        return unmodifiableSet(executors);
     }
 
 

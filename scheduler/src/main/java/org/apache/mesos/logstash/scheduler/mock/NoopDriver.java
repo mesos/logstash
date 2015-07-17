@@ -1,9 +1,8 @@
-package org.apache.mesos.logstash.scheduler;
+package org.apache.mesos.logstash.scheduler.mock;
 
 import org.apache.mesos.Protos;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import org.apache.mesos.logstash.scheduler.Driver;
+import org.apache.mesos.logstash.scheduler.Scheduler;
 
 public class NoopDriver implements Driver {
 

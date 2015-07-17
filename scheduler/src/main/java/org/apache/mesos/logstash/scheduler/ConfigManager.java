@@ -8,14 +8,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static java.util.Collections.synchronizedMap;
 import static java.util.Collections.unmodifiableMap;
 
 @Component
-public class ConfigManager {
+public class ConfigManager implements ConfigListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -44,8 +42,11 @@ public class ConfigManager {
 
     @PostConstruct
     public void start() {
-        dockerMonitor.start(this::newDockerConfigAvailable);
-        hostMonitor.start(this::newHostConfigAvailable);
+        dockerMonitor.registerListener(this);
+        hostMonitor.registerListener(this);
+
+        dockerMonitor.start();
+        hostMonitor.start();
     }
 
 
@@ -62,7 +63,6 @@ public class ConfigManager {
         }
     }
 
-
     private void newHostConfigAvailable(Map<String, String> config) {
         synchronized (this) {
             hostConfig.clear();
@@ -73,7 +73,7 @@ public class ConfigManager {
 
     private void broadcastConfig() {
         if (dockerConfig == null || hostConfig == null) {
-            LOGGER.info("Skipping broadcast, haven't read all configs yet");
+            LOGGER.info("Skipping broadcast, haven't read all configs yet.");
             return;
         }
 
@@ -91,6 +91,16 @@ public class ConfigManager {
         return new ConfigPair(dockerConfigCopy, hostConfigCopy);
     }
 
+
+    @Override
+    public void onNewConfig(ConfigMonitor monitor, Map<String, String> configs) {
+        if (monitor.equals(dockerMonitor)) {
+            newDockerConfigAvailable(configs);
+        }
+        else {
+            newHostConfigAvailable(configs);
+        }
+    }
 
     public static class ConfigPair {
 

@@ -1,59 +1,58 @@
 package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
+import java.util.*;
+import java.util.concurrent.*;
 
 import static java.nio.file.StandardWatchEventKinds.*;
 
 public class ConfigMonitor {
 
-    public static final Logger LOGGER = Logger.getLogger(Scheduler.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
-    private Path configDir;
+    private final ScheduledExecutorService executorService;
+    private final Path configDir;
+    private final Map<String, String> configToNameMap;
+    private final Collection<ConfigListener> listeners;
 
-    @Autowired
-    public ConfigMonitor(@Qualifier("configDir") String configDir) {
+    public ConfigMonitor(String configDir) {
         this.configDir = FileSystems.getDefault().getPath(configDir);
+
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        configToNameMap = Collections.synchronizedMap(new HashMap<>());
+        listeners = Collections.synchronizedList(new ArrayList<>());
     }
 
     private static String readStringFromFile(File f) {
         try {
             return FileUtils.readFileToString(f);
         } catch (IOException e) {
-            LOGGER.warn("Config file " + f.getAbsolutePath() + " couldn't be read");
+            LOGGER.warn("Config file couldn't be read. path={}", f.getAbsolutePath());
             return "# Couldn't parse config " + f.getAbsolutePath();
         }
     }
 
-    public void start(Consumer<Map<String, String>> onChange) {
+    public void start() {
 
         // Ensure directory exists
+        // TODO: Handle that the dir was not created.
         this.configDir.toFile().mkdirs();
 
-        FutureTask<Boolean> isStarted = new FutureTask<>(() -> {
-        }, true);
+        updateFiles();
 
-        LOGGER.info("Config monitor of " + this.configDir.toString() + " starting..");
+        FutureTask<Boolean> isStarted = new FutureTask<>(() -> {}, true);
 
-        // TODO: This thread is never properly stopped. Does not really matter if the JVM is killed, but we should clean up.
-        Thread thread = new Thread(() -> {
-            this.run(onChange, isStarted);
-        });
+        LOGGER.info("Config monitor starting. dir={}", this.configDir);
 
-        thread.start();
+        executorService.scheduleAtFixedRate(() -> this.run(isStarted), 0, 1, TimeUnit.SECONDS);
+
+        // Wait for the watcher to run once before continuing.
 
         try {
             isStarted.get();
@@ -61,50 +60,38 @@ public class ConfigMonitor {
             throw new RuntimeException(e);
         }
 
-        LOGGER.info("Config monitor of " + this.configDir.toString() + " started");
+        LOGGER.info("Config monitor started. dir={}", this.configDir);
     }
 
-    private void run(Consumer<Map<String, String>> onChange, FutureTask<Boolean> isStarted) {
+    private void run(FutureTask<Boolean> isStarted) {
         WatchService watcher;
 
         try {
             watcher = FileSystems.getDefault().newWatchService();
             configDir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
         } catch (IOException e) {
-            LOGGER.error(e);
+            LOGGER.error("Failed to start monitoring config dir. dir={}", configDir, e);
             return;
         }
 
-        HashMap<String, String> configToNameMap = new HashMap<>();
-        try {
-            Files
-                    .list(configDir)
-                    .map(Path::toFile)
-                    .filter(File::isFile)
-                    .forEach(f -> configToNameMap.put(f.getName().replace(".conf", ""), readStringFromFile(f)));
-        } catch (IOException e) {
-            LOGGER.error(e);
-            return;
-        }
-
-        onChange.accept(configToNameMap);
+        notifyListeners();
 
         isStarted.run(); // Let creator know we have initialized successfully
 
-
         WatchKey key;
+
         while (true) {
 
             try {
                 key = watcher.poll(1, TimeUnit.SECONDS);
             } catch (InterruptedException x) {
-                // TODO: Log this event
                 return;
             }
 
             if (key == null) continue;
 
             boolean didChange = false;
+
             for (WatchEvent<?> event : key.pollEvents()) {
                 WatchEvent.Kind<?> kind = event.kind();
 
@@ -125,7 +112,8 @@ public class ConfigMonitor {
                 if (kind == ENTRY_DELETE) {
                     configToNameMap.remove(filenameString);
                     didChange = true;
-                } else {
+                }
+                else {
                     if (kind == ENTRY_CREATE || kind == ENTRY_MODIFY) {
                         configToNameMap.put(filenameString, readStringFromFile(configDir.resolve(filename).toFile()));
                         didChange = true;
@@ -134,15 +122,41 @@ public class ConfigMonitor {
             }
 
             if (didChange) {
-                onChange.accept(configToNameMap);
+                notifyListeners();
             }
 
             if (!key.reset()) return;
         }
     }
 
+    private void notifyListeners() {
+        this.listeners.stream().forEach(l -> l.onNewConfig(this, configToNameMap));
+    }
+
+    private void updateFiles() {
+        HashMap<String, String> configToNameMap = new HashMap<>();
+
+        try {
+            Files
+                    .list(configDir)
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .forEach(f -> configToNameMap.put(f.getName().replace(".conf", ""), readStringFromFile(f)));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read files from config dir. dir=" + configDir, e);
+        }
+    }
+
     public void save(String name, String input) throws IOException {
         File file = FileUtils.getFile(this.configDir.toFile(), name + ".conf");
         FileUtils.write(file, input, false);
+
+        // Don't wait until the monitor discovers it.
+        configToNameMap.put(name, input);
+        notifyListeners();
+    }
+
+    public void registerListener(ConfigListener listener) {
+        listeners.add(listener);
     }
 }

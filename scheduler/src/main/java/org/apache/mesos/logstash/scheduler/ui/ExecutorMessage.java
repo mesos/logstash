@@ -1,12 +1,15 @@
 package org.apache.mesos.logstash.scheduler.ui;
 
+import org.apache.mesos.logstash.scheduler.ExecutorInfo;
+
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
+
 
 @SuppressWarnings("unused")
 public class ExecutorMessage {
 
-    public ExecutorMessage(List<ExecutorInfo> executors) {
+    public ExecutorMessage(Collection<ExecutorData> executors) {
         this.executors = executors;
     }
 
@@ -14,25 +17,25 @@ public class ExecutorMessage {
         return type;
     }
 
-    public Iterator<ExecutorInfo> getExecutors() {
+    public Iterator<ExecutorData> getExecutors() {
         return executors.iterator();
     }
 
     public static String type = "EXECUTORS";
 
-    public List<ExecutorInfo> executors;
+    public Collection<ExecutorData> executors;
 
-    public static class ExecutorInfo {
+    public static class ExecutorData {
         private String slaveId;
         private String executorId;
 
-        public ExecutorInfo(String slaveId, String executorId) {
+        public ExecutorData(String slaveId, String executorId) {
             this.slaveId = slaveId;
             this.executorId = executorId;
         }
 
-        public static ExecutorInfo fromExecutor(Executor executor) {
-            return new ExecutorInfo(
+        public static ExecutorData fromExecutor(ExecutorInfo executor) {
+            return new ExecutorData(
                     executor.getSlaveID().getValue(),
                     executor.getExecutorID().getValue()
             );

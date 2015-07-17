@@ -1,29 +1,26 @@
 package org.apache.mesos.logstash.scheduler;
 
+import org.apache.mesos.logstash.scheduler.mock.MockClusterStatus;
+import org.apache.mesos.logstash.scheduler.mock.NoopDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.Scope;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+
+import static java.util.Arrays.asList;
 
 @SpringBootApplication
-@EnableAutoConfiguration
-@ComponentScan
 public class Application {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
     private static String masterURL = null;
+    private static boolean isNoCluster = false;
 
     protected Application() {}
 
@@ -33,13 +30,10 @@ public class Application {
 
         SpringApplication app = new SpringApplication(Application.class);
         app.setShowBanner(false);
-        app.run(args);
-    }
 
-    @Bean
-    @Scope("prototype")
-    public ExecutorService getExecutor() {
-        return Executors.newSingleThreadExecutor();
+        if (asList(args).contains("--no-cluster")) isNoCluster = true;
+
+        app.run(args);
     }
 
     @Bean
@@ -61,23 +55,24 @@ public class Application {
     }
 
     @Bean
-    public Driver getDriver() {
-        // FIXME: Hack for testing frontend.
-        if (true) {
-            return new NoopDriver();
-        }
-        else {
-            return new MesosDriver(masterURL);
-        }
+    public Driver getMesosDriver() {
+        if (isNoCluster) return new NoopDriver();
+        return new MesosDriver(masterURL);
+    }
+
+    @Bean
+    public ClusterStatus getSchedulerStatus(Scheduler scheduler) {
+        if (isNoCluster) return new MockClusterStatus();
+        return new MesosClusterStatus(scheduler);
     }
 
     private static void readConfigFromCommandLine(String... args) {
-        List<String> argList = Arrays.asList(args);
+        List<String> argList = asList(args);
         int index = argList.indexOf("-m");
 
         if (index != -1 && argList.size() >= index) {
             masterURL = argList.get(index + 1);
-            LOGGER.debug("MasterURL configured as: '%s'", masterURL);
+            LOGGER.debug("MasterURL configured. masterUrl={}", masterURL);
         }
         else {
             printUsage();

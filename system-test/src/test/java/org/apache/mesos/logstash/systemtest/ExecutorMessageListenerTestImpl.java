@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.systemtest;
 
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.scheduler.ui.Executor;
+import org.apache.mesos.logstash.scheduler.Executor;
 import org.apache.mesos.logstash.scheduler.FrameworkMessageListener;
 
 import java.util.ArrayList;

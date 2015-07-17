@@ -114,14 +114,9 @@ public class ConfigMonitorTest {
     private Map<String, String> startMonitor(ConfigMonitor monitor) {
         final Map<String, String> config = new ConcurrentHashMap<>();
 
-        monitor.start(c -> {
-            config.clear();
-            config.putAll(c);
-            notificationCounter.incrementAndGet();
-        });
+        monitor.start();
 
         awaitRunning(monitor);
-
 
         return config;
     }
