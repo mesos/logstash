@@ -87,7 +87,7 @@ task buildDockerImage(type: Exec) {
     executable "docker"
     args "build"
     args "-t"
-    args schedulerImageName
+    args "mesos/logstash-scheduler"
     args "."
 }
 
@@ -96,7 +96,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 task createConfig(type: Copy) {
     from 'executor-name.txt'
     into 'build/resources/main/'
-    filter(ReplaceTokens, tokens: [executorImageName: executorImageName])
+    filter(ReplaceTokens, tokens: [executorImageName: "mesos/logstash-executor"])
 }
 
 build.dependsOn createConfig
