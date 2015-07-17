@@ -138,8 +138,14 @@ These features are yet to be implemented:
 - Logging cannot be reconfigured once logstash-mesos has started streaming from a container
 
 # Security
-*To be Written*
+The framework will process log files of any docker container which is running on the same slave node and which are accessable via
+`docker exec <observed-container> tail -f /my/configured/logfile`. 
 
+There is no mechanism which ensures that you're authorized to monitor the log files of a specific framework running on the same cluster/node.
+
+There is no mechanism which ensures that the logstash output might overlap with other logstash configurations. In other words: logstash might observed one framework
+and output to the same destination it's using for another framework. 
+   
 
 ## Sponsors
 This project is sponsored by Cisco Cloud Services
