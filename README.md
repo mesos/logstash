@@ -91,7 +91,10 @@ You can find it [here](https://github.com/CiscoCloud/microservices-infrastructur
 
 # Requirements
 
-The executor will require access to its docker host.
+The executor will require access to its docker host in order to be able to discover and stream from docker containers.
+
+Since the executor runs inside its own docker container it will try to reach its host using:
+```http://slavehostname:2376```.
 
 # How Container Log Extraction is Implemented
 
