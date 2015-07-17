@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.systemtest;
 
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.scheduler.Executor;
+import org.apache.mesos.logstash.scheduler.ExecutorInfo;
 import org.apache.mesos.logstash.scheduler.FrameworkMessageListener;
 
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class ExecutorMessageListenerTestImpl implements FrameworkMessageListener
     }
 
     @Override
-    public void frameworkMessage(Executor executor, ExecutorMessage message) {
+    public void frameworkMessage(ExecutorInfo executor, ExecutorMessage message) {
         messages.add(message);
     }
 }
