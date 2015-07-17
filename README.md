@@ -1,6 +1,6 @@
 # Logstash Mesos Framework
 
-A [Mesos](http://mesos.apache.org/) Framework for running logstash in your cluster. You can configure logging for all your
+A [Mesos](http://mesos.apache.org/) framework for running logstash in your cluster. You can configure logging for all your
 other frameworks and have logstash parse and send your logs to ElasticSearch.
 
 ## Overview
@@ -52,7 +52,7 @@ Mesos 0.22.1 (or compatible).
 The executor will require access to its docker host in order to be able to discover and stream from docker containers.
 
 Since the executor runs inside its own docker container it will try to reach its host using:
-```http://slavehostname:2376```.
+`http://slavehostname:2376`.
 
 In order to stream the content of monitored log files each docker container hosting these files must have the following 
 binaries installed and executable:
@@ -108,7 +108,7 @@ To run the tests locally you need to fulfill the following requirements:
 - Docker daemon running (either locally or using e.g. [Docker-Machine](https://docs.docker.com/machine/))
 
 If your Docker daemon is not running natively on your machine (e.g. on a Mac or if you're using docker-machine) you have
-to export the DOCKE_* variables (e.g. for docker-machine use `eval $(docker-machine env dev)`).
+to export the DOCKER_* variables (e.g. for docker-machine use `eval $(docker-machine env dev)`).
 
 Run `gradle test` to run the all tests.  
 
