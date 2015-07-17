@@ -71,8 +71,18 @@ directly to the schedulers configuration directory.
 ## Run the TestS
 
 ### Routes
+When testing against non-local docker host (e.g docker-machine, boot2docker) you will need to add a route
+to get the tests to run.
 
+The reason is to allow the scheduler, which runs outside of docker when testing, to
+communicate with the rest of the cluster inside docker.
 
+This command:
+```
+sudo route -n add 172.17.0.0/16 $(docker-machine ip dev)
+```
+Sets up a route that allows packets to be routed from your scheduler (running locally on your
+computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
 # Limitations
 
