@@ -21,16 +21,20 @@ public class MockClusterStatus implements ClusterStatus {
         Set<ExecutorInfo> executors = new HashSet<>();
         Random random = new Random();
 
+        ExecutorInfo x = new ExecutorInfo(slaveID("6127-6213-7812-6312"), executorID("1221-1221-64-4345-4"));
+        x.setActiveStreamCount(random.nextInt(20) + 10);
+        executors.add(x);
+
         if (random.nextBoolean()) {
-            executors.add(new ExecutorInfo(slaveID("6127-6213-7812-6312"), executorID("1221-1221-64-4345-4")));
+            ExecutorInfo e = new ExecutorInfo(slaveID("5555-6213-7812-1275"), executorID("9183-7221-24-3345-1"));
+            e.setActiveStreamCount(random.nextInt(30) + 2);
+            executors.add(e);
         }
 
         if (random.nextBoolean()) {
-            executors.add(new ExecutorInfo(slaveID("5555-6213-7812-1275"), executorID("9183-7221-24-3345-1")));
-        }
-
-        if (random.nextBoolean()) {
-            executors.add(new ExecutorInfo(slaveID("1112-3112-8463-1273"), executorID("4113-6222-22-3335-3")));
+            ExecutorInfo e = new ExecutorInfo(slaveID("1112-3112-8463-1273"), executorID("4113-6222-22-3335-3"));
+            e.setActiveStreamCount(random.nextInt(7));
+            executors.add(e);
         }
 
         return executors;

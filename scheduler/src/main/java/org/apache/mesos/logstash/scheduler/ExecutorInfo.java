@@ -10,9 +10,19 @@ public class ExecutorInfo {
     private final Protos.SlaveID slaveID;
     private final Protos.ExecutorID executorID;
 
+    private int activeStreamCount = 0;
+
     public ExecutorInfo(Protos.SlaveID slaveID, Protos.ExecutorID executorID) {
         this.slaveID = slaveID;
         this.executorID = executorID;
+    }
+
+    public void setActiveStreamCount(int activeStreamCount) {
+        this.activeStreamCount = activeStreamCount;
+    }
+
+    public int getActiveStreamCount() {
+        return activeStreamCount;
     }
 
     public Protos.SlaveID getSlaveID() {
@@ -32,6 +42,7 @@ public class ExecutorInfo {
         return new HashCodeBuilder(17, 7). // two randomly chosen prime numbers
                 append(executorID.getValue()).
                 append(slaveID.getValue()).
+                append(activeStreamCount).
                 toHashCode();
     }
 
@@ -46,6 +57,7 @@ public class ExecutorInfo {
         return new EqualsBuilder().
                 append(executorID.getValue(), rhs.executorID.getValue()).
                 append(slaveID.getValue(), rhs.slaveID.getValue()).
+                append(activeStreamCount, rhs.activeStreamCount).
                 isEquals();
     }
 }

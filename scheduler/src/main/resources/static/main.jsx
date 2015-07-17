@@ -7,7 +7,7 @@ let RestClient = {
         var request = new XMLHttpRequest();
         request.open('GET', url, true);
 
-        request.onload = function() {
+        request.onload = function () {
             if (request.status >= 200 && request.status < 400) {
                 var data = JSON.parse(request.responseText);
                 callback(null, data);
@@ -16,7 +16,7 @@ let RestClient = {
             }
         };
 
-        request.onerror = function() {
+        request.onerror = function () {
             callback("An error occurred");
         };
 
@@ -39,19 +39,25 @@ let SplitPage = React.createClass({
     }
 });
 
-let WebSocketClient = function(topic) {
+let WebSocketClient = function (topics) {
     return {
         componentWillMount() {
             let component = this;
             let socket = new SockJS('/ws');
             let stompClient = Stomp.over(socket);
+            stompClient.debug = null;
             this.setState({stompClient: stompClient});
 
-            stompClient.connect({}, function(frame) {
-                stompClient.subscribe('/topic/' + topic, function(message) {
-                    let content = JSON.parse(message.body);
-                    if (component.webSocketData) component.webSocketData(content);
-                });
+            stompClient.connect({}, function (frame) {
+                for (let i in topics) {
+                    if (topics.hasOwnProperty(i)) {
+                        let topic = topics[i];
+                        stompClient.subscribe('/topic/' + topic, function (message) {
+                            let content = JSON.parse(message.body);
+                            if (component.webSocketData) component.webSocketData(content, topic);
+                        });
+                    }
+                }
             });
         },
 
@@ -62,58 +68,154 @@ let WebSocketClient = function(topic) {
     };
 };
 
+let Icon = React.createClass({
+    render() {
+        let style = this.props.color ? {color: this.props.color || "inherit"} : null;
+        return <span style={style} className={"icon-" + this.props.name + " " + this.props.className}></span>;
+    }
+});
+
 let Menu = React.createClass({
-   render() {
-       return (
-           <div className="menu">
-           <div>
-               <div className="menu__header">
-                   Mesos Logstash
-               </div>
-                <div className="menu__list">
-                    <Link className="menu__list-item" to="dashboard">Dashboard</Link>
-                    <Link className="menu__list-item" to="nodes">Nodes</Link>
-                    <Link className="menu__list-item" to="config">Config</Link>
+    render() {
+        return (
+            <div className="menu">
+                <div>
+                    <div className="menu__header">
+                        <img src="logstash_icon.svg" className="menu__logo" />
+                        <div>Mesos Logstash</div>
+                    </div>
+                    <div className="menu__list">
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="dashboard"><Icon className="menu__icon" name="dashboard"/>Dashboard</Link>
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="nodes"><Icon className="menu__icon" name="nodes" />Nodes</Link>
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="config"><Icon className="menu__icon" name="config"/>Config</Link>
+                    </div>
                 </div>
-           </div>
-           <div className="menu__footer">
-               <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
-                   GitHub
-               </a>
-               <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
-                 Documentation
-                </a>
-           </div>
-           </div>);
-   }
+                <div className="menu__footer">
+                    <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
+                        GitHub
+                    </a>
+                    <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
+                        Documentation
+                    </a>
+                </div>
+            </div>);
+    }
 });
 
 let Chart = React.createClass({
 
     getInitialState() {
-      return {
-          chart: null,
-          data: null
-      }
+        return {
+            chart: null,
+            latestX: null,
+        }
+    },
+
+    roundT(t) {
+        return Math.floor(t / 1000) * 1000;
     },
 
     componentWillReceiveProps(nextProps) {
-        this.setState({data: [nextProps.value, 10, 30]});
+        let chart = this.state.chart;
+        let series = chart.series[0];
+        let latestX = this.state.latestX;
+        let x = this.roundT(new Date().getTime());
+        if (x !== latestX) {
+
+            let y = nextProps.value;
+            chart.xAxis[0].setExtremes(x - 60 * 1000, x);
+
+            var l = series.points.length;
+            var p = series.points[l - 1];
+            p.update({ marker: {enabled: false} });
+
+            series.addPoint({x: x, y: y, marker: {
+                enabled: true,
+                symbol: 'circle',
+                radius: 3
+            }}, true, true);
+
+            this.setState({latestX: x});
+        }
     },
 
     componentDidMount() {
         let el = this.getDOMNode();
+        let now = this.roundT(new Date().getTime());
+        let self = this;
         let chart = new Highcharts.Chart({
             chart: {
-                renderTo: el
+                type: "area",
+                renderTo: el,
+                backgroundColor: "transparent",
+                height: 120,
+                width: 286
+            },
+
+            legend: {
+                enabled: false
+            },
+
+            colors: [this.props.color || "#00FF00"],
+
+            credits: {
+                enabled: false
+            },
+
+            title: {
+                text: null
+            },
+
+            plotOptions: {
+                area: {
+                    lineWidth: 1,
+                    fillOpacity: .25,
+                }
+            },
+
+            yAxis: {
+                tickInterval: 1,
+                min: 0,
+                lineColor: "transparent",
+                gridLineColor: "#2E3447",
+                title: {
+                    text: null
+                },
+                labels: {
+                    style: {color: "#5E626D"}
+                }
             },
 
             xAxis: {
-                categories: ['Jan', 'Feb', 'Mar']
+                type: 'datetime',
+                lineColor: "#2E3447",
+                tickLength: 0,
+                endOnTick: false,
+                startOnTick: false,
+                title: {
+                    text: null
+                },
+                labels: {
+                    enabled:false
+                },
+                alternateGridColor: "#2E3447",
+                tickPixelInterval: 20,
             },
 
             series: [{
-                data: [29.9, 10, 30]
+                name: "Count",
+                cropThreshold: 100,
+                pointStart: now - 60000,
+                pointInterval: 1000,
+                data: (function() {
+                    let data = [];
+                    let count = 100;
+                    for (let i = 0; i < count; i++) {
+                        let t = self.roundT(now - (count - i) * 1000);
+                        data.push({x: t, y: 0});
+                    }
+                    return data;
+                }())
             }]
 
         });
@@ -121,47 +223,56 @@ let Chart = React.createClass({
         this.setState({chart: chart});
     },
 
-    componentWillUpdate(nextProps, nextState) {
-        nextState.chart.series[0].setData(nextState.data);
-    },
-
-   render() {
-       return <div></div>
-   }
+    render() {
+        return <div></div>
+    }
 });
 
 
 let NodePage = React.createClass({
     mixins: [
-        WebSocketClient("nodes")
+        WebSocketClient(["nodes"])
     ],
 
     getInitialState() {
-      return {
-          executors: []
-      };
+        return {
+            executors: []
+        };
     },
 
     webSocketData(data) {
-        console.log(data);
-      this.setState({executors: data.executors});
+        this.setState({executors: data.executors});
     },
 
     render() {
-        let renderRow = function(e) { return <tr><td>{e.slaveId}</td><td>{e.executorId}</td></tr>; };
+        let renderItem = function(k, v) {
+            return (
+                <li className="box-list__item">
+                    <div className="box-list__key">{k}</div>
+                    <div className="box-list__value">{v}</div>
+                </li>
+            );
+        };
+
+        let renderNode = function (e) {
+            return (
+                <div className="box box--list">
+                    <div className="box__header">
+                        {e.executorId}<div className="status status--healthy"></div>
+                    </div>
+                    <div className="box__body">
+                        <ul className="box-list">
+                            {renderItem("Slave ID", e.slaveId)}
+                            {renderItem("Executor ID", e.executorId)}
+                            {renderItem("Active Steams", e.activeStreamCount)}
+                        </ul>
+                    </div>
+            </div>);
+        };
 
         return (
-            <div>
-                <h1>Nodes</h1>
-                <div>
-                    <table>
-                        <thead>
-                            <th>Slave ID</th>
-                            <th>Executor ID</th>
-                        </thead>
-                        {this.state.executors.map(renderRow)}
-                    </table>
-                </div>
+            <div className="page">
+                <div>{this.state.executors.map(renderNode)}</div>
             </div>);
     }
 });
@@ -178,7 +289,7 @@ let ConfigPage = React.createClass({
     componentWillMount() {
         let component = this;
 
-        RestClient.get("/api/configs", function(error, data) {
+        RestClient.get("/api/configs", function (error, data) {
             if (error) {
                 console.error(error);
                 return;
@@ -187,7 +298,7 @@ let ConfigPage = React.createClass({
             component.setState({configs: data});
         });
 
-        RestClient.get("/api/host-config", function(error, data) {
+        RestClient.get("/api/host-config", function (error, data) {
             if (error) {
                 console.error(error);
                 return;
@@ -199,21 +310,23 @@ let ConfigPage = React.createClass({
     render() {
         let self = this;
         let configs = this.state.configs;
-        let renderConfig = function(c) {
+        let renderConfig = function (c) {
             return (
                 <li className="config">
                     <form action={"/api/configs/" + c.name} method="POST">
                         <input type="hidden" name="_method" value="PUT"/>
-                        <input type="hidden" className="configForm__name" name="name" value={c.name} />
+                        <input type="hidden" className="configForm__name" name="name" value={c.name}/>
+
                         <h3>{c.name}</h3>
-                        <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)" defaultValue={c.input}></textarea>
+                        <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)"
+                                  defaultValue={c.input}></textarea>
                         <br />
                         <button type="submit">Update</button>
                     </form>
                 </li>
             );
         };
-        console.log(self.state.hostConfig);
+
         return (
             <div className="page">
                 <h1>Configurations</h1>
@@ -222,8 +335,9 @@ let ConfigPage = React.createClass({
                 {self.state.hostConfig === null ? "Loading..." :
                     <form action="/api/host-config" method="POST">
                         <input type="hidden" name="_method" value="PUT"/>
-                        <input type="hidden" className="configForm__name" name="name" value="ui" />
-                        <textarea className="configForm__input" name="input" placeholder="Logstash Config" defaultValue={self.state.hostConfig}></textarea>
+                        <input type="hidden" className="configForm__name" name="name" value="ui"/>
+                        <textarea className="configForm__input" name="input" placeholder="Logstash Config"
+                                  defaultValue={self.state.hostConfig}></textarea>
                         <br />
                         <button type="submit">Update</button>
                     </form>
@@ -236,9 +350,11 @@ let ConfigPage = React.createClass({
                 }
 
                 <h2>New Docker Configuration</h2>
+
                 <form className="configForm" action="/api/configs" method="POST">
-                    <input className="configForm__name" name="name" placeholder="docker image name" /><br />
-                    <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)"></textarea>
+                    <input className="configForm__name" name="name" placeholder="docker image name"/><br />
+                    <textarea className="configForm__input" name="input"
+                              placeholder="Logstash Config (Input Only)"></textarea>
                     <br />
                     <button type="submit">Create</button>
                 </form>
@@ -247,40 +363,77 @@ let ConfigPage = React.createClass({
 });
 
 
+let Box = React.createClass({
+    render() {
+        return (
+            <div className="box">
+                <div className="box__header">{this.props.title}</div>
+                <div className="box__body">
+                    <div>{this.props.children}</div>
+                </div>
+            </div>
+        );
+    }
+});
+
+let BigNumber = React.createClass({
+    render() {
+        return (
+            <div className="big-number">
+                {this.props.value}
+                <div className="big-number__title" style={{color: this.props.color || "white"}}>
+                    {this.props.title}
+                </div>
+            </div>
+        );
+    }
+});
+
+
 let DashboardPage = React.createClass({
     mixins: [
-        WebSocketClient("stats")
+        WebSocketClient(["stats", "nodes"])
     ],
 
     getInitialState() {
         return {
             connected: false,
             client: null,
-            stats: null
+            stats: null,
+            nodes: null
         };
     },
 
-    webSocketData(data) {
-        this.setState({stats: data});
+    webSocketData(data, topic) {
+        let state = {};
+        state[topic] = data;
+        console.log(data);
+        this.setState(state);
     },
 
     render() {
         let stats = this.state.stats;
-        if (!stats) return <div>Connecting...</div>;
+        let nodes = this.state.nodes;
+        if (!stats || !nodes) return <div>Connecting...</div>;
+
+        let streamTotal = nodes.executors.reduce(function(acc, exec) {
+            return acc + exec.activeStreamCount;
+        }, 0);
 
         return (
-            <div>
-                <h1>Dashboard</h1>
-                <div>
-                    <div>CPUs: {stats.cpus}</div>
-                    <div>Mem: {stats.mem}</div>
-                    <div>Nodes: {stats.numNodes}</div>
-                    <div>Disk: {stats.disk}</div>
-                </div>
-                <Chart value={stats.numNodes} />
+            <div className="page">
+                <Box title="Number of Nodes">
+                    <BigNumber value={nodes.executors.length} title="Foo Bar Baz Quux" color="#8038E5" />
+                    <Chart value={nodes.executors.length} color="#8038E5" />
+                </Box>
+
+                <Box title="Logged Instances">
+                    <BigNumber value={streamTotal} title="Quux Foo Baz Barr" color="#AF1034" />
+                    <Chart value={streamTotal} color="#AF1034" />
+                </Box>
             </div>
         )
-   }
+    }
 });
 
 let Route = ReactRouter.Route;
@@ -291,8 +444,8 @@ let App = React.createClass({
     render() {
         return (
             <div className="container">
-                <img className="mesos-logo" src="mesos_logo.png" />
-                <SplitPage leftContent={<Menu />} rightContent={<RouteHandler />} />
+                <img className="mesos-logo" src="mesos_logo.png"/>
+                <SplitPage leftContent={<Menu />} rightContent={<RouteHandler />}/>
             </div>
         );
     }
@@ -300,10 +453,10 @@ let App = React.createClass({
 
 let routes = (
     <Route path="/" handler={App}>
-        <DefaultRoute handler={DashboardPage} />
-        <Route name="dashboard" handler={DashboardPage} />
-        <Route name="config" handler={ConfigPage} />
-        <Route name="nodes" handler={NodePage} />
+        <DefaultRoute handler={DashboardPage}/>
+        <Route name="dashboard" handler={DashboardPage}/>
+        <Route name="config" handler={ConfigPage}/>
+        <Route name="nodes" handler={NodePage}/>
     </Route>
 );
 

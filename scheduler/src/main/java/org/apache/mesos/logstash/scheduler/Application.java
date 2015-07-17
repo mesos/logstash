@@ -20,7 +20,7 @@ public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
     private static String masterURL = null;
-    private static boolean isNoCluster = false;
+    private static boolean isNoCluster = true;
 
     protected Application() {}
 
@@ -32,6 +32,7 @@ public class Application {
         app.setShowBanner(false);
 
         if (asList(args).contains("--no-cluster")) isNoCluster = true;
+        if (asList(args).contains("--no-ui")) app.setWebEnvironment(false);
 
         app.run(args);
     }
@@ -74,9 +75,18 @@ public class Application {
             masterURL = argList.get(index + 1);
             LOGGER.debug("MasterURL configured. masterUrl={}", masterURL);
         }
+        else if (getMasterURLFromSystemProps() != null) {
+            masterURL = getMasterURLFromSystemProps();
+        }
         else {
             printUsage();
         }
+    }
+
+    private static String getMasterURLFromSystemProps() {
+        // This we need to do since bootRun in gradle does not
+        // support commandline arguments.
+        return System.getProperty("logstash-mesos.masterUrl");
     }
 
     private static void printUsage() {

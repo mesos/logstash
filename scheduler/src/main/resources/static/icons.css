@@ -1,0 +1,30 @@
+@font-face {
+    font-family: 'mesos-logstash-icons';
+    src: url('icons.woff?-iz29ty') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+    font-family: 'mesos-logstash-icons';
+    speak: none;
+    font-style: normal;
+    font-weight: normal;
+    font-variant: normal;
+    text-transform: none;
+    line-height: 1;
+
+    /* Better Font Rendering =========== */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-config:before {
+    content: "\e600";
+}
+.icon-dashboard:before {
+    content: "\e601";
+}
+.icon-nodes:before {
+    content: "\e602";
+}

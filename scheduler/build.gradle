@@ -14,8 +14,9 @@ buildscript {
     }
 }
 
+applicationDefaultJvmArgs = ["-Dlogstash-mesos.masterUrl=localhost"]
+
 run {
-    args "-m", "192.168.1.106:5050", "-f", "./conf.conf"
     jvmArgs "-Djava.library.path=/usr/local/lib"
 }
 
@@ -91,14 +92,5 @@ task buildDockerImage(type: Exec) {
     args "."
 }
 
-import org.apache.tools.ant.filters.ReplaceTokens
-
-task createConfig(type: Copy) {
-    from 'executor-name.txt'
-    into 'build/resources/main/'
-    filter(ReplaceTokens, tokens: [executorImageName: "mesos/logstash-executor"])
-}
-
-build.dependsOn createConfig
 build.dependsOn buildDockerImage
 build.dependsOn copyJar
