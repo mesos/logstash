@@ -13,6 +13,11 @@ import java.util.concurrent.Executors;
 public class FileLogSteamWriter implements LogStreamWriter {
 
     private static final Logger LOGGER = Logger.getLogger(FileLogSteamWriter.class);
+    private final long maxLogSize;
+
+    public FileLogSteamWriter(long maxLogSize) {
+        this.maxLogSize = maxLogSize;
+    }
 
     @Override
     public void write(String name, LogStream logStream) throws IOException {
@@ -31,9 +36,46 @@ public class FileLogSteamWriter implements LogStreamWriter {
             LOGGER.info("Reading stream...");
 
             try {
-                FileOutputStream outputStream = new FileOutputStream(path.toFile(), true);
-                // FIXME: How should we handle stderr?
-                logStream.attach(outputStream, new ByteArrayOutputStream());
+
+                OutputStream myOutput = new OutputStream() {
+                    FileOutputStream outputStream = new FileOutputStream(path.toFile(), false);
+                    int numBytesWritten;
+
+                    @Override
+                    public void write(int b) throws IOException {
+                        getEndpoint().write(b);
+                        numBytesWritten++;
+                        recalculateEndpoint();
+                    }
+
+                    OutputStream getEndpoint() {
+                        return outputStream;
+                    }
+
+                    void recalculateEndpoint() {
+                        if(numBytesWritten >= maxLogSize) {
+                            numBytesWritten = 0;
+                            try {
+                                outputStream.close();
+                                path.toFile().delete();
+                                outputStream = new FileOutputStream(path.toFile(), false);
+                            } catch (FileNotFoundException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void flush() throws IOException {
+                        getEndpoint().flush();
+                    }
+                };
+
+                // Note: the only thing we stream in logstash-mesos is the output of 'tail -F', so
+                // we don't care that much about standard error
+                logStream.attach(myOutput, System.out);
             } catch (IOException e) {
                 LOGGER.error("Error writing to file", e);
             }

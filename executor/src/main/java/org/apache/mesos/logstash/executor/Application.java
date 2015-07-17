@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 public class Application implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(Application.class.toString());
+    private static final long MAX_LOG_SIZE = 5_000_000;
 
     public static void main(String[] args) {
         new Application().run();
@@ -21,7 +22,7 @@ public class Application implements Runnable {
 
     public void run() {
         DockerClient dockerClient = new DockerClient();
-        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(), dockerClient));
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(MAX_LOG_SIZE), dockerClient));
         DockerInfoCache dockerInfoCache = new DockerInfoCache();
 
         ConfigManager controller = createController(dockerClient, streamManager,dockerInfoCache);
