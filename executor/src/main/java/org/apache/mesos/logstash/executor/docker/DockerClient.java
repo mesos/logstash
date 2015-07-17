@@ -1,26 +1,32 @@
 package org.apache.mesos.logstash.executor.docker;
 
+import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.Container;
 import org.apache.log4j.Logger;
+import org.apache.mesos.logstash.executor.StartupListener;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 
+import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static java.util.concurrent.TimeUnit.HOURS;
 
-public class DockerClient implements ContainerizerClient {
+
+public class DockerClient implements ContainerizerClient, StartupListener {
 
     private Map<String, String> runningContainers = new HashMap<>();
     private final Logger LOGGER = Logger.getLogger(DockerClient.class.toString());
 
-    private final com.spotify.docker.client.DockerClient dockerClient;
+    private com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
 
     public void setDelegate(Consumer<List<String>> consumer) {
         this.frameworkDiscoveryListener = consumer;
     }
 
+    public DockerClient() {}
     public DockerClient(com.spotify.docker.client.DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
@@ -37,6 +43,12 @@ public class DockerClient implements ContainerizerClient {
         }, 0, (long) 5000);
     }
 
+    public void startupComplete(String hostName) {
+        this.dockerClient = DefaultDockerClient.builder()
+                .readTimeoutMillis(HOURS.toMillis(1))
+                .uri(URI.create("http://" + hostName + ":2376"))
+                .build();
+    }
 
     public Set<String> getRunningContainers() {
         return this.runningContainers.keySet();
@@ -47,6 +59,9 @@ public class DockerClient implements ContainerizerClient {
     }
 
     private List<Container> getContainers() throws DockerException, InterruptedException {
+        if(dockerClient == null) {
+            return Collections.emptyList();
+        }
         return this.dockerClient.listContainers();
     }
 

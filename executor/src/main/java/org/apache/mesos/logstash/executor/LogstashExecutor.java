@@ -20,9 +20,11 @@ public class LogstashExecutor implements Executor {
 
     private final ConfigEventListener listener;
     private final GlobalStateInfo globalStateInfo;
+    private final StartupListener startupListener;
 
-    public LogstashExecutor(ConfigEventListener listener, GlobalStateInfo globalStateInfo) {
+    public LogstashExecutor(ConfigEventListener listener, StartupListener startupListener, GlobalStateInfo globalStateInfo) {
         this.listener = listener;
+        this.startupListener = startupListener;
         this.globalStateInfo = globalStateInfo;
     }
 
@@ -119,6 +121,8 @@ public class LogstashExecutor implements Executor {
     @Override
     public void registered(ExecutorDriver driver, Protos.ExecutorInfo executorInfo, Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
         LOGGER.info("LogstashExecutor Logstash registered on slave " + slaveInfo.getHostname());
+
+        startupListener.startupComplete(slaveInfo.getHostname());
     }
 
     @Override
