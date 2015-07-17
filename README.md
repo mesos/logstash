@@ -110,7 +110,7 @@ the standard logstash configuration format. Documentation is available [here](ht
 
 ## UI
 
-## Use Case NGINX
+## Use Case: Nginx
 
 # Technical Details
 
@@ -126,7 +126,7 @@ For each log file within a docker container we run
 in the background. We then stream the contents into a local file within the logstash container.
 This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
 
-The file size of each streamed log file withing the logstash container is limited (currently max. 5MB). When the file size 
+The file size of each streamed log file within the logstash container is limited (currently max. 5MB). When the file size
 exceeds that limit the file content is truncated. This might cause loss of data but is in our opinion still acceptable (best effort).  
 
 
