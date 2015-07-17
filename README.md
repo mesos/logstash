@@ -49,12 +49,14 @@ directly to the schedulers configuration directory.
 
 Mesos 0.22.1 (or compatible).
 
+### Access to Docker Host
 The executor will require access to its docker host in order to be able to discover and stream from docker containers.
 
 Since the executor runs inside its own docker container it will try to reach its host using:
 `http://slavehostname:2376`.
 
-In order to stream the content of monitored log files each docker container hosting these files must have the following 
+### Requirements on Docker Containers
+In order to stream the content of monitored log files, each docker container hosting these files must have the following
 binaries installed and executable:
 
 - tail
