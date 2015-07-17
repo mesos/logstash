@@ -14,16 +14,6 @@ them according to the supplied configuration.
 The configuration files can be supplied either trough the web UI of the scheduler or through writing
 directly to the schedulers configuration directory.
 
-## How Container Log Extraction is Implemented
-
-For each log file within a docker container we run
-```docker exec tail -f /my/logfile```
-in the background. We then stream the contents into a local file within the logstash container.
-This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
-
-The `tail -f` will steal some of the computing resources allocated to that container. But the
-resource-restrictions imposed by Mesos will still be respected.
-
 
 # Roadmap
 
@@ -51,7 +41,44 @@ resource-restrictions imposed by Mesos will still be respected.
 
 - ☐ Configuration GUI
 
-# Getting Started
+# How to Run the Framework
+
+## Requirements
+
+## Configuration
+
+### Format
+### Matching
+
+## Run on Mesos
+
+## Run on Marathon
+
+
+## UI
+
+## Use Case NGINX
+
+# Technical Details
+
+## How we extract the logs
+
+## Run the TestS
+
+### Routes
+
+
+
+# Limitations
+
+# Missing Feature
+
+
+
+
+
+
+
 
 *This project is under active development and instructions on how to actually run in a production
 environment will be coming soon*.
@@ -61,9 +88,22 @@ community. Check out the MicroServices Infrastructure project for more.
 
 You can find it [here](https://github.com/CiscoCloud/microservices-infrastructure).
 
+
 # Requirements
 
 The executor will require access to its docker host.
+
+# How Container Log Extraction is Implemented
+
+For each log file within a docker container we run
+```docker exec tail -f /my/logfile```
+in the background. We then stream the contents into a local file within the logstash container.
+This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
+
+The `tail -f` will steal some of the computing resources allocated to that container. But the
+resource-restrictions imposed by Mesos will still be respected.
+
+
 
 # Development
 
@@ -72,7 +112,7 @@ There is a `Vagrantfile` for the project if you want to run it there.
 
 ## Dependencies
 
-- Java 7
+- Java 8
 
 ## Building
 
