@@ -62,10 +62,41 @@ binaries installed and executable:
 - sh
 
 
-## Configuration
+## <a name="configuration"></a> Configuration
+To configure logstash-mesos, you put logstash configuration files into the Scheduler's `config`-directory.
 
-### Format
-### Matching
+There are two different types of configuration files.
+
+### Docker Image Configuration Files
+Files under `config/docker` contain logstash configurations for docker images.
+
+A docker logstash configuration will be included once for every docker container with an image name matching
+the configuration filename. That is, the file `config/docker/nginx.conf` is included once
+for every nginx-container found running on a slave.
+Later on, we will also support wildcard configuration names, so that e.g `ng_.conf` might match `nginx` also.
+
+Logstash-mesos will treat these configuration files as standard logstash configuration files but for *one* difference.
+Input-sections using the `File`-plugin must look like this:
+```
+input {
+  File {
+    docker-path => '/var/lib/mylog.log' # note we use 'docker-path' instead of 'path' here
+  }
+}
+```
+Logstash-mesos will search for the string "docker-path", parse out the log path, and setup
+ cross-container streaming from the source container (e.g `nginx`) to logstash.
+
+Typically, the docker configurations just contain the `input`-sections. The rest of
+ the logstash configuration goes into the host configuration instead.
+
+### Host Configuration Files
+Files under `config/host` are for host logstash configurations.
+They will *always* be read by the logstash process, so it makes sense to put common
+`filter` and `output`-sections here.
+
+These files are provided directly to the logstash process so they should use
+the standard logstash configuration format. Documentation is available [here](https://www.elastic.co/guide/en/logstash/current/configuration.html).
 
 ## Run on Mesos
 
@@ -134,8 +165,9 @@ The intention is to do a best guess when allocating resources from Mesos (Work i
 
 # Missing Features
 These features are yet to be implemented:
-- Processing non-dockerized log files (meaning, log files available directly on the slaves).
+- Processing non-dockerized log files (meaning, log files available directly on the slaves)
 - Logging cannot be reconfigured once logstash-mesos has started streaming from a container
+- Wildcard filename matching for docker logstash configurations (see [Configuration](#configuration))
 
 # Security
 The framework will process log files of any docker container which is running on the same slave node and which are accessable via
