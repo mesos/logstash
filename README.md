@@ -1,7 +1,7 @@
 # Logstash Mesos Framework
 
-A Mesos Framework for running Logstash in your cluster. You can configure logging for all your
-other frameworks and have LogStash parse and send your logs to ElasticSearch.
+A [Mesos](http://mesos.apache.org/) Framework for running logstash in your cluster. You can configure logging for all your
+other frameworks and have logstash parse and send your logs to ElasticSearch.
 
 ## Overview
 
@@ -47,6 +47,21 @@ directly to the schedulers configuration directory.
 
 ## Requirements
 
+Mesos 0.22.1 (or compatible).
+
+The executor will require access to its docker host in order to be able to discover and stream from docker containers.
+
+Since the executor runs inside its own docker container it will try to reach its host using:
+```http://slavehostname:2376```.
+
+In order to stream the content of monitored log files each docker container hosting these files must have the following 
+binaries installed and executable:
+
+- tail
+
+- sh
+
+
 ## Configuration
 
 ### Format
@@ -66,9 +81,36 @@ directly to the schedulers configuration directory.
 
 # Technical Details
 
+The mesos-logstash framework is written in Java (Version 8).
+
 ## How we extract the logs
 
-## Run the TestS
+Currently we only support monitoring log files within a running docker container. See configuration section how to
+specify the log file location. 
+
+For each log file within a docker container we run
+```docker exec <observed-container> tail -f /my/configured/logfile```
+in the background. We then stream the contents into a local file within the logstash container.
+This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
+
+The file size of each streamed log file withing the logstash container is limited (currently max. 5MB). When the file size 
+exceeds that limit the file content is truncated. This might cause loss of data but is in our opinion still acceptable (best effort).  
+
+
+The `tail -f` will steal some of the computing resources allocated to that container. But the
+resource-restrictions imposed by Mesos will still be respected. 
+
+## Run the Tests
+
+To run the tests locally you need to fulfill the following requirements:
+
+- Java Development Kit installed (Java 8)
+- Docker daemon running (either locally or using e.g. [Docker-Machine](https://docs.docker.com/machine/))
+
+If your Docker daemon is not running natively on your machine (e.g. on a Mac or if you're using docker-machine) you have
+to export the DOCKE_* variables (e.g. for docker-machine use `eval $(docker-machine env dev)`).
+
+Run `gradle test` to run the all tests.  
 
 ### Routes
 When testing against non-local docker host (e.g docker-machine, boot2docker) you will need to add a route
@@ -97,30 +139,6 @@ These features are yet to be implemented:
 
 # Security
 *To be Written*
-
-
-
-
-
-
-
-# Requirements
-
-The executor will require access to its docker host in order to be able to discover and stream from docker containers.
-
-Since the executor runs inside its own docker container it will try to reach its host using:
-```http://slavehostname:2376```.
-
-# How Container Log Extraction is Implemented
-
-For each log file within a docker container we run
-```docker exec tail -f /my/logfile```
-in the background. We then stream the contents into a local file within the logstash container.
-This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
-
-The `tail -f` will steal some of the computing resources allocated to that container. But the
-resource-restrictions imposed by Mesos will still be respected.
-
 
 
 ## Sponsors
