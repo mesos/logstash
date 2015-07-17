@@ -43,6 +43,8 @@ directly to the schedulers configuration directory.
 
 # How to Run the Framework
 
+[TODO] 
+
 ## Requirements
 
 ## Configuration
@@ -52,8 +54,11 @@ directly to the schedulers configuration directory.
 
 ## Run on Mesos
 
+[TODO]
+
 ## Run on Marathon
 
+[TODO]
 
 ## UI
 
@@ -80,13 +85,7 @@ directly to the schedulers configuration directory.
 
 
 
-*This project is under active development and instructions on how to actually run in a production
-environment will be coming soon*.
 
-This project has been sponsored by Cisco Cloud Services, as part of their effort to give back to the DevOps
-community. Check out the MicroServices Infrastructure project for more.
-
-You can find it [here](https://github.com/CiscoCloud/microservices-infrastructure).
 
 
 # Requirements
@@ -107,43 +106,6 @@ The `tail -f` will steal some of the computing resources allocated to that conta
 resource-restrictions imposed by Mesos will still be respected.
 
 
-
-# Development
-
-You can run the project directly on your machine or in Vagrant.
-There is a `Vagrantfile` for the project if you want to run it there.
-
-## Dependencies
-
-- Java 8
-
-## Building
-
-You should copy the `local.properties.example` to `local.properties` and modify it with
-your dockerhub username.
-
-Also make sure you have the repos "logstash-scheduler" and "logstash-executor".
-
-Then run:
-
-```bash
-$ ./gradlew :build
-```
-
-## Running the Tests
-
-```bash
-$ ./gradlew :system-test:build
-```
-
-## Starting a Local Cluster
-
-3. Build
-
-    ```bash
-    $ cd /vagrant
-    $ sudo ./gradlew build
-    ```
 
 ## Sponsors
 This project is sponsored by Cisco Cloud Services
