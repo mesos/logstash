@@ -71,7 +71,7 @@ task buildDockerImage(type: Exec) {
     executable "docker"
     args "build"
     args "-t"
-    args executorImageName
+    args "mesos/logstash-executor"
     args "."
 }
 
