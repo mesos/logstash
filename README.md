@@ -91,7 +91,8 @@ which is hard to estimate beforehand, since it depends on the number of availabl
 The intention is to do a best guess when allocating resources from Mesos (Work in Progress).
 
 # Missing Features
-- Processing non-dockerized log files (meaning, log files available directly on the slaves) is still a work in progress.
+These features are yet to be implemented:
+- Processing non-dockerized log files (meaning, log files available directly on the slaves).
 - Logging cannot be reconfigured once logstash-mesos has started streaming from a container
 
 # Security
