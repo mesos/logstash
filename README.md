@@ -8,7 +8,7 @@ other frameworks and have logstash parse and send your logs to ElasticSearch.
 This framework will try to launch a logstash-process per slave.
 
 The user writes logstash configuration files for the frameworks and docker images that he wants to support.
-The logstash-executor will then be able to extract logs *out of* any docker container and parse
+Logstash-mesos will then be able to extract logs *out of* any docker container and parse
 them according to the supplied configuration.
 
 The configuration files can be supplied either trough the web UI of the scheduler or through writing
