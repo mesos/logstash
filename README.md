@@ -177,7 +177,7 @@ The framework will process log files of any docker container which is running on
 
 There is no mechanism which ensures that you're authorized to monitor the log files of a specific framework running on the same cluster/node.
 
-There is no mechanism which ensures that the logstash output might overlap with other logstash configurations. In other words: logstash might observed one framework
+There is no mechanism which ensures that the logstash output might overlap with other logstash configurations. In other words: logstash might observe one framework
 and output to the same destination it's using for another framework. 
    
 
