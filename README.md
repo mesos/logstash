@@ -85,6 +85,10 @@ Sets up a route that allows packets to be routed from your scheduler (running lo
 computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
 # Limitations
+Log files will be streamed into local files within the logstash-mesos container. This requires disk space
+which is hard to estimate beforehand, since it depends on the number of available log files.
+
+The intention is to do a best guess when allocating resources from Mesos (Work in Progress).
 
 # Missing Features
 - Processing non-dockerized log files (meaning, log files available directly on the slaves) is still a work in progress.
