@@ -76,11 +76,12 @@ directly to the schedulers configuration directory.
 
 # Limitations
 
-# Missing Feature
+# Missing Features
+- Processing non-dockerized log files (meaning, log files available directly on the slaves) is still a work in progress.
+- Logging cannot be reconfigured once logstash-mesos has started streaming from a container
 
-
-
-
+# Security
+*To be Written*
 
 
 
