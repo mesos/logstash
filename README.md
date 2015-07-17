@@ -3,6 +3,27 @@
 A Mesos Framework for running Logstash in your cluster. You can configure logging for all your
 other frameworks and have LogStash parse and send your logs to ElasticSearch.
 
+## Overview
+
+This framework will try to launch a logstash-process per slave.
+
+The user writes logstash configuration files for the frameworks and docker images that he wants to support.
+The logstash-executor will then be able to extract logs *out of* any docker container and parse
+them according to the supplied configuration.
+
+The configuration files can be supplied either trough the web UI of the scheduler or through writing
+directly to the schedulers configuration directory.
+
+## How Container Log Extraction is Implemented
+
+For each log file within a docker container we run
+```docker exec tail -f /my/logfile```
+in the background. We then stream the contents into a local file within the logstash container.
+This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
+
+The `tail -f` will steal some of the computing resources allocated to that container. But the
+resource-restrictions imposed by Mesos will still be respected.
+
 
 # Roadmap
 
@@ -39,6 +60,10 @@ This project has been sponsored by Cisco Cloud Services, as part of their effort
 community. Check out the MicroServices Infrastructure project for more.
 
 You can find it [here](https://github.com/CiscoCloud/microservices-infrastructure).
+
+# Requirements
+
+The executor will require access to its docker host.
 
 # Development
 
