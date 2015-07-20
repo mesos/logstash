@@ -10,14 +10,12 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.state.State;
 import org.apache.mesos.mini.util.Predicate;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
