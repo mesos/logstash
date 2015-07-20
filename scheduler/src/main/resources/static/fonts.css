@@ -1,0 +1,27 @@
+@font-face {
+    font-family: 'source_sans_pro';
+    src: url('fonts/sourcesanspro-extralight-webfont.woff2') format('woff2');
+    font-weight: 100;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'source_sans_pro';
+    src: url('fonts/sourcesanspro-light-webfont.woff2') format('woff2');
+    font-weight: 200;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'source_sans_pro';
+    src: url('fonts/sourcesanspro-regular-webfont.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'source_sans_pro';
+    src: url('fonts/sourcesanspro-semibold-webfont.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+}

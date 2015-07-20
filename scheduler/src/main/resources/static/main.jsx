@@ -71,7 +71,8 @@ let WebSocketClient = function (topics) {
 let Icon = React.createClass({
     render() {
         let style = this.props.color ? {color: this.props.color || "inherit"} : null;
-        return <span style={style} className={"icon-" + this.props.name + " " + this.props.className}></span>;
+        return <span style={style}
+                     className={"icon-" + this.props.name + " " + this.props.className}></span>;
     }
 });
 
@@ -81,20 +82,26 @@ let Menu = React.createClass({
             <div className="menu">
                 <div>
                     <div className="menu__header">
-                        <img src="logstash_icon.svg" className="menu__logo" />
+                        <img src="logstash_icon.svg" className="menu__logo"/>
+
                         <div>Mesos Logstash</div>
                     </div>
                     <div className="menu__list">
-                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="dashboard"><Icon className="menu__icon" name="dashboard"/>Dashboard</Link>
-                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="nodes"><Icon className="menu__icon" name="nodes" />Nodes</Link>
-                        <Link className="menu__list-item" activeClassName="menu__list-item--active" to="config"><Icon className="menu__icon" name="config"/>Config</Link>
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active"
+                              to="dashboard"><Icon className="menu__icon" name="dashboard"/>Dashboard</Link>
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active"
+                              to="nodes"><Icon className="menu__icon" name="nodes"/>Nodes</Link>
+                        <Link className="menu__list-item" activeClassName="menu__list-item--active"
+                              to="config"><Icon className="menu__icon" name="config"/>Config</Link>
                     </div>
                 </div>
                 <div className="menu__footer">
-                    <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
+                    <a className="menu__footer-item"
+                       href="http://github.com/triforkse/logstash-mesos">
                         GitHub
                     </a>
-                    <a className="menu__footer-item" href="http://github.com/triforkse/logstash-mesos">
+                    <a className="menu__footer-item"
+                       href="http://github.com/triforkse/logstash-mesos">
                         Documentation
                     </a>
                 </div>
@@ -127,13 +134,15 @@ let Chart = React.createClass({
 
             var l = series.points.length;
             var p = series.points[l - 1];
-            p.update({ marker: {enabled: false} });
+            p.update({marker: {enabled: false}});
 
-            series.addPoint({x: x, y: y, marker: {
-                enabled: true,
-                symbol: 'circle',
-                radius: 3
-            }}, true, true);
+            series.addPoint({
+                x: x, y: y, marker: {
+                    enabled: true,
+                    symbol: 'circle',
+                    radius: 3
+                }
+            }, true, true);
 
             this.setState({latestX: x});
         }
@@ -196,7 +205,7 @@ let Chart = React.createClass({
                     text: null
                 },
                 labels: {
-                    enabled:false
+                    enabled: false
                 },
                 alternateGridColor: "#2E3447",
                 tickPixelInterval: 20,
@@ -207,7 +216,7 @@ let Chart = React.createClass({
                 cropThreshold: 100,
                 pointStart: now - 60000,
                 pointInterval: 1000,
-                data: (function() {
+                data: (function () {
                     let data = [];
                     let count = 100;
                     for (let i = 0; i < count; i++) {
@@ -245,7 +254,7 @@ let NodePage = React.createClass({
     },
 
     render() {
-        let renderItem = function(k, v) {
+        let renderItem = function (k, v) {
             return (
                 <li className="box-list__item">
                     <div className="box-list__key">{k}</div>
@@ -258,7 +267,8 @@ let NodePage = React.createClass({
             return (
                 <div className="box box--list">
                     <div className="box__header">
-                        {e.executorId}<div className="status status--healthy"></div>
+                        <div>{e.executorId}</div>
+                        <div className="status status--healthy"></div>
                     </div>
                     <div className="box__body">
                         <ul className="box-list">
@@ -267,7 +277,7 @@ let NodePage = React.createClass({
                             {renderItem("Active Steams", e.activeStreamCount)}
                         </ul>
                     </div>
-            </div>);
+                </div>);
         };
 
         return (
@@ -315,10 +325,12 @@ let ConfigPage = React.createClass({
                 <li className="config">
                     <form action={"/api/configs/" + c.name} method="POST">
                         <input type="hidden" name="_method" value="PUT"/>
-                        <input type="hidden" className="configForm__name" name="name" value={c.name}/>
+                        <input type="hidden" className="configForm__name" name="name"
+                               value={c.name}/>
 
                         <h3>{c.name}</h3>
-                        <textarea className="configForm__input" name="input" placeholder="Logstash Config (Input Only)"
+                        <textarea className="configForm__input" name="input"
+                                  placeholder="Logstash Config (Input Only)"
                                   defaultValue={c.input}></textarea>
                         <br />
                         <button type="submit">Update</button>
@@ -336,7 +348,8 @@ let ConfigPage = React.createClass({
                     <form action="/api/host-config" method="POST">
                         <input type="hidden" name="_method" value="PUT"/>
                         <input type="hidden" className="configForm__name" name="name" value="ui"/>
-                        <textarea className="configForm__input" name="input" placeholder="Logstash Config"
+                        <textarea className="configForm__input" name="input"
+                                  placeholder="Logstash Config"
                                   defaultValue={self.state.hostConfig}></textarea>
                         <br />
                         <button type="submit">Update</button>
@@ -352,7 +365,8 @@ let ConfigPage = React.createClass({
                 <h2>New Docker Configuration</h2>
 
                 <form className="configForm" action="/api/configs" method="POST">
-                    <input className="configForm__name" name="name" placeholder="docker image name"/><br />
+                    <input className="configForm__name" name="name"
+                           placeholder="docker image name"/><br />
                     <textarea className="configForm__input" name="input"
                               placeholder="Logstash Config (Input Only)"></textarea>
                     <br />
@@ -370,6 +384,8 @@ let Box = React.createClass({
                 <div className="box__header">{this.props.title}</div>
                 <div className="box__body">
                     <div>{this.props.children}</div>
+                    {this.props.subtitle ?
+                        <div className="box__subtitle">{this.props.subtitle}</div> : ""}
                 </div>
             </div>
         );
@@ -416,20 +432,21 @@ let DashboardPage = React.createClass({
         let nodes = this.state.nodes;
         if (!stats || !nodes) return <div>Connecting...</div>;
 
-        let streamTotal = nodes.executors.reduce(function(acc, exec) {
+        let streamTotal = nodes.executors.reduce(function (acc, exec) {
             return acc + exec.activeStreamCount;
         }, 0);
 
         return (
             <div className="page">
-                <Box title="Number of Nodes">
-                    <BigNumber value={nodes.executors.length} title="Foo Bar Baz Quux" color="#8038E5" />
-                    <Chart value={nodes.executors.length} color="#8038E5" />
+                <Box title="Number of Nodes" subtitle="Last 60 seconds">
+                    <BigNumber value={nodes.executors.length} title="Foo Bar Baz Quux"
+                               color="#8038E5"/>
+                    <Chart value={nodes.executors.length} color="#8038E5"/>
                 </Box>
 
-                <Box title="Logged Instances">
-                    <BigNumber value={streamTotal} title="Quux Foo Baz Barr" color="#AF1034" />
-                    <Chart value={streamTotal} color="#AF1034" />
+                <Box title="Logged Instances" subtitle="Last 60 seconds">
+                    <BigNumber value={streamTotal} title="Quux Foo Baz Barr" color="#AF1034"/>
+                    <Chart value={streamTotal} color="#AF1034"/>
                 </Box>
             </div>
         )

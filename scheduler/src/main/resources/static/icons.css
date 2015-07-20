@@ -22,9 +22,11 @@
 .icon-config:before {
     content: "\e600";
 }
+
 .icon-dashboard:before {
     content: "\e601";
 }
+
 .icon-nodes:before {
     content: "\e602";
 }

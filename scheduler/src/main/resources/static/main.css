@@ -1,4 +1,5 @@
 @import "icons.css";
+@import "fonts.css";
 
 html,
 body,
@@ -7,7 +8,7 @@ body,
     margin: 0;
     padding: 0;
     height: 100%;
-    font-family: "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, serif;
+    font-family: "source_sans_pro", "Helvetica Neue Light", "HelveticaNeue-Light", "Helvetica Neue", Calibri, Helvetica, Arial, serif;
     -webkit-font-smoothing: antialiased;
 
 }
@@ -147,11 +148,12 @@ body,
 .box__header {
     text-align: center;
     color: white;
-    padding: 7px;
+    padding: 7px 17px;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 16px;
     border-bottom: solid 1px #262B3C;
     position: relative;
+    text-shadow: 0 1px 0px #000;
 }
 
 .box__body {
@@ -168,18 +170,25 @@ body,
     justify-content: flex-start;
 }
 
+.box--list .box__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .big-number {
-    font-size: 50px;
+    font-size: 60px;
     text-align: center;
-    line-height: 50px;
+    line-height: 60px;
+    font-weight: 100;
 }
 
 .big-number__title {
-    margin-top: 10px;
+    margin: 0 0 25px;
     color: white;
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 15px;
     line-height: 15px;
+    font-weight: 400;
 }
 
 .box-list {
@@ -209,14 +218,21 @@ body,
 }
 
 .status {
-    width: 8px;
-    height: 8px;
-    border-radius: 4px;
-    position: absolute;
-    right: 10px;
-    top: 12px;
+    font-size: 12px;
 }
 
-.status--healthy {
-    background-color: greenyellow;
+.status--healthy:before {
+    color: #11D17B;
+    content: "Healthy";
+}
+
+.status--sick:before {
+    color: #d12f36;
+    content: "Sick";
+}
+
+.box__subtitle {
+    color: white;
+    font-size: 13px;
+    margin-bottom: 15px;
 }

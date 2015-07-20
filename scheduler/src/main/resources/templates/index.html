@@ -1,9 +1,9 @@
 <!doctype html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html>
 <head>
     <title>Mesos Logstash</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <link rel="stylesheet" type="text/css" href="main.css" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet" type="text/css" href="main.css"/>
     <script src="/webjars/react/0.13.3/react.min.js" type="text/javascript"></script>
     <script src="/webjars/react/0.13.3/JSXTransformer.js" type="text/javascript"></script>
     <script src="/webjars/react-router/0.13.2/ReactRouter.min.js" type="text/javascript"></script>
@@ -14,11 +14,11 @@
     <script src="/main.jsx" type="text/jsx"></script>
 </head>
 <body>
-    <div id="app"></div>
-    <script type="text/jsx">
-        AppRouter.run(function (Handler, state){
-            React.render(<Handler />, document.getElementById("app"));
-        });
-    </script>
+<div id="app"></div>
+<script type="text/jsx">
+    AppRouter.run(function (Handler, state) {
+        React.render(<Handler />, document.getElementById("app"));
+    });
+</script>
 </body>
 </html>
