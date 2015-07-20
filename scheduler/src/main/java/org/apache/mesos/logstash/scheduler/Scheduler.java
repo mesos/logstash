@@ -28,6 +28,9 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
 
     private static final String TASK_NAME = "LOGSTASH_SERVER";
     private static final String TASK_DATE_FORMAT = "yyyyMMdd'T'HHmmss.SSS'Z'";
+    public static final double LOGSTASH_CPU_DEFAULT = 0.2;
+    public static final int LOGSTASH_MEMORY_DEFAULT = 256;
+    public static final int LOGSTASH_DISK_DEFAULT = 512;
 
     private final Driver driver;
     private final ConfigManager configManager;
@@ -178,9 +181,7 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
                 .setName(TASK_NAME)
                 .setTaskId(Protos.TaskID.newBuilder().setValue(id))
                 .setSlaveId(offer.getSlaveId())
-
-                // FIXME: Only accept the resources we need.
-                .addAllResources(offer.getResourcesList());
+                .addAllResources(getResourcesList());
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo.newBuilder()
                 .setForcePullImage(false)
@@ -207,6 +208,17 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
 
         return taskInfoBuilder.build();
     }
+
+    private List<Resource> getResourcesList() {
+
+        return Arrays.asList(
+                // FIXME: Read these numbers from the commandline.
+                Resources.cpus(LOGSTASH_CPU_DEFAULT),
+                Resources.mem(LOGSTASH_MEMORY_DEFAULT),
+                Resources.disk(LOGSTASH_DISK_DEFAULT)
+        );
+    }
+
 
 
     private boolean shouldAcceptOffer(Protos.Offer offer) {
