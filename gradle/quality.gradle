@@ -1,0 +1,22 @@
+apply plugin: 'findbugs'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+
+tasks.withType(FindBugs) {
+  excludeFilter = file("$rootProject.projectDir/gradle/findbugs/excludeFilter.xml")
+}
+
+checkstyle {
+  configFile = file("$rootProject.projectDir/gradle/checkstyle/checkstyle.xml")
+  sourceSets = [sourceSets.main]  // disable style checks on tests
+}
+
+pmd {
+  ruleSets = [
+    'java-basic',
+    'java-braces',
+    'java-clone',
+    'java-finalizers',
+    'java-imports'
+  ]
+}

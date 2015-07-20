@@ -1,0 +1,9 @@
+<FindBugsFilter>
+    <Match>
+        <Package name="~org\.apache\.mesos\.mini\..*"/>
+    </Match>
+
+    <Match>
+        <Bug code="SnVI"/>
+    </Match>
+</FindBugsFilter>
