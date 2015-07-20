@@ -2,6 +2,9 @@ apply plugin: 'java'
 apply plugin: 'com.bmuschko.docker-remote-api'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'spring-boot'
+apply plugin: 'application'
+
+
 
 buildscript {
     repositories {
@@ -9,7 +12,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.bmuschko:gradle-docker-plugin:2.2'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.1'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
         classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE"
     }
 }
@@ -52,12 +55,13 @@ dependencies {
 
 shadowJar {
     baseName = "logstash-scheduler-dependencies"
-
     exclude 'org/apache/mesos/logstash' // only include dependencies
 }
 
+mainClassName ='org.apache.mesos.logstash.scheduler.Application';
+
+
 jar {
-    dependsOn 'createConfig'
     baseName = "logstash-scheduler"
     manifest {
         attributes(
@@ -93,4 +97,3 @@ task buildDockerImage(type: Exec) {
 }
 
 build.dependsOn buildDockerImage
-build.dependsOn copyJar
