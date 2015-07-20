@@ -1,12 +1,11 @@
 package org.apache.mesos.logstash.executor;
 
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
-import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
+import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -47,7 +46,8 @@ public class ConfigManagerTest {
 
         configManager.onConfigUpdated(LogType.DOCKER, frameworks.stream());
 
-        verify(logstash, times(1)).updateConfig(LogType.DOCKER, "# bas\nbas-config\n# foo\nfoo-config\n# foo\nfoo-config");
+        verify(logstash, times(1)).updateConfig(LogType.DOCKER,
+            "# bas\nbas-config\n# foo\nfoo-config\n# foo\nfoo-config");
     }
 
 }

@@ -1,6 +1,5 @@
 package org.apache.mesos.logstash.executor.logging;
 
-
 import java.io.IOException;
 import java.io.OutputStream;
 

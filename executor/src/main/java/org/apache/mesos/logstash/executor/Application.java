@@ -22,16 +22,19 @@ public class Application implements Runnable {
 
     public void run() {
         DockerClient dockerClient = new DockerClient();
-        DockerLogSteamManager streamManager = new DockerLogSteamManager(new DockerStreamer(new FileLogSteamWriter(MAX_LOG_SIZE), dockerClient));
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(
+            new DockerStreamer(new FileLogSteamWriter(MAX_LOG_SIZE), dockerClient));
         DockerInfoCache dockerInfoCache = new DockerInfoCache();
 
-        ConfigManager controller = createController(dockerClient, streamManager,dockerInfoCache);
-        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager, dockerInfoCache);
+        ConfigManager controller = createController(dockerClient, streamManager, dockerInfoCache);
+        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager,
+            dockerInfoCache);
 
         LogstashExecutor executor = new LogstashExecutor(controller, dockerClient, globalStateInfo);
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 
-        dockerClient.startMonitoringContainerState(); // we start after the controller is initiated because it's sets a frameworkListener
+        dockerClient
+            .startMonitoringContainerState(); // we start after the controller is initiated because it's sets a frameworkListener
 
         LOGGER.info("Mesos Logstash Executor Started");
         Protos.Status status = driver.run();
@@ -44,7 +47,8 @@ public class Application implements Runnable {
         }
     }
 
-    private ConfigManager createController(DockerClient dockerClient, DockerLogSteamManager streamManager, DockerInfoCache dockerInfoCache) {
+    private ConfigManager createController(DockerClient dockerClient,
+        DockerLogSteamManager streamManager, DockerInfoCache dockerInfoCache) {
         LogstashService logstashService = new LogstashService();
 
         return new ConfigManager(dockerClient, logstashService, streamManager, dockerInfoCache);

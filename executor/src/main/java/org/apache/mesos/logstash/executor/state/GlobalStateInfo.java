@@ -15,12 +15,12 @@ public class GlobalStateInfo {
     private final DockerLogSteamManager streamManager;
     private final DockerInfoCache dockerInfoCache;
 
-    public GlobalStateInfo(DockerClient dockerClient, DockerLogSteamManager streamManager, DockerInfoCache dockerInfoCache) {
+    public GlobalStateInfo(DockerClient dockerClient, DockerLogSteamManager streamManager,
+        DockerInfoCache dockerInfoCache) {
         this.dockerClient = dockerClient;
         this.streamManager = streamManager;
         this.dockerInfoCache = dockerInfoCache;
     }
-
 
     Set<String> getRunningContainers() {
         return dockerClient.getRunningContainers();
@@ -31,17 +31,17 @@ public class GlobalStateInfo {
     }
 
     List<String> getDockerFrameworkNamesWhichHaveBeenConfigured() {
-        return dockerInfoCache.dockerInfos.stream().map(FrameworkInfo::getName).collect(Collectors.toList());
+        return dockerInfoCache.dockerInfos.stream().map(FrameworkInfo::getName)
+            .collect(Collectors.toList());
     }
-
 
     public ExecutorMessage getStateAsExecutorMessage() {
         return ExecutorMessage.newBuilder().setType("GlobalStateInfo")
-                .setGlobalStateInfo(LogstashProtos.GlobalStateInfo.newBuilder()
-                        .addAllConfiguredDockerFramework(getDockerFrameworkNamesWhichHaveBeenConfigured())
-                        .addAllProcessedContainer(getProcessedContainers())
-                        .addAllRunningContainer(getRunningContainers())
-                        .build())
-                .build();
+            .setGlobalStateInfo(LogstashProtos.GlobalStateInfo.newBuilder()
+                .addAllConfiguredDockerFramework(getDockerFrameworkNamesWhichHaveBeenConfigured())
+                .addAllProcessedContainer(getProcessedContainers())
+                .addAllRunningContainer(getRunningContainers())
+                .build())
+            .build();
     }
 }

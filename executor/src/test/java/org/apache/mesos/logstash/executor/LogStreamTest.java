@@ -1,34 +1,28 @@
 package org.apache.mesos.logstash.executor;
 
-import com.github.dockerjava.api.InternalServerErrorException;
-import com.google.protobuf.ByteString;
 import org.apache.commons.io.FileUtils;
-import org.apache.mesos.logstash.executor.logging.Constansts;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
-import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.*;
-import java.util.concurrent.Callable;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
 
 public class LogStreamTest {
-
 
     public static final int MAX_LOG_SIZE = 11;
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
-
     File testLogFile;
     FileLogSteamWriter writer;
     TestLogStream testLogStream;
-
 
     @Test
     public void simpleRotation() throws IOException {
@@ -77,7 +71,6 @@ public class LogStreamTest {
             testLogFile = folder.newFile("testLog.log");
             writer = new FileLogSteamWriter(MAX_LOG_SIZE);
 
-
             testLogStream = new TestLogStream();
 
             writer.write(testLogFile.getAbsolutePath(), testLogStream);
@@ -89,7 +82,6 @@ public class LogStreamTest {
         }
     }
 
-
     @After
     public void tearDown() throws IOException {
         if (testLogStream != null && testLogStream.isAttached()) {
@@ -97,14 +89,10 @@ public class LogStreamTest {
         }
     }
 
-
     private void waitForTestLogStreamIsAttached(final TestLogStream testLogStream) {
-        await("Waiting for attached LogStream").atMost(5, TimeUnit.SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return testLogStream.isAttached();
-            }
-        });
+        await("Waiting for attached LogStream")
+            .atMost(5, TimeUnit.SECONDS)
+            .until(testLogStream::isAttached);
     }
 
     static class TestLogStream implements LogStream, Closeable {
@@ -112,7 +100,6 @@ public class LogStreamTest {
         OutputStream outputStream;
         OutputStream stdout;
         OutputStream stderr;
-
 
         @Override
         public void attach(OutputStream stdout, OutputStream stderr) throws IOException {
@@ -122,7 +109,6 @@ public class LogStreamTest {
             this.stderr = stderr;
             this.stdout = stdout;
 
-
             outputStream = new OutputStream() {
                 @Override
                 public void write(int b) throws IOException {
@@ -130,7 +116,6 @@ public class LogStreamTest {
                 }
             };
         }
-
 
         boolean isAttached() {
             return outputStream != null;

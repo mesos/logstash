@@ -4,8 +4,8 @@ import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.executor.ConfigManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 
-import java.util.*;
-
+import java.util.HashSet;
+import java.util.Set;
 
 public class DockerLogSteamManager {
 
@@ -23,7 +23,8 @@ public class DockerLogSteamManager {
     public void setupContainerLogfileStreaming(DockerFramework framework) {
 
         if (isAlreadySteaming(framework)) {
-            LOGGER.info("Ignoring framework " + framework.getName() + " because it has already been configured");
+            LOGGER.info("Ignoring framework " + framework.getName()
+                + " because it has already been configured");
             return;
         }
 

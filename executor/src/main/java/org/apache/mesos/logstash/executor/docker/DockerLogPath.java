@@ -1,6 +1,5 @@
 package org.apache.mesos.logstash.executor.docker;
 
-
 import java.nio.file.Paths;
 
 public class DockerLogPath {
@@ -13,7 +12,8 @@ public class DockerLogPath {
         this.containerId = containerId;
         String sanitizedFrameworkName = sanitize(frameworkName);
         this.containerFilePath = containerFilePath;
-        this.executorLogPath = Paths.get("/tmp", containerId, sanitizedFrameworkName, containerFilePath).toString();
+        this.executorLogPath = Paths
+            .get("/tmp", containerId, sanitizedFrameworkName, containerFilePath).toString();
     }
 
     public String getContainerLogPath() {

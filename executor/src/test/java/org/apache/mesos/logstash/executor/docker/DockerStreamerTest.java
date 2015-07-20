@@ -1,10 +1,11 @@
 package org.apache.mesos.logstash.executor.docker;
 
-import com.spotify.docker.client.*;
+import com.spotify.docker.client.DefaultDockerClient;
+import com.spotify.docker.client.DockerCertificateException;
+import com.spotify.docker.client.DockerCertificates;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
-import junit.framework.Assert;
 import org.apache.mesos.logstash.executor.logging.ByteBufferLogSteamWriter;
 import org.hamcrest.Matchers;
 import org.junit.After;
@@ -19,7 +20,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.HOURS;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 @Ignore
@@ -32,18 +32,19 @@ public class DockerStreamerTest {
     private com.spotify.docker.client.DockerClient client;
 
     @Before
-    public void setUp() throws com.spotify.docker.client.DockerException, InterruptedException, DockerCertificateException {
+    public void setUp() throws com.spotify.docker.client.DockerException, InterruptedException,
+        DockerCertificateException {
 
         writer = new ByteBufferLogSteamWriter();
 
-        DockerCertificates certs = DockerCertificates.builder().dockerCertPath(Paths.get(System.getenv("DOCKER_CERT_PATH"))).build();
+        DockerCertificates certs = DockerCertificates.builder()
+            .dockerCertPath(Paths.get(System.getenv("DOCKER_CERT_PATH"))).build();
 
         client = DefaultDockerClient.builder()
-                .readTimeoutMillis(HOURS.toMillis(1))
-                .uri(URI.create(System.getenv("DOCKER_HOST").replace("tcp", "https")))
-                .dockerCertificates(certs)
-                .build();
-
+            .readTimeoutMillis(HOURS.toMillis(1))
+            .uri(URI.create(System.getenv("DOCKER_HOST").replace("tcp", "https")))
+            .dockerCertificates(certs)
+            .build();
 
         client.pull("busybox");
 
@@ -64,10 +65,9 @@ public class DockerStreamerTest {
     @Test
     public void filesAreStreamedToTheExecutor() throws DockerException, InterruptedException {
 
-
         container = client.createContainer(ContainerConfig.builder()
-                .image("busybox") // while : sleep 3; echo 1; done
-                .cmd("sh", "-c", "echo 'Hello' >> /mytest.log && sleep 10").build());
+            .image("busybox") // while : sleep 3; echo 1; done
+            .cmd("sh", "-c", "echo 'Hello' >> /mytest.log && sleep 10").build());
 
         client.startContainer(container.id());
 
@@ -79,11 +79,12 @@ public class DockerStreamerTest {
     }
 
     @Test
-    public void filesAreStreamedToTheExecutor2() throws DockerException, InterruptedException, UnsupportedEncodingException {
+    public void filesAreStreamedToTheExecutor2()
+        throws DockerException, InterruptedException, UnsupportedEncodingException {
 
         container = client.createContainer(ContainerConfig.builder()
-                .image("busybox")
-                .cmd("sh", "-c", "while sleep 1; do echo 'foo' >> /mytest.log; done").build());
+            .image("busybox")
+            .cmd("sh", "-c", "while sleep 1; do echo 'foo' >> /mytest.log; done").build());
 
         client.startContainer(container.id());
 

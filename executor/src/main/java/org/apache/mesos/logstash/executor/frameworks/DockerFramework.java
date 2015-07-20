@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.executor.frameworks;
 
 import org.apache.mesos.logstash.executor.docker.DockerLogPath;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -35,7 +34,8 @@ public class DockerFramework implements Framework {
 
         // Replace all log paths with paths to temporary files
         for (String logLocation : logLocations) {
-            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getName(), logLocation).getExecutorLogPath();
+            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getName(),
+                logLocation).getExecutorLogPath();
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
 
@@ -58,6 +58,7 @@ public class DockerFramework implements Framework {
 
     public static class ContainerId {
         String id;
+
         public ContainerId(String containerId) {
             this.id = containerId;
         }
@@ -65,8 +66,8 @@ public class DockerFramework implements Framework {
 
     public List<DockerLogPath> getLogFiles() {
         return logLocations.stream()
-                .map((path) -> new DockerLogPath(this.containerId.id, this.getName(), path))
-                .collect(Collectors.toList());
+            .map((path) -> new DockerLogPath(this.containerId.id, this.getName(), path))
+            .collect(Collectors.toList());
     }
 
     public String getName() {

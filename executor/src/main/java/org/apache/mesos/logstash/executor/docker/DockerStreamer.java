@@ -22,10 +22,12 @@ public class DockerStreamer {
     }
 
     public void startStreaming(DockerLogPath path) {
-        LOGGER.info("Stream from " + path.getContainerLogPath() + " to " + path.getExecutorLogPath());
+        LOGGER
+            .info("Stream from " + path.getContainerLogPath() + " to " + path.getExecutorLogPath());
 
         try {
-            LogStream logStream = createContainerLogStream(path.getContainerId(), path.getContainerLogPath());
+            LogStream logStream = createContainerLogStream(path.getContainerId(),
+                path.getContainerLogPath());
             writer.write(path.getExecutorLogPath(), logStream);
             LOGGER.info(String.format("Logging file: %s", path.getExecutorLogPath()));
         } catch (IOException e) {
@@ -34,7 +36,8 @@ public class DockerStreamer {
     }
 
     private LogStream createContainerLogStream(String containerId, String logLocation) {
-        String MONITOR_CMD = String.format(BASH_COMMAND, logLocation, Constansts.MAGIC_CHARACTER, logLocation);
+        String MONITOR_CMD = String
+            .format(BASH_COMMAND, logLocation, Constansts.MAGIC_CHARACTER, logLocation);
         LOGGER.info("Running: " + MONITOR_CMD);
         return client.exec(containerId, "sh", "-c", MONITOR_CMD);
     }

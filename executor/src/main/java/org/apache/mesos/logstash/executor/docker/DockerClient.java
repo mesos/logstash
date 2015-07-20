@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 
-
 public class DockerClient implements ContainerizerClient, StartupListener {
 
     private Map<String, String> runningContainers = new HashMap<>();
@@ -26,12 +25,14 @@ public class DockerClient implements ContainerizerClient, StartupListener {
         this.frameworkDiscoveryListener = consumer;
     }
 
-    public DockerClient() {}
+    public DockerClient() {
+    }
+
     public DockerClient(com.spotify.docker.client.DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
 
-    public void startMonitoringContainerState(){
+    public void startMonitoringContainerState() {
         // FIXME: We are never stopping this. Maybe consider making this class a service.
 
         Timer timer = new Timer();
@@ -45,9 +46,9 @@ public class DockerClient implements ContainerizerClient, StartupListener {
 
     public void startupComplete(String hostName) {
         this.dockerClient = DefaultDockerClient.builder()
-                .readTimeoutMillis(HOURS.toMillis(1))
-                .uri(URI.create("http://" + hostName + ":2376"))
-                .build();
+            .readTimeoutMillis(HOURS.toMillis(1))
+            .uri(URI.create("http://" + hostName + ":2376"))
+            .build();
     }
 
     public Set<String> getRunningContainers() {
@@ -59,7 +60,7 @@ public class DockerClient implements ContainerizerClient, StartupListener {
     }
 
     private List<Container> getContainers() throws DockerException, InterruptedException {
-        if(dockerClient == null) {
+        if (dockerClient == null) {
             return Collections.emptyList();
         }
         return this.dockerClient.listContainers();
@@ -91,11 +92,14 @@ public class DockerClient implements ContainerizerClient, StartupListener {
         try {
             List<Container> latestRunningContainers = getContainers();
 
-            LOGGER.info(String.format("Found %d running containers", latestRunningContainers.size()));
+            LOGGER
+                .info(String.format("Found %d running containers", latestRunningContainers.size()));
 
-            Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(latestRunningContainers);
+            Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(
+                latestRunningContainers);
 
-            if (!latestRunningContainerIdAndNames.keySet().equals(this.runningContainers.keySet())) {
+            if (!latestRunningContainerIdAndNames.keySet()
+                .equals(this.runningContainers.keySet())) {
                 LOGGER.info("Container list changed!");
 
                 this.runningContainers = latestRunningContainerIdAndNames;
@@ -120,7 +124,9 @@ public class DockerClient implements ContainerizerClient, StartupListener {
         // TODO: Handle error properly.
 
         try {
-            String id = dockerClient.execCreate(containerId, command, com.spotify.docker.client.DockerClient.ExecParameter.STDOUT, com.spotify.docker.client.DockerClient.ExecParameter.STDERR);
+            String id = dockerClient.execCreate(containerId, command,
+                com.spotify.docker.client.DockerClient.ExecParameter.STDOUT,
+                com.spotify.docker.client.DockerClient.ExecParameter.STDERR);
             return new DockerLogStream(dockerClient.execStart(id));
 
         } catch (DockerException | InterruptedException e) {

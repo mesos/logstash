@@ -8,11 +8,12 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class HeartbeatFilterOutputStreamTest {
 
-    final String TEST_STRING = String.format("Hello\n%c Ignore me\nWorld!", Constansts.MAGIC_CHARACTER);
+    final String TEST_STRING = String
+        .format("Hello\n%c Ignore me\nWorld!", Constansts.MAGIC_CHARACTER);
 
     ByteArrayOutputStream baos;
     HeartbeatFilterOutputStream target;

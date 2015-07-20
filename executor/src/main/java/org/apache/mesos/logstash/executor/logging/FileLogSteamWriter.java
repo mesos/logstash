@@ -3,12 +3,14 @@ package org.apache.mesos.logstash.executor.logging;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 public class FileLogSteamWriter implements LogStreamWriter {
 
@@ -53,7 +55,7 @@ public class FileLogSteamWriter implements LogStreamWriter {
                     }
 
                     void recalculateEndpoint() {
-                        if(numBytesWritten >= maxLogSize) {
+                        if (numBytesWritten >= maxLogSize) {
                             numBytesWritten = 0;
                             try {
                                 outputStream.close();

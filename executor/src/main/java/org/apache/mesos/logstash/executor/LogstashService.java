@@ -20,8 +20,12 @@ public class LogstashService implements LogstashManager {
     public void updateConfig(LogType type, String config) {
         LOGGER.debug("New Config for " + type + ":\n" + config);
         switch (type) {
-            case HOST: updateStaticConfig(config); break;
-            case DOCKER: updateDockerConfig(config); break;
+            case HOST:
+                updateStaticConfig(config);
+                break;
+            case DOCKER:
+                updateDockerConfig(config);
+                break;
         }
     }
 

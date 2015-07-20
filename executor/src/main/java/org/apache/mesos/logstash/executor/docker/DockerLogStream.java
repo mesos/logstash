@@ -1,6 +1,5 @@
 package org.apache.mesos.logstash.executor.docker;
 
-
 import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 
