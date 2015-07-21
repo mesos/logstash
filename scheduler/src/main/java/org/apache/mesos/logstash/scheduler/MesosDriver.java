@@ -45,7 +45,7 @@ public class MesosDriver implements Driver {
     private Protos.FrameworkInfo buildFramework() {
         final Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder();
         frameworkBuilder.setName(Constants.FRAMEWORK_NAME);
-        frameworkBuilder.setUser("root"); // TODO: change, (thb) meaning what
+        frameworkBuilder.setUser(""); // TODO: change, (thb) meaning what
         frameworkBuilder.setCheckpoint(true);
         frameworkBuilder.setFailoverTimeout(Constants.FAILOVER_TIMEOUT);
         return frameworkBuilder.build();

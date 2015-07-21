@@ -10,6 +10,11 @@
         </encoder>
     </appender>
 
+    <logger name="org.apache.mesos.logstash">
+        <level value="DEBUG" />
+    </logger>
+
+
     <root level="info">
         <appender-ref ref="STDOUT" />
     </root>
