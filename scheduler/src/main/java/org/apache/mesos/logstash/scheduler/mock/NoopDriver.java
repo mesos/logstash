@@ -18,12 +18,6 @@ public class NoopDriver implements Driver {
         }});
 
         t.start();
-
-        try {
-            t.join();
-        } catch (InterruptedException ignored) {
-
-        }
     }
 
     @Override

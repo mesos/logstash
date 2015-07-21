@@ -1,24 +1,30 @@
 package org.apache.mesos.logstash.scheduler;
 
 
+import javassist.bytecode.analysis.Executor;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MesosDriver implements Driver {
 
     private final String masterURL;
     private MesosSchedulerDriver mesosDriver;
+    private ExecutorService executorService;
 
 
     public MesosDriver(String masterURL) {
         this.masterURL = masterURL;
+        this.executorService = Executors.newSingleThreadExecutor();
     }
 
 
     @Override
     public synchronized void run(Scheduler scheduler) {
         mesosDriver = buildSchedulerDriver(scheduler);
-        mesosDriver.run();
+        executorService.execute(mesosDriver::run);
     }
 
 
@@ -26,6 +32,7 @@ public class MesosDriver implements Driver {
     public void stop() {
         mesosDriver.stop();
         mesosDriver = null;
+        executorService.shutdown();
     }
 
 

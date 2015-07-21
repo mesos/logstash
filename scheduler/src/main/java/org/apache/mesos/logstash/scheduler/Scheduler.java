@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -57,8 +58,14 @@ public class Scheduler implements org.apache.mesos.Scheduler, ConfigEventListene
     @PostConstruct
     public void start() {
         configManager.registerListener(this);
+        driver.run(this);
     }
 
+
+    @PreDestroy
+    public void stop() {
+        driver.stop();
+    }
 
     public void registerListener(FrameworkMessageListener listener) {
         listeners.add(listener);

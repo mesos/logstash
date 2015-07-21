@@ -20,7 +20,7 @@ public class Application {
     private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
 
     private static String masterURL = null;
-    private static boolean isNoCluster = true;
+    private static boolean isNoCluster = false;
 
     protected Application() {}
 
