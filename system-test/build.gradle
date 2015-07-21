@@ -1,20 +1,11 @@
-apply plugin: 'java'
-
 dependencies {
-    compile project(':common')
-    compile project(':scheduler')
-    compile project(':executor')
+    compile project(':logstash-commons')
+    compile project(':logstash-scheduler')
 
-
-    testCompile 'junit:junit:4.11'
     testCompile 'com.github.docker-java:docker-java:1.3.0'
     testCompile 'com.mashape.unirest:unirest-java:1.4.5'
-    testCompile 'com.jayway.awaitility:awaitility:1.6.3'
-//    testCompile 'org.apache.commons-lang:commons-lang:2.6'
     testCompile 'com.github.ContainerSolutions:mini-mesos:-SNAPSHOT'
 }
-
-
 
 test {
     include '**/*SystemTest*'
@@ -22,11 +13,7 @@ test {
         showStandardStreams = true
     }
     outputs.upToDateWhen { false }
-
-    jvmArgs "-Djava.library.path=/usr/local/lib"
 }
 
-
-// bring up the cluster before tests
-test.dependsOn project(':executor').buildDockerImage
+test.dependsOn ':logstash-executor:dockerBuild'
 

@@ -5,9 +5,10 @@ import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.FolderMonitor;
-import org.apache.mesos.logstash.scheduler.MesosDriver;
+import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
+import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.LogstashLiveState;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
@@ -27,20 +28,18 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
-
 public abstract class AbstractLogstashFrameworkTest {
     public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
-            // Note: Logstash-mesos uses container discovery, and mesos-local runs all
-            // the executors in the same docker host. So it is safest to just use 1 slave for now..
-            .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
-//            .imagesToBuild(new MesosClusterConfig.ImageToBuild(new File("../executor"), "logstash-executor"))
-            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-//            .dockerInDockerImages(new String[]{"logstash-executor"})
-            .build();
+        // Note: Logstash-mesos uses container discovery, and mesos-local runs all
+        // the executors in the same docker host. So it is safest to just use 1 slave for now..
+        .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
+            //            .imagesToBuild(new MesosClusterConfig.ImageToBuild(new File("../executor"), "logstash-executor"))
+        .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
+            //            .dockerInDockerImages(new String[]{"logstash-executor"})
+        .build();
 
     @ClassRule
     public static MesosCluster cluster = new MesosCluster(clusterConfig);
-
 
     public static LogstashScheduler scheduler;
     public static ConfigFolder configFolder;
@@ -48,19 +47,18 @@ public abstract class AbstractLogstashFrameworkTest {
     protected List<String> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
-    private MesosDriver driver;
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
 
         DockerClient dockerClient = clusterConfig.dockerClient;
 
-
         // TODO move out into a Rule (should belong to mini-mesos)
         // Make our framework executor available inside the mesos cluster
         String[] dindImages = {"mesos/logstash-executor"};
         pushDindImagesToPrivateRegistry(dockerClient, dindImages, clusterConfig);
-        pullDindImagesAndRetagWithoutRepoAndLatestTag(dockerClient, cluster.getMesosContainer().getMesosContainerID(), dindImages);
+        pullDindImagesAndRetagWithoutRepoAndLatestTag(dockerClient,
+            cluster.getMesosContainer().getMesosContainerID(), dindImages);
     }
 
     @After
@@ -70,12 +68,14 @@ public abstract class AbstractLogstashFrameworkTest {
             return;
         }
 
-        String stopString = "docker stop -t=0 " + containersToBeStopped.stream().collect(Collectors.joining(" "));
+        String stopString =
+            "docker stop -t=0 " + containersToBeStopped.stream().collect(Collectors.joining(" "));
 
         System.out.println("STOPPING test containers: " + stopString);
 
-        String execId = clusterConfig.dockerClient.execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
-                .withCmd("bash", "-c", stopString).exec().getId();
+        String execId = clusterConfig.dockerClient
+            .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
+            .withCmd("bash", "-c", stopString).exec().getId();
 
         InputStream inputStream = clusterConfig.dockerClient.execStartCmd(execId).exec();
         String output = DockerUtil.consumeInputStream(inputStream);
@@ -87,47 +87,33 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        File dockerConf = folder.newFolder("docker");
-        File hostConf = folder.newFolder("host");
+        LiveState liveState = new LogstashLiveState();
 
-        configFolder = new ConfigFolder(dockerConf, hostConf);
-
-        driver = new MesosDriver(cluster.getMesosContainer().getMesosMasterURL());
-
-        ConfigManager configManager = new ConfigManager(
-                new FolderMonitor(dockerConf.toPath()),
-                new FolderMonitor(hostConf.toPath())
-        );
-
-        scheduler = new LogstashScheduler(driver, configManager, );
-
+        scheduler = new LogstashScheduler(liveState, new LogstashSettings(null, null),
+            cluster.getMesosContainer().getMesosMasterURL(), false);
         scheduler.start();
-        configManager.start();
 
-        Thread t = new Thread(() -> driver.run(scheduler));
+        ConfigManager configManager = new ConfigManager(scheduler, folder.getRoot().toPath());
+        configManager.start();
 
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
         printRunningContainers();
         System.out.println("*********************************************************************");
-
-        t.setName("Mesos-Logstash-Scheduler");
-        t.setDaemon(true);
-        t.start();
 
         // TODO move out into a Rule
         waitForLogstashFramework();
         waitForExcutorTaskIsRunning();
     }
 
-
     private String printRunningContainers() {
         DockerClient dockerClient = clusterConfig.dockerClient;
         ExecCreateCmdResponse execCreateCmdResponse;
         InputStream execCmdStream;
 
-        execCreateCmdResponse = dockerClient.execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
-                .withAttachStdout(true)
-                .withCmd("bash", "-c", "docker ps").exec();
+        execCreateCmdResponse = dockerClient
+            .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
+            .withAttachStdout(true)
+            .withCmd("bash", "-c", "docker ps").exec();
 
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
         String runningDockerContainers = DockerUtil.consumeInputStream(execCmdStream);
@@ -137,10 +123,9 @@ public abstract class AbstractLogstashFrameworkTest {
         return runningDockerContainers;
     }
 
-
     @After
     public void stopLogstashFramework() {
-        driver.stop();
+        scheduler.stop();
     }
 
     @AfterClass
@@ -156,11 +141,12 @@ public abstract class AbstractLogstashFrameworkTest {
     private static void waitForExcutorTaskIsRunning() {
         // wait for our executor
         cluster.waitForState(state -> state.getFramework("logstash") != null
-                && state.getFramework("logstash").getTasks().size() > 0
-                && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState()));
+            && state.getFramework("logstash").getTasks().size() > 0
+            && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState()));
     }
 
-    private static void pullDindImagesAndRetagWithoutRepoAndLatestTag(DockerClient dockerClient, String mesosClusterContainerId, String[] dindImages) {
+    private static void pullDindImagesAndRetagWithoutRepoAndLatestTag(DockerClient dockerClient,
+        String mesosClusterContainerId, String[] dindImages) {
 
         for (String image : dindImages) {
 
@@ -169,45 +155,62 @@ public abstract class AbstractLogstashFrameworkTest {
             } catch (InterruptedException ignored) {
             }
 
-            ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(mesosClusterContainerId)
-                    .withAttachStdout(true).withCmd("docker", "pull", "private-registry:5000/" + image + ":systemtest").exec();
-            InputStream execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
-            assertThat(DockerUtil.consumeInputStream(execCmdStream), containsString("Download complete"));
+            ExecCreateCmdResponse execCreateCmdResponse = dockerClient
+                .execCreateCmd(mesosClusterContainerId)
+                .withAttachStdout(true)
+                .withCmd("docker", "pull", "private-registry:5000/" + image + ":systemtest").exec();
+            InputStream execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId())
+                .exec();
+            assertThat(DockerUtil.consumeInputStream(execCmdStream),
+                containsString("Download complete"));
 
             execCreateCmdResponse = dockerClient.execCreateCmd(mesosClusterContainerId)
-                    .withAttachStdout(true).withCmd("docker", "tag", "private-registry:5000/" + image + ":systemtest", image + ":latest").exec();
+                .withAttachStdout(true)
+                .withCmd("docker", "tag", "private-registry:5000/" + image + ":systemtest",
+                    image + ":latest").exec();
 
             execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
             DockerUtil.consumeInputStream(execCmdStream);
         }
     }
 
-    private static void pushDindImagesToPrivateRegistry(DockerClient dockerClient, String[] dindImages, MesosClusterConfig config) {
+    private static void pushDindImagesToPrivateRegistry(DockerClient dockerClient,
+        String[] dindImages, MesosClusterConfig config) {
         for (String image : dindImages) {
-            String imageWithPrivateRepoName = "localhost:" + config.privateRegistryPort + "/" + image;
-            dockerClient.tagImageCmd(image, imageWithPrivateRepoName, "systemtest").withForce(true).exec();
-            InputStream responsePushImage = dockerClient.pushImageCmd(imageWithPrivateRepoName).withTag("systemtest").exec();
-            assertThat(DockerUtil.consumeInputStream(responsePushImage), containsString("The push refers to a repository"));
+            String imageWithPrivateRepoName =
+                "localhost:" + config.privateRegistryPort + "/" + image;
+            dockerClient.tagImageCmd(image, imageWithPrivateRepoName, "systemtest").withForce(true)
+                .exec();
+            InputStream responsePushImage = dockerClient.pushImageCmd(imageWithPrivateRepoName)
+                .withTag("systemtest").exec();
+            assertThat(DockerUtil.consumeInputStream(responsePushImage),
+                containsString("The push refers to a repository"));
         }
     }
 
     /**
-     * We assume that the messages already received are already processed and we can clear the messages list before
-     * we query the internal state. Further we assume that there is only one response/message from each executor.
+     * We assume that the messages already received are already
+     * processed and we can clear the messages list before
+     * we query the internal state. Further we assume that there
+     * is only one response/message from each executor.
      *
      * @return Messages
      */
-    public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(Predicate<List<ExecutorMessage>> predicate) {
+    public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(
+        Predicate<List<ExecutorMessage>> predicate) {
         int seconds = 10;
         int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
 
         executorMessageListener.clearAllMessages();
         scheduler.requestInternalStatus();
 
-        String message = String.format("Waiting for %d internal status report messages from executor", numberOfExpectedMessages);
+        String message = String
+            .format("Waiting for %d internal status report messages from executor",
+                numberOfExpectedMessages);
         await(message).atMost(seconds, SECONDS).pollInterval(1, SECONDS).until(() -> {
             try {
-                if (executorMessageListener.getExecutorMessages().size() >= numberOfExpectedMessages) {
+                if (executorMessageListener.getExecutorMessages().size()
+                    >= numberOfExpectedMessages) {
 
                     if (predicate.test(executorMessageListener.getExecutorMessages())) {
                         return true;
@@ -228,15 +231,16 @@ public abstract class AbstractLogstashFrameworkTest {
     }
 
     /**
-     * We assume that the messages already received are already processed and we can clear the messages list before
-     * we query the internal state. Further we assume that there is only one response/message from each executor.
+     * We assume that the messages already received are already
+     * processed and we can clear the messages list before
+     * we query the internal state. Further we assume that there
+     * is only one response/message from each executor.
      *
      * @return Messages
      */
     public List<ExecutorMessage> requestInternalStatusAndWaitForResponse() {
         return requestInternalStatusAndWaitForResponse(executorMessages -> true);
     }
-
 
     static class ConfigFolder {
         final File dockerConfDir;

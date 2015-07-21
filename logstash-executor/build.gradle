@@ -1,0 +1,41 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+mainClassName = "org.apache.mesos.logstash.executor.Application"
+
+dependencies {
+    compile project(':logstash-commons')
+
+    compile 'com.github.docker-java:docker-java:1.3.0'
+    compile 'com.spotify:docker-client:2.7.7'
+}
+
+jar {
+    archiveName = "logstash-executor.jar"
+    manifest {
+        attributes(
+                'Main-Class': 'org.apache.mesos.logstash.executor.Application',
+                'Class-Path': 'logstash-executor-deps.jar'
+        )
+    }
+}
+
+shadowJar {
+    exclude 'org/apache/mesos/logstash'
+
+    archiveName = "logstash-executor-deps.jar"
+
+    mergeServiceFiles()
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+jar.dependsOn "shadowJar"
+
+task dockerBuild(type: Exec) {
+    commandLine 'docker'
+    args 'build', '-t', 'mesos/logstash-executor', '.'
+}
+
+build.dependsOn "dockerBuild"

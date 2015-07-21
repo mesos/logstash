@@ -1,21 +1,10 @@
-*.class
-
 .vagrant/
 
-#gradle
 .gradle/
 build/
-target/
-local/build.gradle
 
-# Package Files #
-*.war
-*.ear
-*.jar
-
-*.pem
 *.iml
-.idea
+.idea/
 
-/local.properties
-system-test/.registry
+/system-test/.registry
+/scheduler/config/

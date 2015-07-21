@@ -1,3 +1,6 @@
-rootProject.name = 'logstash'
+rootProject.name = 'logstash-mesos'
 
-include 'common', 'executor', 'scheduler', 'system-test', 'mini-mesos'
+include 'logstash-commons'
+include 'logstash-executor'
+include 'logstash-scheduler'
+include 'system-test'

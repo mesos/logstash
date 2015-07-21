@@ -1,0 +1,21 @@
+apply plugin: 'com.google.protobuf'
+
+dependencies {
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
+}
+
+idea {
+    // We want IDEA to find the generated protobuf source file.
+    // Problem is that the "build/" dir is excluded.
+    module {
+        excludeDirs -= file('build')
+        excludeDirs += file('build/classes')
+        excludeDirs += file('build/dependency-cache')
+        excludeDirs += file('build/libs')
+        excludeDirs += file('build/reports')
+        excludeDirs += file('build/resources')
+        excludeDirs += file('build/tmp')
+
+        sourceDirs  += file('build/generated/source/proto')
+    }
+}

@@ -1,0 +1,60 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'spring-boot'
+
+mainClassName = "org.apache.mesos.logstash.scheduler.Application"
+
+applicationDefaultJvmArgs = ["-Dlogstash-mesos.masterUrl=localhost", "-Djava.library.path=/usr/local/lib"]
+
+configurations {
+    // We are using jetty instead of tomcat.
+    // See, http://docs.spring.io/spring-boot/docs/current/reference/html/howto-embedded-servlet-containers.html#howto-use-jetty-instead-of-tomcat
+    compile.exclude module: "spring-boot-starter-tomcat"
+}
+
+dependencies {
+    compile project(':logstash-commons')
+
+    compile 'commons-lang:commons-lang:2.6'
+
+    compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVer}")
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVer}")
+    compile("org.springframework.boot:spring-boot-starter-websocket:${springBootVer}")
+    compile("org.springframework:spring-messaging")
+
+    compile 'org.webjars:react:0.13.3'
+    compile 'org.webjars:react-router:0.13.2'
+    compile 'org.webjars.bower:stomp-websocket:2.3.4'
+    compile 'org.webjars:sockjs-client:1.0.0'
+    compile 'org.webjars:highcharts:4.1.6'
+}
+
+jar {
+    archiveName = "logstash-scheduler.jar"
+    manifest {
+        attributes(
+                'Main-Class': 'org.apache.mesos.logstash.scheduler.Application',
+                'Class-Path': 'logstash-scheduler-deps.jar'
+        )
+    }
+}
+
+shadowJar {
+    exclude 'org/apache/mesos/logstash'
+
+    archiveName = "logstash-scheduler-deps.jar"
+
+    mergeServiceFiles()
+
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+jar.dependsOn "shadowJar"
+
+task dockerBuild(type: Exec) {
+    commandLine 'docker'
+    args 'build', '-t', 'mesos/logstash-scheduler', '.'
+}
+
+build.dependsOn "dockerBuild"
