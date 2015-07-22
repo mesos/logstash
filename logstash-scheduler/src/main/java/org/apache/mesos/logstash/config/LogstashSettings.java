@@ -16,10 +16,10 @@ public class LogstashSettings {
     }
 
     public double getMemForTask() {
-        return cpus != null ? cpus : DEFAULT_CPUS;
+        return mem != null ? mem : DEFAULT_MEM;
     }
 
     public double getCpuForTask() {
-        return mem != null ? mem : DEFAULT_MEM;
+        return cpus != null ? cpus : DEFAULT_CPUS;
     }
 }
