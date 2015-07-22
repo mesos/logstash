@@ -19,6 +19,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 @SpringBootApplication
+@ComponentScan(basePackages = {"org.apache.mesos.logstash"})
 public class Application {
 
     private static String masterURL = null;
