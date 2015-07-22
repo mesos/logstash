@@ -200,7 +200,7 @@ public abstract class AbstractLogstashFrameworkTest {
         int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
 
         executorMessageListener.clearAllMessages();
-        scheduler.requestInternalStatus();
+        scheduler.requestExecutorStats();
 
         String message = String
             .format("Waiting for %d internal status report messages from executor",
@@ -214,7 +214,7 @@ public abstract class AbstractLogstashFrameworkTest {
                         return true;
                     } else {
                         executorMessageListener.clearAllMessages();
-                        scheduler.requestInternalStatus();
+                        scheduler.requestExecutorStats();
                         return false;
                     }
                 }

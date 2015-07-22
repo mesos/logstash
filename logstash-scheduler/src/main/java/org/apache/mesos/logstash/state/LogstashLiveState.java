@@ -2,20 +2,14 @@ package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.scheduler.FrameworkMessageListener;
-import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.logstash.scheduler.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static java.util.stream.Collectors.toSet;
 
-public class LogstashLiveState implements LiveState, FrameworkMessageListener {
+public class LogstashLiveState implements LiveState {
 
     private final Map<Protos.SlaveID, Task> tasks;
 
@@ -41,9 +35,9 @@ public class LogstashLiveState implements LiveState, FrameworkMessageListener {
         tasks.put(task.getSlaveID(), task);
     }
 
-    @Override public void frameworkMessage(LogstashScheduler scheduler,
-        Protos.ExecutorID executorID, Protos.SlaveID slaveID,
-        LogstashProtos.ExecutorMessage message) {
-
+    @Override
+    public void updateStats(Protos.SlaveID slaveID,
+        List<LogstashProtos.ContainerState> containers) {
+        tasks.put(slaveID, new Task(tasks.get(slaveID), containers));
     }
 }

@@ -245,12 +245,12 @@ let NodePage = React.createClass({
 
     getInitialState() {
         return {
-            executors: []
+            tasks: []
         };
     },
 
     webSocketData(data) {
-        this.setState({executors: data.executors});
+        this.setState({tasks: data.tasks});
     },
 
     render() {
@@ -263,18 +263,22 @@ let NodePage = React.createClass({
             );
         };
 
-        let renderNode = function (e) {
+        let renderTask = function (t) {
             return (
                 <div className="box box--list">
                     <div className="box__header">
-                        <div>{e.executorId}</div>
+                        <div>{t.executorId}</div>
                         <div className="status status--healthy"></div>
                     </div>
                     <div className="box__body">
                         <ul className="box-list">
-                            {renderItem("Slave ID", e.slaveId)}
-                            {renderItem("Executor ID", e.executorId)}
-                            {renderItem("Active Steams", e.activeStreamCount)}
+                            {renderItem("Task ID", t.taskId)}
+                            {renderItem("Slave ID", t.slaveId)}
+                            {renderItem("Executor ID", t.executorId)}
+                            {renderItem("Containers Configs", t.containers.length)}
+                            {t.containers.map(function(c) {
+                                return renderItem(c.name, c.status);
+                            })}
                         </ul>
                     </div>
                 </div>);
@@ -282,7 +286,7 @@ let NodePage = React.createClass({
 
         return (
             <div className="page">
-                <div>{this.state.executors.map(renderNode)}</div>
+                <div>{this.state.tasks.map(renderTask)}</div>
             </div>);
     }
 });
@@ -423,7 +427,6 @@ let DashboardPage = React.createClass({
     webSocketData(data, topic) {
         let state = {};
         state[topic] = data;
-        console.log(data);
         this.setState(state);
     },
 
@@ -432,16 +435,16 @@ let DashboardPage = React.createClass({
         let nodes = this.state.nodes;
         if (!stats || !nodes) return <div>Connecting...</div>;
 
-        let streamTotal = nodes.executors.reduce(function (acc, exec) {
-            return acc + exec.activeStreamCount;
+        let streamTotal = nodes.tasks.reduce(function (acc, t) {
+            return acc + t.activeStreamCount;
         }, 0);
 
         return (
             <div className="page">
                 <Box title="Number of Nodes" subtitle="Last 60 seconds">
-                    <BigNumber value={nodes.executors.length} title="Foo Bar Baz Quux"
+                    <BigNumber value={nodes.tasks.length} title="Foo Bar Baz Quux"
                                color="#8038E5"/>
-                    <Chart value={nodes.executors.length} color="#8038E5"/>
+                    <Chart value={nodes.tasks.length} color="#8038E5"/>
                 </Box>
 
                 <Box title="Logged Instances" subtitle="Last 60 seconds">

@@ -1,24 +1,38 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.scheduler.Task;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 public class MockLiveState implements LiveState {
 
-    private Task randomExecutor(String taskId, String slaveId, String executorId, int count) {
-        Task task = new Task(
+    private List<LogstashProtos.ContainerState> getRandomContainers() {
+        List<LogstashProtos.ContainerState> containers = new ArrayList<>();
+
+        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
+            LogstashProtos.ContainerState.LoggingStateType.STREAMING).setName("nginx").build());
+
+        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
+            LogstashProtos.ContainerState.LoggingStateType.STREAMING).setName("website").build());
+
+        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
+            LogstashProtos.ContainerState.LoggingStateType.NOT_STREAMING).setName("hadoop")
+            .build());
+
+        return containers;
+    }
+
+    private Task randomTask(String taskId, String slaveId, String executorId) {
+        Task task = new Task(new Task(
             Protos.TaskID.newBuilder().setValue(taskId).build(),
             Protos.SlaveID.newBuilder().setValue(slaveId).build(),
             Protos.ExecutorID.newBuilder().setValue(executorId).build()
-        );
+        ),
+            getRandomContainers());
 
         task.setStatus(Protos.TaskState.TASK_RUNNING);
-
-        task.setActiveStreamCount(count);
 
         return task;
     }
@@ -28,19 +42,14 @@ public class MockLiveState implements LiveState {
         Set<Task> tasks = new HashSet<>();
         Random random = new Random();
 
-        tasks.add(
-            randomExecutor("TaskA", "6127-6213-7812-6312", "1221-1221-64-4345-4",
-                random.nextInt(20) + 10));
+        tasks.add(randomTask("TaskA", "6127-6213-7812-6312", "1221-1221-64-4345-4"));
 
         if (random.nextBoolean()) {
-            tasks.add(randomExecutor("TaskB", "5555-6213-7812-1275", "9183-7221-24-3345-1",
-                random.nextInt(30) + 2));
+            tasks.add(randomTask("TaskB", "5555-6213-7812-1275", "9183-7221-24-3345-1"));
         }
 
         if (random.nextBoolean()) {
-            tasks.add(
-                randomExecutor("TaskC", "1112-3112-8463-1273", "4113-6222-22-3335-3",
-                    random.nextInt(7)));
+            tasks.add(randomTask("TaskC", "1112-3112-8463-1273", "4113-6222-22-3335-3"));
         }
 
         return tasks;
@@ -53,6 +62,12 @@ public class MockLiveState implements LiveState {
 
     @Override
     public void addRunningTask(Task task) {
+
+    }
+
+    @Override
+    public void updateStats(Protos.SlaveID slaveId,
+        List<LogstashProtos.ContainerState> containers) {
 
     }
 }

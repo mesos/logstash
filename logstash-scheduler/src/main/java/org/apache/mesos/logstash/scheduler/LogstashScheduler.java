@@ -114,20 +114,21 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
         offers.forEach(offer -> {
-            LOGGER.info("Received Offer. offerId={}, slaveId={}",
-                offer.getId().getValue(),
-                offer.getSlaveId());
 
             // TODO: Debug log the offered resource,
             // it can be used to debug why executes are not spinning up.
 
             if (shouldAcceptOffer(offer)) {
-                LOGGER.info("Accepting Offer.");
+                LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
+                    offer.getId().getValue(),
+                    offer.getSlaveId());
                 schedulerDriver.launchTasks(
                     singletonList(offer.getId()),
                     singletonList(buildTask(offer)));
             } else {
-                LOGGER.info("Declining Offer.");
+                LOGGER.debug("Declining Offer. offerId={}, slaveId={}",
+                    offer.getId().getValue(),
+                    offer.getSlaveId());
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
@@ -191,6 +192,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
             LOGGER.debug("Received Stats from Executor. executorId={}", executorID);
             message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
+
+            liveState.updateStats(slaveID, message.getContainersList());
 
             listeners.forEach(l -> l.frameworkMessage(this, executorID, slaveID, message));
 
@@ -271,7 +274,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         return !slaveHasTask;
     }
 
-    public void requestInternalStatus() {
+    public void requestExecutorStats() {
 
         SchedulerMessage message = SchedulerMessage.newBuilder()
             .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)

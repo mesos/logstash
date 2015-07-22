@@ -3,25 +3,32 @@ package org.apache.mesos.logstash.scheduler;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
+
+import java.util.Collections;
+import java.util.List;
 
 public class Task {
 
     private final Protos.TaskID taskId;
     private final Protos.SlaveID slaveID;
     private final Protos.ExecutorID executorID;
+    private final List<ContainerState> containers;
 
     private Protos.TaskState status = null;
-
-    private int activeStreamCount = 0;
 
     public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID) {
         this.taskId = taskId;
         this.slaveID = slaveID;
         this.executorID = executorID;
+        this.containers = Collections.emptyList();
     }
 
-    public int getActiveStreamCount() {
-        return activeStreamCount;
+    public Task(Task other, List<ContainerState> containers) {
+        this.containers = containers;
+        this.taskId = other.taskId;
+        this.slaveID = other.slaveID;
+        this.executorID = other.executorID;
     }
 
     public Protos.SlaveID getSlaveID() {
@@ -60,11 +67,16 @@ public class Task {
         this.status = status;
     }
 
-    public void setActiveStreamCount(int activeStreamCount) {
-        this.activeStreamCount = activeStreamCount;
+    public long getActiveStreamCount() {
+        return this.containers.stream().filter(
+            c -> c.getType().equals(ContainerState.LoggingStateType.STREAMING)).count();
     }
 
     public Protos.TaskID getTaskId() {
         return taskId;
+    }
+
+    public List<ContainerState> getContainers() {
+        return Collections.unmodifiableList(containers);
     }
 }
