@@ -5,7 +5,6 @@ import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.LogstashLiveState;
 import org.apache.mesos.logstash.state.MockLiveState;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
@@ -20,21 +19,12 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "org.apache.mesos.logstash")
 public class Application {
 
     private static String masterURL = null;
-<<<<<<< HEAD
-<<<<<<< HEAD
-    private static boolean isNoCluster = false;
-=======
-    private static boolean isNoCluster = true;
-    private static Path pwd;
->>>>>>> Invert flow in scheduler. No more registering listeners. Listeners get injected.
-=======
+
     private static boolean offline = true;
-    private static int port = 8080;
->>>>>>> Allow specifying app options as either command line args or system props.
+    private static int port;
 
     protected Application() {
     }
@@ -46,7 +36,7 @@ public class Application {
 
         masterURL = getParam(args, "-m", "mesos.logstash.masterUrl", null);
         offline = hasParam(args, "--offline", "mesos.logstash.offline");
-        port = Integer.parseInt(getParam(args, "-p", "mesos.logstash.uiPort", "11111"));
+        port = Integer.parseInt(getParam(args, "-p", "mesos.logstash.uiPort", "4080"));
 
         app.setWebEnvironment(!hasParam(args, "--no-ui", "mesos.logstash.noUI"));
 
