@@ -6,5 +6,5 @@ build/
 *.iml
 .idea/
 
+.registry
 /system-test/.registry
-/scheduler/config/
