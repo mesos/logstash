@@ -13,6 +13,7 @@ import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
 import org.apache.mesos.mini.util.Predicate;
+import org.hamcrest.Matchers;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
@@ -25,7 +26,6 @@ import java.util.stream.Collectors;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
 public abstract class AbstractLogstashFrameworkTest {
