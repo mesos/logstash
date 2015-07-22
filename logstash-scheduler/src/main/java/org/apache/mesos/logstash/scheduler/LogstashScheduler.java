@@ -6,14 +6,13 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.ContainerInfo.DockerInfo;
 import org.apache.mesos.Protos.ContainerInfo.Type;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.common.ConcurrentUtils;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.util.Clock;
-import org.apache.mesos.logstash.common.LogstashConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,8 +23,6 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -174,6 +171,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 .setFrameworkName(entry.getKey()));
         }
 
+        builder.setType(SchedulerMessage.SchedulerMessageType.NEW_CONFIG);
+
         SchedulerMessage message = this.latestConfig = builder.build();
         liveState.getTasks().forEach(e ->
             sendMessage(e.getExecutorID(), e.getSlaveID(), message));
@@ -189,10 +188,12 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         try {
             ExecutorMessage message = ExecutorMessage.parseFrom(bytes);
-            LOGGER.debug("Received Framework Message. type={}, state={}", message.getType(),
-                message.getGlobalStateInfo());
-            liveState.getTasks();
+
+            LOGGER.debug("Received Stats from Executor. executorId={}", executorID);
+            message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
+
             listeners.forEach(l -> l.frameworkMessage(this, executorID, slaveID, message));
+
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Failed to parse framework message. executorId={}, slaveId={}", executorID,
                 slaveID, e);
@@ -273,7 +274,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void requestInternalStatus() {
 
         SchedulerMessage message = SchedulerMessage.newBuilder()
-            .setCommand("REPORT_INTERNAL_STATUS")
+            .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
             .build();
 
         liveState.getTasks().forEach(e ->

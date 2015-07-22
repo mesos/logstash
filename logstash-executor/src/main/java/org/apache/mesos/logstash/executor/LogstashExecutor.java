@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 
 import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
+import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
 
 public class LogstashExecutor implements Executor {
 
@@ -58,22 +59,10 @@ public class LogstashExecutor implements Executor {
 
             LOGGER.info("SchedulerMessage. message={}", message);
 
-            if (message.hasCommand()) { // currently we assume that commands
-                handleCommand(driver, message);
-            }
-
-            Stream<FrameworkInfo> dockerInfos = extractConfigs(
-                message.getDockerConfigList().stream());
-
-            Stream<FrameworkInfo> hostInfos = extractConfigs(
-                message.getHostConfigList().stream());
-
-            listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
-            listener.onConfigUpdated(LogType.HOST, hostInfos);
-
-            if (message.getDockerConfigList().size() > 0
-                || message.getHostConfigList().size() > 0) {
-                LOGGER.info("Logstash configuration updated.");
+            if (message.getType().equals(REQUEST_STATS)) {
+                sendStatsToScheduler(driver, message);
+            } else {
+                updateConfig(message);
             }
 
         } catch (InvalidProtocolBufferException e) {
@@ -81,11 +70,25 @@ public class LogstashExecutor implements Executor {
         }
     }
 
-    private void handleCommand(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
-        LOGGER.info("Logstash received command. command={}", schedulerMessage.getCommand());
-        if (schedulerMessage.getCommand().equals("REPORT_INTERNAL_STATUS")) {
-            driver.sendFrameworkMessage(globalStateInfo.getStateAsExecutorMessage().toByteArray());
+    private void updateConfig(SchedulerMessage message) {
+        Stream<FrameworkInfo> dockerInfos = extractConfigs(
+            message.getDockerConfigList().stream());
+
+        Stream<FrameworkInfo> hostInfos = extractConfigs(
+            message.getHostConfigList().stream());
+
+        listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
+        listener.onConfigUpdated(LogType.HOST, hostInfos);
+
+        if (message.getDockerConfigList().size() > 0
+            || message.getHostConfigList().size() > 0) {
+            LOGGER.info("Logstash configuration updated.");
         }
+    }
+
+    private void sendStatsToScheduler(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
+        driver.sendFrameworkMessage(globalStateInfo.getStateAsExecutorMessage().toByteArray());
+
     }
 
     private Stream<FrameworkInfo> extractConfigs(Stream<LogstashConfig> cfgs) {

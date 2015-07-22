@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.executor.state;
 
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
@@ -13,13 +14,10 @@ import java.util.stream.Collectors;
 public class GlobalStateInfo {
     private final DockerClient dockerClient;
     private final DockerLogSteamManager streamManager;
-    private final DockerInfoCache dockerInfoCache;
 
-    public GlobalStateInfo(DockerClient dockerClient, DockerLogSteamManager streamManager,
-        DockerInfoCache dockerInfoCache) {
+    public GlobalStateInfo(DockerClient dockerClient, DockerLogSteamManager streamManager) {
         this.dockerClient = dockerClient;
         this.streamManager = streamManager;
-        this.dockerInfoCache = dockerInfoCache;
     }
 
     Set<String> getRunningContainers() {
@@ -30,18 +28,23 @@ public class GlobalStateInfo {
         return streamManager.getProcessedContainers();
     }
 
-    List<String> getDockerFrameworkNamesWhichHaveBeenConfigured() {
-        return dockerInfoCache.dockerInfos.stream().map(FrameworkInfo::getName)
-            .collect(Collectors.toList());
+    private LoggingStateType getContainerStatus(String containerId) {
+        if (getProcessedContainers().contains(containerId)) {
+            return LoggingStateType.STREAMING;
+        }
+
+        return LoggingStateType.NOT_STREAMING;
     }
 
     public ExecutorMessage getStateAsExecutorMessage() {
-        return ExecutorMessage.newBuilder().setType("GlobalStateInfo")
-            .setGlobalStateInfo(LogstashProtos.GlobalStateInfo.newBuilder()
-                .addAllConfiguredDockerFramework(getDockerFrameworkNamesWhichHaveBeenConfigured())
-                .addAllProcessedContainer(getProcessedContainers())
-                .addAllRunningContainer(getRunningContainers())
-                .build())
+        return ExecutorMessage.newBuilder()
+            .setType(ExecutorMessage.ExecutorMessageType.STATS)
+            .addAllContainers(
+                getRunningContainers().stream().map(c -> LogstashProtos.ContainerState.newBuilder()
+                       .setType(getContainerStatus(c))
+                       .setName(c)
+                       .build()
+                ).collect(Collectors.toList()))
             .build();
     }
 }

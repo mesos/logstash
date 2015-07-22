@@ -7,10 +7,10 @@ import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.apache.mesos.logstash.executor.frameworks.Framework;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.apache.mesos.logstash.executor.frameworks.HostFramework;
-import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -28,14 +28,13 @@ public class ConfigManager implements ConfigEventListener {
     private LogstashService logstash;
     private ContainerizerClient containerizerClient;
     private DockerLogSteamManager dockerLogSteamManager;
-    private DockerInfoCache dockerInfoCache;
+    public List<FrameworkInfo> dockerInfos = new ArrayList<>();
 
     public ConfigManager(ContainerizerClient containerizerClient, LogstashService logstash,
-        DockerLogSteamManager dockerLogSteamManager, DockerInfoCache dockerInfoCache) {
+        DockerLogSteamManager dockerLogSteamManager) {
         this.containerizerClient = containerizerClient;
         this.logstash = logstash;
         this.dockerLogSteamManager = dockerLogSteamManager;
-        this.dockerInfoCache = dockerInfoCache;
         this.containerizerClient.setDelegate(this::onContainerListUpdated);
     }
 
@@ -54,7 +53,7 @@ public class ConfigManager implements ConfigEventListener {
 
     private void onContainerListUpdated(List<String> images) {
         LOGGER.info("New containers discovered. Reconfiguring.");
-        reconfigureDockerLogs(dockerInfoCache.dockerInfos.stream());
+        reconfigureDockerLogs(dockerInfos.stream());
     }
 
     private void reconfigureDockerLogs(Stream<FrameworkInfo> logstashInfos) {
@@ -102,8 +101,8 @@ public class ConfigManager implements ConfigEventListener {
 
     private void updateDocker(Stream<FrameworkInfo> logstashInfos) {
         // Make a local copy so that we can immediately reconfigure if we discover new containers!
-        dockerInfoCache.dockerInfos = logstashInfos.collect(Collectors.toList());
-        reconfigureDockerLogs(dockerInfoCache.dockerInfos.stream());
+        dockerInfos = logstashInfos.collect(Collectors.toList());
+        reconfigureDockerLogs(dockerInfos.stream());
     }
 
     private Function<String, FrameworkInfo> createLookupHelper(

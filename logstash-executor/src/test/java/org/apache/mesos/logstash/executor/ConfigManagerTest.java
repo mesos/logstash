@@ -27,7 +27,7 @@ public class ConfigManagerTest {
         logstash = mock(LogstashService.class);
         DockerLogSteamManager streamManager = mock(DockerLogSteamManager.class);
 
-        configManager = new ConfigManager(client, logstash, streamManager, new DockerInfoCache());
+        configManager = new ConfigManager(client, logstash, streamManager);
     }
 
     @Test

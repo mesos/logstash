@@ -9,19 +9,32 @@ message LogstashConfig {
 }
 
 message SchedulerMessage {
-  repeated LogstashConfig dockerConfig = 1;
-  repeated LogstashConfig hostConfig = 2;
-  optional string command = 3;
+  enum SchedulerMessageType {
+      REQUEST_STATS = 1;
+      NEW_CONFIG = 2;
+  }
+  required SchedulerMessageType type = 1;
+
+  // NEW_CONFIG
+  repeated LogstashConfig dockerConfig = 2;
+  repeated LogstashConfig hostConfig = 3;
 }
 
-
-message GlobalStateInfo {
-  repeated string runningContainer = 1;
-  repeated string processedContainer = 2;
-  repeated string configuredDockerFramework = 3;
+message ContainerState {
+  enum LoggingStateType {
+    STREAMING = 1;
+    NOT_STREAMING = 2;
+    ERROR = 3;
+  }
+  required LoggingStateType type = 1;
+  required string name = 2;
+  optional string message = 3;
 }
 
 message ExecutorMessage {
-  required string type = 1;
-  optional GlobalStateInfo globalStateInfo = 2;
+  enum ExecutorMessageType {
+      STATS = 1;
+  }
+  required ExecutorMessageType type = 1;
+  repeated ContainerState containers = 2;
 }

@@ -24,11 +24,9 @@ public class Application implements Runnable {
         DockerClient dockerClient = new DockerClient();
         DockerLogSteamManager streamManager = new DockerLogSteamManager(
             new DockerStreamer(new FileLogSteamWriter(MAX_LOG_SIZE), dockerClient));
-        DockerInfoCache dockerInfoCache = new DockerInfoCache();
 
-        ConfigManager controller = createController(dockerClient, streamManager, dockerInfoCache);
-        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager,
-            dockerInfoCache);
+        ConfigManager controller = createController(dockerClient, streamManager);
+        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager);
 
         LogstashExecutor executor = new LogstashExecutor(controller, dockerClient, globalStateInfo);
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
@@ -48,9 +46,9 @@ public class Application implements Runnable {
     }
 
     private ConfigManager createController(DockerClient dockerClient,
-        DockerLogSteamManager streamManager, DockerInfoCache dockerInfoCache) {
+        DockerLogSteamManager streamManager) {
         LogstashService logstashService = new LogstashService();
 
-        return new ConfigManager(dockerClient, logstashService, streamManager, dockerInfoCache);
+        return new ConfigManager(dockerClient, logstashService, streamManager);
     }
 }
