@@ -44,7 +44,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private SchedulerMessage latestConfig;
 
-    private final ExecutorService executorService;
     private final MesosSchedulerDriver driver;
 
     @Autowired
@@ -69,19 +68,20 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setFailoverTimeout(LogstashConstants.FAILOVER_TIMEOUT);
 
         driver = new MesosSchedulerDriver(this, frameworkBuilder.build(), masterURL);
-        executorService = Executors.newSingleThreadExecutor();
     }
 
     @PostConstruct
     public void start() {
         if (!isNoCluster) {
-            executorService.execute(driver::run);
+            driver.start();
         }
     }
 
     @PreDestroy
     public void stop() {
-        ConcurrentUtils.stop(executorService, 30);
+        if (!isNoCluster) {
+            driver.stop(false);
+        }
     }
 
     // Used by tests

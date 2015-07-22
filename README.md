@@ -170,6 +170,7 @@ These features are yet to be implemented:
 - Processing non-dockerized log files (meaning, log files available directly on the slaves)
 - Logging cannot be reconfigured once logstash-mesos has started streaming from a container
 - Wildcard filename matching for docker logstash configurations (see [Configuration](#configuration))
+- Failover scenarios are currently not supported
 
 # Security
 The framework will process log files of any docker container which is running on the same slave node and which are accessable via
