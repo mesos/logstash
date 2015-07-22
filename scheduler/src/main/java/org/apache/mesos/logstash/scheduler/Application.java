@@ -1,40 +1,60 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.mesos.logstash.scheduler.mock.MockClusterStatus;
-import org.apache.mesos.logstash.scheduler.mock.NoopDriver;
+import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.LogstashLiveState;
+import org.apache.mesos.logstash.state.MockLiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 
 @SpringBootApplication
+@ComponentScan(basePackages = "org.apache.mesos.logstash")
 public class Application {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Scheduler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
     private static String masterURL = null;
+<<<<<<< HEAD
     private static boolean isNoCluster = false;
+=======
+    private static boolean isNoCluster = true;
+    private static Path pwd;
+>>>>>>> Invert flow in scheduler. No more registering listeners. Listeners get injected.
 
-    protected Application() {}
+    protected Application() {
+    }
 
     public static void main(String[] args) throws IOException {
+
+        pwd = Paths.get(".").toAbsolutePath();
 
         readConfigFromCommandLine(args);
 
         SpringApplication app = new SpringApplication(Application.class);
         app.setShowBanner(false);
 
-        if (asList(args).contains("--no-cluster")) isNoCluster = true;
-        if (asList(args).contains("--no-ui")) app.setWebEnvironment(false);
+        isNoCluster = asList(args).contains("--no-cluster");
+
+        app.setWebEnvironment(!asList(args).contains("--no-ui"));
 
         app.run(args);
+    }
+
+    @Bean
+    @Qualifier("isNoCluster")
+    public boolean getNoCluster() {
+        return isNoCluster;
     }
 
     @Bean
@@ -44,27 +64,13 @@ public class Application {
     }
 
     @Bean
-    @Qualifier("host")
-    public ConfigMonitor createHostMonitor() {
-        return new ConfigMonitor("config/host");
+    public Path getConfigRootPath() {
+        return pwd.resolve("config/");
     }
 
     @Bean
-    @Qualifier("docker")
-    public ConfigMonitor createDockerMonitor() {
-        return new ConfigMonitor("config/docker");
-    }
-
-    @Bean
-    public Driver getMesosDriver() {
-        if (isNoCluster) return new NoopDriver();
-        return new MesosDriver(masterURL);
-    }
-
-    @Bean
-    public ClusterStatus getSchedulerStatus(Scheduler scheduler) {
-        if (isNoCluster) return new MockClusterStatus();
-        return new MesosClusterStatus(scheduler);
+    public LiveState getSchedulerStatus() {
+        return (isNoCluster) ? new MockLiveState() : new LogstashLiveState();
     }
 
     private static void readConfigFromCommandLine(String... args) {
@@ -73,14 +79,13 @@ public class Application {
 
         if (index != -1 && argList.size() >= index) {
             masterURL = argList.get(index + 1);
-            LOGGER.debug("MasterURL configured. masterUrl={}", masterURL);
-        }
-        else if (getMasterURLFromSystemProps() != null) {
+        } else if (getMasterURLFromSystemProps() != null) {
             masterURL = getMasterURLFromSystemProps();
-        }
-        else {
+        } else {
             printUsage();
         }
+
+        LOGGER.debug("MasterURL configured. masterUrl={}", masterURL);
     }
 
     private static String getMasterURLFromSystemProps() {

@@ -1,8 +1,7 @@
-package org.apache.mesos.logstash.scheduler.ui;
+package org.apache.mesos.logstash.ui;
 
-
-import org.apache.mesos.logstash.scheduler.ClusterStatus;
-import org.apache.mesos.logstash.scheduler.ui.ExecutorMessage.ExecutorData;
+import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.ui.ExecutorMessage.ExecutorData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -20,10 +19,9 @@ public class StatService {
 
     private final ScheduledExecutorService executorService;
     private final SimpMessagingTemplate template;
-    private final ClusterStatus status;
+    private final LiveState status;
 
-    @Autowired
-    StatService(SimpMessagingTemplate template, ClusterStatus status) {
+    @Autowired StatService(SimpMessagingTemplate template, LiveState status) {
         this.template = template;
         this.status = status;
         this.executorService = Executors.newSingleThreadScheduledExecutor();
@@ -33,23 +31,23 @@ public class StatService {
     public void start() {
         executorService.scheduleAtFixedRate(() ->
             template.convertAndSend("/topic/stats", new StatMessageBuilder()
-                    .setNumNodes(status.getExecutors().size())
-                    .setCpus(Math.random())
-                    .setMem(Math.random())
-                    .setDisk(Math.random())
-                    .build())
-        , 0, 1, TimeUnit.SECONDS);
+                .setNumNodes(status.getTasks().size())
+                .setCpus(Math.random())
+                .setMem(Math.random())
+                .setDisk(Math.random())
+                .build())
+            , 0, 1, TimeUnit.SECONDS);
 
         executorService.scheduleAtFixedRate(() -> {
 
-            List<ExecutorData> executors = status.getExecutors().stream()
-                    .map(ExecutorData::fromExecutor)
-                    .collect(Collectors.toList());
+            List<ExecutorData> executors = status.getTasks().stream()
+                .map(ExecutorData::fromExecutor)
+                .collect(Collectors.toList());
 
             ExecutorMessage message = new ExecutorMessage(executors);
 
             template.convertAndSend("/topic/nodes", message);
-        }, 0, 3, TimeUnit.SECONDS);
+        }, 0, 1, TimeUnit.SECONDS);
     }
 
     @PreDestroy

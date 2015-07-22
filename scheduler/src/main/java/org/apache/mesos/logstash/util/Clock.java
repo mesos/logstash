@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.scheduler.util;
+package org.apache.mesos.logstash.util;
 
 import java.util.Date;
 

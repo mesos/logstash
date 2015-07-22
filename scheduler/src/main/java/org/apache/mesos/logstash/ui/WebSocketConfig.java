@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.scheduler.ui;
+package org.apache.mesos.logstash.ui;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

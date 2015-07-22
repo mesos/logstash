@@ -9,11 +9,12 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.state.State;
-import org.apache.mesos.mini.util.Predicate;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -69,15 +70,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
     @Test
     public void logstashDiscoversOtherRunningContainers() throws Exception {
-
         createAndStartDummyContainer();
-
-        requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
-            @Override
-            public boolean test(List<ExecutorMessage> executorMessages) {
-                return 1 == executorMessages.size() && 2 == executorMessages.get(0).getGlobalStateInfo().getRunningContainerCount();
-            }
-        });
+        requestInternalStatusAndWaitForResponse(executorMessages -> 1 == executorMessages.size() && 2 == executorMessages.get(0).getGlobalStateInfo().getRunningContainerCount());
     }
 
 
@@ -103,8 +97,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         createAndStartDummyContainer();
         simulateLogEvent(logString);
 
-        FileUtils.write(Paths.get(configFolder.dockerConfDir.getAbsolutePath(), "busybox.conf").toFile(), BUSYBOX_CONF);
-        FileUtils.write(Paths.get(configFolder.hostConfDir.getAbsolutePath(), "host.conf").toFile(), HOST_CONF);
+        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"), BUSYBOX_CONF.getBytes());
+        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
 
         verifyLogstashProcessesLogEvents(logString);
     }

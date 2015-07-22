@@ -1,4 +1,4 @@
-package org.apache.mesos.logstash.scheduler.ui;
+package org.apache.mesos.logstash.ui;
 
 public class StatMessage {
     private String type = "STATS";

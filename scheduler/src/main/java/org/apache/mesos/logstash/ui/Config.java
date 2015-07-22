@@ -1,5 +1,4 @@
-package org.apache.mesos.logstash.scheduler.ui;
-
+package org.apache.mesos.logstash.ui;
 
 import java.util.Map;
 
@@ -9,7 +8,8 @@ public class Config {
     private String name;
     private String input;
 
-    public Config() {}
+    public Config() {
+    }
 
     public Config(String name, String input) {
 

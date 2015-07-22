@@ -4,14 +4,13 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.scheduler.ConfigManager;
-import org.apache.mesos.logstash.scheduler.ConfigMonitor;
+import org.apache.mesos.logstash.config.ConfigManager;
+import org.apache.mesos.logstash.config.FolderMonitor;
 import org.apache.mesos.logstash.scheduler.MesosDriver;
-import org.apache.mesos.logstash.scheduler.Scheduler;
+import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
-import org.apache.mesos.mini.state.State;
 import org.apache.mesos.mini.util.Predicate;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -21,11 +20,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertThat;
 
@@ -44,10 +42,9 @@ public abstract class AbstractLogstashFrameworkTest {
     public static MesosCluster cluster = new MesosCluster(clusterConfig);
 
 
-    public static Scheduler scheduler;
+    public static LogstashScheduler scheduler;
     public static ConfigFolder configFolder;
 
-    private static TemporaryFolder folder ;
     protected List<String> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
@@ -69,7 +66,7 @@ public abstract class AbstractLogstashFrameworkTest {
     @After
     public void stopContainers() {
 
-        if (containersToBeStopped.isEmpty()){
+        if (containersToBeStopped.isEmpty()) {
             return;
         }
 
@@ -87,22 +84,22 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @Before
     public void startLogstashFramework() throws IOException {
-        folder = new TemporaryFolder();
+        TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        File dockerConf  = folder.newFolder("docker");
-        File hostConf  = folder.newFolder("host");
+        File dockerConf = folder.newFolder("docker");
+        File hostConf = folder.newFolder("host");
 
         configFolder = new ConfigFolder(dockerConf, hostConf);
 
         driver = new MesosDriver(cluster.getMesosContainer().getMesosMasterURL());
 
         ConfigManager configManager = new ConfigManager(
-                new ConfigMonitor(dockerConf.getAbsolutePath()),
-                new ConfigMonitor(hostConf.getAbsolutePath())
+                new FolderMonitor(dockerConf.toPath()),
+                new FolderMonitor(hostConf.toPath())
         );
 
-        scheduler = new Scheduler(driver, configManager);
+        scheduler = new LogstashScheduler(driver, configManager, );
 
         scheduler.start();
         configManager.start();
@@ -142,7 +139,7 @@ public abstract class AbstractLogstashFrameworkTest {
 
 
     @After
-    public void stopLogstashFramework(){
+    public void stopLogstashFramework() {
         driver.stop();
     }
 
@@ -153,24 +150,14 @@ public abstract class AbstractLogstashFrameworkTest {
 
     private static void waitForLogstashFramework() {
         // wait for our framework
-        cluster.waitForState(new Predicate<State>() {
-            @Override
-            public boolean test(State state) {
-                return state.getFramework("logstash") != null;
-            }
-        });
+        cluster.waitForState(state -> state.getFramework("logstash") != null);
     }
 
     private static void waitForExcutorTaskIsRunning() {
         // wait for our executor
-        cluster.waitForState(new Predicate<State>() {
-            @Override
-            public boolean test(State state) {
-                return state.getFramework("logstash") != null
-                        && state.getFramework("logstash").getTasks().size() > 0
-                        && "TASK_RUNNING" .equals(state.getFramework("logstash").getTasks().get(0).getState());
-            }
-        });
+        cluster.waitForState(state -> state.getFramework("logstash") != null
+                && state.getFramework("logstash").getTasks().size() > 0
+                && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState()));
     }
 
     private static void pullDindImagesAndRetagWithoutRepoAndLatestTag(DockerClient dockerClient, String mesosClusterContainerId, String[] dindImages) {
@@ -179,7 +166,7 @@ public abstract class AbstractLogstashFrameworkTest {
 
             try {
                 Thread.sleep(2000); // we have to wait
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
 
             ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(mesosClusterContainerId)
@@ -208,36 +195,35 @@ public abstract class AbstractLogstashFrameworkTest {
      * We assume that the messages already received are already processed and we can clear the messages list before
      * we query the internal state. Further we assume that there is only one response/message from each executor.
      *
-     *
      * @return Messages
      */
     public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(Predicate<List<ExecutorMessage>> predicate) {
         int seconds = 10;
         int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
+
         executorMessageListener.clearAllMessages();
         scheduler.requestInternalStatus();
 
-        await("Waiting for " + numberOfExpectedMessages + " internal status report messages from executor").atMost(seconds, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                try {
-                    if (executorMessageListener.getExecutorMessages().size() >= numberOfExpectedMessages) {
+        String message = String.format("Waiting for %d internal status report messages from executor", numberOfExpectedMessages);
+        await(message).atMost(seconds, SECONDS).pollInterval(1, SECONDS).until(() -> {
+            try {
+                if (executorMessageListener.getExecutorMessages().size() >= numberOfExpectedMessages) {
 
-                        if (predicate.test(executorMessageListener.getExecutorMessages())) {
-                            return true;
-                        } else {
-                            executorMessageListener.clearAllMessages();
-                            scheduler.requestInternalStatus();
-                            return false;
-                        }
+                    if (predicate.test(executorMessageListener.getExecutorMessages())) {
+                        return true;
+                    } else {
+                        executorMessageListener.clearAllMessages();
+                        scheduler.requestInternalStatus();
+                        return false;
                     }
-                    return false;
-                } catch (InternalServerErrorException e) {
-                    // This probably means that the mesos cluster isn't ready yet..
-                    return false;
                 }
+                return false;
+            } catch (InternalServerErrorException e) {
+                // This probably means that the mesos cluster isn't ready yet..
+                return false;
             }
         });
+
         return new ArrayList<>(executorMessageListener.getExecutorMessages());
     }
 
@@ -245,16 +231,10 @@ public abstract class AbstractLogstashFrameworkTest {
      * We assume that the messages already received are already processed and we can clear the messages list before
      * we query the internal state. Further we assume that there is only one response/message from each executor.
      *
-     *
      * @return Messages
      */
     public List<ExecutorMessage> requestInternalStatusAndWaitForResponse() {
-        return  requestInternalStatusAndWaitForResponse(new Predicate<List<ExecutorMessage>>() {
-            @Override
-            public boolean test(List<ExecutorMessage> executorMessages) {
-                return true;
-            }
-        });
+        return requestInternalStatusAndWaitForResponse(executorMessages -> true);
     }
 
 

@@ -1,10 +1,9 @@
-package org.apache.mesos.logstash.scheduler.ui;
+package org.apache.mesos.logstash.ui;
 
-import org.apache.mesos.logstash.scheduler.ExecutorInfo;
+import org.apache.mesos.logstash.scheduler.Task;
 
 import java.util.Collection;
 import java.util.Iterator;
-
 
 @SuppressWarnings("unused")
 public class ExecutorMessage {
@@ -36,11 +35,11 @@ public class ExecutorMessage {
             this.activeStreamCount = activeStreamCount;
         }
 
-        public static ExecutorData fromExecutor(ExecutorInfo executor) {
+        public static ExecutorData fromExecutor(Task executor) {
             return new ExecutorData(
-                    executor.getSlaveID().getValue(),
-                    executor.getExecutorID().getValue(),
-                    executor.getActiveStreamCount()
+                executor.getSlaveID().getValue(),
+                executor.getExecutorID().getValue(),
+                executor.getActiveStreamCount()
             );
         }
 
