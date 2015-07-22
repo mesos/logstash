@@ -5,6 +5,8 @@ mainClassName = "org.apache.mesos.logstash.scheduler.Application"
 
 applicationDefaultJvmArgs = ["-Dlogstash-mesos.masterUrl=localhost", "-Djava.library.path=/usr/local/lib"]
 
+bootRun.systemProperties = System.properties
+
 configurations {
     // We are using jetty instead of tomcat.
     // See, http://docs.spring.io/spring-boot/docs/current/reference/html/howto-embedded-servlet-containers.html#howto-use-jetty-instead-of-tomcat

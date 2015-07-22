@@ -4,11 +4,11 @@ import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.LogstashLiveState;
 import org.apache.mesos.logstash.state.MockLiveState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
@@ -23,39 +23,40 @@ import static java.util.Arrays.asList;
 @ComponentScan(basePackages = "org.apache.mesos.logstash")
 public class Application {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
-
     private static String masterURL = null;
+<<<<<<< HEAD
 <<<<<<< HEAD
     private static boolean isNoCluster = false;
 =======
     private static boolean isNoCluster = true;
     private static Path pwd;
 >>>>>>> Invert flow in scheduler. No more registering listeners. Listeners get injected.
+=======
+    private static boolean offline = true;
+    private static int port = 8080;
+>>>>>>> Allow specifying app options as either command line args or system props.
 
     protected Application() {
     }
 
     public static void main(String[] args) throws IOException {
 
-        pwd = Paths.get(".").toAbsolutePath();
-
-        readConfigFromCommandLine(args);
-
         SpringApplication app = new SpringApplication(Application.class);
         app.setShowBanner(false);
 
-        isNoCluster = asList(args).contains("--no-cluster");
+        masterURL = getParam(args, "-m", "mesos.logstash.masterUrl", null);
+        offline = hasParam(args, "--offline", "mesos.logstash.offline");
+        port = Integer.parseInt(getParam(args, "-p", "mesos.logstash.uiPort", "11111"));
 
-        app.setWebEnvironment(!asList(args).contains("--no-ui"));
+        app.setWebEnvironment(!hasParam(args, "--no-ui", "mesos.logstash.noUI"));
 
         app.run(args);
     }
 
     @Bean
-    @Qualifier("isNoCluster")
+    @Qualifier("offline")
     public boolean getNoCluster() {
-        return isNoCluster;
+        return offline;
     }
 
     @Bean
@@ -66,12 +67,17 @@ public class Application {
 
     @Bean
     public Path getConfigRootPath() {
-        return pwd.resolve("config/");
+        return Paths.get(".").toAbsolutePath().resolve("config/");
     }
 
     @Bean
     public LiveState getSchedulerStatus() {
-        return (isNoCluster) ? new MockLiveState() : new LogstashLiveState();
+        return (offline) ? new MockLiveState() : new LogstashLiveState();
+    }
+
+    @Bean
+    public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
+        return new JettyEmbeddedServletContainerFactory(port);
     }
 
     @Bean
@@ -80,29 +86,46 @@ public class Application {
         return new LogstashSettings(null, null);
     }
 
-    private static void readConfigFromCommandLine(String... args) {
+    private static String getParam(String[] args, String argName, String propName, String defaultValue) {
+
         List<String> argList = asList(args);
-        int index = argList.indexOf("-m");
+
+        int index = argList.indexOf(argName);
 
         if (index != -1 && argList.size() >= index) {
-            masterURL = argList.get(index + 1);
-        } else if (getMasterURLFromSystemProps() != null) {
-            masterURL = getMasterURLFromSystemProps();
-        } else {
-            printUsage();
+            return argList.get(index + 1);
         }
 
-        LOGGER.debug("MasterURL configured. masterUrl={}", masterURL);
+        String propValue = System.getProperty(propName);
+
+        if (propValue != null) {
+            return propValue;
+        }
+
+        if (defaultValue != null) {
+            return defaultValue;
+        }
+        else {
+            System.err.println(String
+                .format("Expected: argument '%s' or system property: '%s'", argName, propName));
+
+            System.exit(1);
+
+            return "";
+        }
     }
 
-    private static String getMasterURLFromSystemProps() {
-        // This we need to do since bootRun in gradle does not
-        // support commandline arguments.
-        return System.getProperty("logstash-mesos.masterUrl");
-    }
+    private static boolean hasParam(String[] args, String argName, String propName) {
 
-    private static void printUsage() {
-        System.err.println("Usage: logstash-scheduler -m <master-url>");
-        System.exit(1);
+        List<String> argList = asList(args);
+
+        int index = argList.indexOf(argName);
+
+        if (index != -1 && argList.size() >= index) {
+            return true;
+        }
+
+        String propValue = System.getProperty(propName);
+        return "true".equals(propValue);
     }
 }

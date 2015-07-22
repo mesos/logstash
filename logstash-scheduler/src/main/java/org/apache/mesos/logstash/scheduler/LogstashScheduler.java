@@ -37,7 +37,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private final LiveState liveState;
     private final LogstashSettings settings;
-    private final String masterURL;
     private final boolean isNoCluster;
     private final Collection<FrameworkMessageListener> listeners;
 
@@ -53,13 +52,12 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         LiveState liveState,
         LogstashSettings settings,
         @Qualifier("masterURL") String masterURL,
-        @Qualifier("isNoCluster") boolean isNoCluster) {
+        @Qualifier("offline") boolean offline) {
 
         this.liveState = liveState;
         this.settings = settings;
-        this.masterURL = masterURL;
 
-        this.isNoCluster = isNoCluster;
+        this.isNoCluster = offline;
 
         this.listeners = synchronizedCollection(new ArrayList<>());
         this.clock = new Clock();
@@ -141,9 +139,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
 
-        LOGGER.info("Received Status Update. slaveId={}, executorId={}, state={}",
+        LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
             status.getTaskId().getValue(),
-            status.getState().toString(),
+            status.getState(),
             status.getMessage());
 
         if (isRunningState(status)) {
@@ -219,7 +217,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         ExecutorInfo executorInfo = ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
             .setExecutorId(ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
-            .addAllResources(getResourcesList())
             .setContainer(container)
             .setCommand(CommandInfo.newBuilder()
                 .addArguments("java")
@@ -231,6 +228,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         return TaskInfo.newBuilder()
             .setExecutor(executorInfo)
+            .addAllResources(getResourcesList())
             .setName(LogstashConstants.TASK_NAME)
             .setTaskId(TaskID.newBuilder().setValue(formatTaskId(offer)))
             // TODO (thb) Consider using setData to pass the current config.
