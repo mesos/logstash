@@ -33,65 +33,46 @@ public class LogstashExecutor implements Executor {
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
 
-        LOGGER.info("Notifying scheduler that task has launched");
-        Protos.TaskStatus status = Protos.TaskStatus.newBuilder()
+        LOGGER.info("Notifying scheduler that executor has started.");
+
+        driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setExecutorId(task.getExecutor().getExecutorId())
             .setTaskId(task.getTaskId())
-            .setState(Protos.TaskState.TASK_RUNNING).build();
-        driver.sendStatusUpdate(status);
-
-        System.out.println("Task has been launched");
-
-        // TODO clean up and make the purpose clear
-        try {
-            assert listener != null;
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                Protos.TaskStatus taskStatus = Protos.TaskStatus.newBuilder()
-                    .setTaskId(task.getTaskId())
-                    .setState(Protos.TaskState.TASK_FINISHED).build();
-                driver.sendStatusUpdate(taskStatus);
-            }) {
-            });
-        } catch (Exception e) {
-            status = Protos.TaskStatus.newBuilder()
-                .setTaskId(task.getTaskId())
-                .setState(Protos.TaskState.TASK_FAILED).build();
-            driver.sendStatusUpdate(status);
-        }
+            .setState(Protos.TaskState.TASK_RUNNING).build());
     }
 
     @Override
     public void killTask(ExecutorDriver driver, Protos.TaskID taskId) {
-        LOGGER.info("Kill task: " + taskId.getValue());
-        Protos.TaskStatus status = Protos.TaskStatus.newBuilder()
+        LOGGER.info("Kill task. taskId={}", taskId.getValue());
+
+        driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setTaskId(taskId)
-            .setState(Protos.TaskState.TASK_FAILED).build();
-        driver.sendStatusUpdate(status);
+            .setState(Protos.TaskState.TASK_KILLED).build());
     }
 
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
 
-        LOGGER.info("Framework Message Received. Parsing contents.");
-
         try {
-            SchedulerMessage schedulerMessage = SchedulerMessage.parseFrom(data);
-            LOGGER.debug("SchedulerMessage:\n" + schedulerMessage);
+            SchedulerMessage message = SchedulerMessage.parseFrom(data);
 
-            if (schedulerMessage.hasCommand()) { // currently we assume that commands
-                handleCommand(driver, schedulerMessage);
+            LOGGER.info("SchedulerMessage. message={}", message);
+
+            if (message.hasCommand()) { // currently we assume that commands
+                handleCommand(driver, message);
             }
 
             Stream<FrameworkInfo> dockerInfos = extractConfigs(
-                schedulerMessage.getDockerConfigList().stream());
-            listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
+                message.getDockerConfigList().stream());
 
             Stream<FrameworkInfo> hostInfos = extractConfigs(
-                schedulerMessage.getHostConfigList().stream());
+                message.getHostConfigList().stream());
+
+            listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
             listener.onConfigUpdated(LogType.HOST, hostInfos);
 
-            if (schedulerMessage.getDockerConfigList().size() > 0
-                || schedulerMessage.getHostConfigList().size() > 0) {
+            if (message.getDockerConfigList().size() > 0
+                || message.getHostConfigList().size() > 0) {
                 LOGGER.info("Logstash configuration updated.");
             }
 
@@ -101,7 +82,7 @@ public class LogstashExecutor implements Executor {
     }
 
     private void handleCommand(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
-        LOGGER.info("Logstash received command: " + schedulerMessage.getCommand());
+        LOGGER.info("Logstash received command. command={}", schedulerMessage.getCommand());
         if (schedulerMessage.getCommand().equals("REPORT_INTERNAL_STATUS")) {
             driver.sendFrameworkMessage(globalStateInfo.getStateAsExecutorMessage().toByteArray());
         }
@@ -113,25 +94,26 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void shutdown(ExecutorDriver driver) {
-        LOGGER.info("Shutting down framework...");
+        // The task i killed automatically.
+        LOGGER.info("Shutting down framework.");
     }
 
     @Override
     public void error(ExecutorDriver driver, String message) {
-        LOGGER.info("Error in executor: " + message);
+        LOGGER.info("Error in executor: message={}", message);
     }
 
     @Override
     public void registered(ExecutorDriver driver, Protos.ExecutorInfo executorInfo,
         Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
-        LOGGER.info("LogstashExecutor Logstash registered on slave " + slaveInfo.getHostname());
+        LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
 
         startupListener.startupComplete(slaveInfo.getHostname());
     }
 
     @Override
     public void reregistered(ExecutorDriver driver, Protos.SlaveInfo slaveInfo) {
-        LOGGER.info("LogstashExecutor Logstash re-registered on slave " + slaveInfo.getHostname());
+        LOGGER.info("LogstashExecutor Logstash re-registered. slaveId={}", slaveInfo.getId());
     }
 
     @Override
