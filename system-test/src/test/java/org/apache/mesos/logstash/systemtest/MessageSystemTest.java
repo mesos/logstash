@@ -64,7 +64,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         State state = cluster.getStateInfo();
 
         assertEquals("logstash framework should run 1 task", 1, state.getFramework("logstash").getTasks().size());
-        assertEquals("LOGSTASH_SERVER", state.getFramework("logstash").getTasks().get(0).getName());
+        assertEquals("logstash.task", state.getFramework("logstash").getTasks().get(0).getName());
         assertEquals("TASK_RUNNING", state.getFramework("logstash").getTasks().get(0).getState());
     }
 

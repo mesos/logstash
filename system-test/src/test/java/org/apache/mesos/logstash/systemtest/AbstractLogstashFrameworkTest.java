@@ -63,6 +63,7 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @After
     public void stopContainers() {
+        scheduler.stop();
 
         if (containersToBeStopped.isEmpty()) {
             return;
@@ -128,15 +129,7 @@ public abstract class AbstractLogstashFrameworkTest {
         return runningDockerContainers;
     }
 
-    @After
-    public void stopLogstashFramework() {
-        scheduler.stop();
-    }
 
-    @AfterClass
-    public static void stopScheduler() {
-        // TODO
-    }
 
     private static void waitForLogstashFramework() {
         // wait for our framework
