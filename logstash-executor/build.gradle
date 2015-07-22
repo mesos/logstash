@@ -34,8 +34,8 @@ shadowJar {
 jar.dependsOn "shadowJar"
 
 task dockerBuild(type: Exec) {
+    dependsOn "jar"
     commandLine 'docker'
     args 'build', '-t', 'mesos/logstash-executor', '.'
 }
 
-build.dependsOn "dockerBuild"
