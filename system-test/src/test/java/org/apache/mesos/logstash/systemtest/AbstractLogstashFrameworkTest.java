@@ -87,6 +87,11 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
+        File dockerConf  = folder.newFolder("docker");
+        File hostConf  = folder.newFolder("host");
+
+        configFolder = new ConfigFolder(dockerConf, hostConf);
+
         LiveState liveState = new LogstashLiveState();
 
         scheduler = new LogstashScheduler(liveState, new LogstashSettings(null, null),
@@ -162,7 +167,7 @@ public abstract class AbstractLogstashFrameworkTest {
             InputStream execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId())
                 .exec();
             assertThat(DockerUtil.consumeInputStream(execCmdStream),
-                containsString("Download complete"));
+                Matchers.containsString("Download complete"));
 
             execCreateCmdResponse = dockerClient.execCreateCmd(mesosClusterContainerId)
                 .withAttachStdout(true)
@@ -184,7 +189,7 @@ public abstract class AbstractLogstashFrameworkTest {
             InputStream responsePushImage = dockerClient.pushImageCmd(imageWithPrivateRepoName)
                 .withTag("systemtest").exec();
             assertThat(DockerUtil.consumeInputStream(responsePushImage),
-                containsString("The push refers to a repository"));
+                Matchers.containsString("The push refers to a repository"));
         }
     }
 
