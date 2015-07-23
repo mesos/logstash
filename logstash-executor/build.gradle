@@ -1,4 +1,5 @@
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'application'
 
 mainClassName = "org.apache.mesos.logstash.executor.Application"
 

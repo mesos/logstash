@@ -34,7 +34,6 @@ idea {
 
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'application'
 
     //apply from: "$rootDir/gradle/quality.gradle"
     //apply from: "$rootDir/gradle/spock.gradle"
