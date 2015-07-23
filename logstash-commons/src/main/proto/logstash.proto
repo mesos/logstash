@@ -27,8 +27,9 @@ message ContainerState {
     ERROR = 3;
   }
   required LoggingStateType type = 1;
-  required string name = 2;
-  optional string message = 3;
+  required string containerId = 2;
+  required string imageName = 3;
+  optional string errorMessage = 4;
 }
 
 message ExecutorMessage {
@@ -36,5 +37,14 @@ message ExecutorMessage {
       STATS = 1;
   }
   required ExecutorMessageType type = 1;
-  repeated ContainerState containers = 2;
+
+  // STATS
+  enum ExecutorStatus {
+    INITIALIZING = 1;
+    RESTARTING = 2;
+    ERROR = 3;
+    RUNNING = 4;
+  }
+  optional ExecutorStatus status = 2;
+  repeated ContainerState containers = 3;
 }

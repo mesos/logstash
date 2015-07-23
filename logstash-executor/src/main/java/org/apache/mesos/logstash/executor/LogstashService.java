@@ -1,6 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
-import org.apache.mesos.logstash.common.LogType;
+import org.apache.mesos.logstash.common.ConcurrentUtils;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
+import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
+import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
+import org.apache.mesos.logstash.executor.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +13,10 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -16,60 +24,64 @@ import java.nio.file.Paths;
 public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
+    private final ContainerizerClient client;
 
-    private String staticConfig;
-    private String dockerConfig;
+    private ExecutorStatus status;
 
-    public void updateConfig(LogType type, String config) {
-        LOGGER.debug("New Config for {}:\n{}", type, config);
-        switch (type) {
-            case HOST:
-                updateStaticConfig(config);
-                break;
-            case DOCKER:
-                updateDockerConfig(config);
-                break;
+    private final ScheduledExecutorService executorService;
+    private final Object lock = new Object();
+    private String latestConfig;
+    private Process process;
+
+    public LogstashService(ContainerizerClient client) {
+        this.client = client;
+        status = ExecutorStatus.INITIALIZING;
+        executorService = Executors.newSingleThreadScheduledExecutor();
+    }
+
+    public void start() {
+        executorService.scheduleWithFixedDelay(this::run, 0, 1, TimeUnit.SECONDS);
+    }
+
+    public void stop() {
+        ConcurrentUtils.stop(executorService);
+    }
+
+    public void update(List<FrameworkInfo> dockerInfo, List<FrameworkInfo> hostInfo) {
+
+        synchronized (lock) {
+            latestConfig = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
         }
     }
 
-    private void updateStaticConfig(String staticConfig) {
-        if (staticConfig.equals(this.staticConfig)) {
-            LOGGER.info("Static framework configuration did not change");
-        } else {
-            this.staticConfig = staticConfig;
-            assertStarted();
-        }
-    }
+    private void run() {
 
-    private void updateDockerConfig(String config) {
-        if (config.equals(this.dockerConfig)) {
-            LOGGER.info("Docker framework configuration did not change");
-        } else {
-            this.dockerConfig = config;
-            assertStarted();
-        }
-    }
-
-    private void assertStarted() {
-
-        if (this.dockerConfig == null || this.staticConfig == null) {
-            LOGGER.warn("Logstash config files haven't been set up yet. Can't start logstash");
-            return;
+        if (process != null) {
+            status = (process.isAlive()) ? ExecutorStatus.RUNNING : ExecutorStatus.ERROR;
         }
 
-        LOGGER.info("(Re)starting logstash...");
+        String config;
+        synchronized (lock) {
+            if (latestConfig == null) {
+                return;
+            }
+            config = latestConfig;
+            latestConfig = null;
+        }
+
+        LOGGER.info("Restarting the Logstash Process.");
+        status = ExecutorStatus.RESTARTING;
 
         try {
-            writeConfig("logstash-docker.conf", this.dockerConfig);
-            writeConfig("logstash-static.conf", this.staticConfig);
-            Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
-        } catch (IOException e) {
-            LOGGER.error("Something went horribly, horribly wrong:", e);
+            writeConfig("logstash.conf", config);
+            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
+        } catch (IOException | ExecutorException e) {
+            status = ExecutorStatus.ERROR;
+            LOGGER.error("Failed to start logstash process.", e);
         }
     }
 
-    // TODO: Why is this synchronized?
-    private synchronized void writeConfig(String fileName, String content) throws IOException {
+    private void writeConfig(String fileName, String content) throws IOException {
         assert !fileName.contains("/"); // should just be the filename, no path
 
         LOGGER.debug("Writing file: {} with content: {}", fileName, content);
@@ -89,5 +101,9 @@ public class LogstashService {
         } catch (IOException e) {
             LOGGER.error("Error creating. file={}", fullFileName, e);
         }
+    }
+
+    public ExecutorStatus status() {
+        return status;
     }
 }

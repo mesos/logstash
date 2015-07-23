@@ -193,7 +193,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             LOGGER.debug("Received Stats from Executor. executorId={}", executorID);
             message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
 
-            liveState.updateStats(slaveID, message.getContainersList());
+            liveState.updateStats(slaveID, message);
 
             listeners.forEach(l -> l.frameworkMessage(this, executorID, slaveID, message));
 

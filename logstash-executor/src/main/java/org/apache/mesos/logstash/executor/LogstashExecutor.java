@@ -4,14 +4,16 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.common.LogType;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.stream.Stream;
+import java.util.Collection;
+import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
@@ -20,15 +22,17 @@ public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class.toString());
 
-    private final ConfigEventListener listener;
+    private final ConfigManager configManager;
     private final GlobalStateInfo globalStateInfo;
-    private final StartupListener startupListener;
+    private final LogstashService logstash;
+    private final DockerClient dockerClient;
 
-    public LogstashExecutor(ConfigEventListener listener, StartupListener startupListener,
-        GlobalStateInfo globalStateInfo) {
-        this.listener = listener;
-        this.startupListener = startupListener;
+    public LogstashExecutor(ConfigManager configManager, DockerClient dockerClient,
+        GlobalStateInfo globalStateInfo, LogstashService logstash) {
+        this.configManager = configManager;
+        this.dockerClient = dockerClient;
         this.globalStateInfo = globalStateInfo;
+        this.logstash = logstash;
     }
 
     @Override
@@ -71,19 +75,10 @@ public class LogstashExecutor implements Executor {
     }
 
     private void updateConfig(SchedulerMessage message) {
-        Stream<FrameworkInfo> dockerInfos = extractConfigs(
-            message.getDockerConfigList().stream());
+        List<FrameworkInfo> dockerInfo = extractConfigs(message.getDockerConfigList());
+        List<FrameworkInfo> hostInfo = extractConfigs(message.getHostConfigList());
 
-        Stream<FrameworkInfo> hostInfos = extractConfigs(
-            message.getHostConfigList().stream());
-
-        listener.onConfigUpdated(LogType.DOCKER, dockerInfos);
-        listener.onConfigUpdated(LogType.HOST, hostInfos);
-
-        if (message.getDockerConfigList().size() > 0
-            || message.getHostConfigList().size() > 0) {
-            LOGGER.info("Logstash configuration updated.");
-        }
+        configManager.onNewConfigsFromScheduler(hostInfo, dockerInfo);
     }
 
     private void sendStatsToScheduler(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
@@ -91,8 +86,10 @@ public class LogstashExecutor implements Executor {
 
     }
 
-    private Stream<FrameworkInfo> extractConfigs(Stream<LogstashConfig> cfgs) {
-        return cfgs.map(cfg -> new FrameworkInfo(cfg.getFrameworkName(), cfg.getConfig()));
+    private List<FrameworkInfo> extractConfigs(Collection<LogstashConfig> cfgs) {
+        return cfgs.stream()
+            .map(c -> new FrameworkInfo(c.getFrameworkName(), c.getConfig()))
+            .collect(toList());
     }
 
     @Override
@@ -111,7 +108,7 @@ public class LogstashExecutor implements Executor {
         Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
         LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
 
-        startupListener.startupComplete(slaveInfo.getHostname());
+        dockerClient.startupComplete(slaveInfo.getHostname());
     }
 
     @Override

@@ -3,19 +3,21 @@ package org.apache.mesos.logstash.executor.state;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
+import org.apache.mesos.logstash.executor.LogstashService;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class GlobalStateInfo {
+    private final LogstashService logstash;
     private final DockerClient dockerClient;
     private final DockerLogSteamManager streamManager;
 
-    public GlobalStateInfo(DockerClient dockerClient, DockerLogSteamManager streamManager) {
+    public GlobalStateInfo(LogstashService logstash, DockerClient dockerClient,
+        DockerLogSteamManager streamManager) {
+        this.logstash = logstash;
         this.dockerClient = dockerClient;
         this.streamManager = streamManager;
     }
@@ -39,11 +41,13 @@ public class GlobalStateInfo {
     public ExecutorMessage getStateAsExecutorMessage() {
         return ExecutorMessage.newBuilder()
             .setType(ExecutorMessage.ExecutorMessageType.STATS)
+            .setStatus(logstash.status())
             .addAllContainers(
                 getRunningContainers().stream().map(c -> LogstashProtos.ContainerState.newBuilder()
-                       .setType(getContainerStatus(c))
-                       .setName(c)
-                       .build()
+                        .setType(getContainerStatus(c))
+                        .setContainerId(c)
+                        .setImageName("Container") // TODO: Get the image name here.
+                        .build()
                 ).collect(Collectors.toList()))
             .build();
     }

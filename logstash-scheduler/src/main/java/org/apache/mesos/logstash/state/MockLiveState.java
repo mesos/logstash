@@ -2,26 +2,43 @@ package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.scheduler.Task;
 
 import java.util.*;
 
+import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.NOT_STREAMING;
+import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.STREAMING;
+
+/**
+ * Mock Live State for use while developing the UI without having to run against
+ * a live Mesos Cluster.
+ */
 public class MockLiveState implements LiveState {
 
     private List<LogstashProtos.ContainerState> getRandomContainers() {
         List<LogstashProtos.ContainerState> containers = new ArrayList<>();
 
-        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
-            LogstashProtos.ContainerState.LoggingStateType.STREAMING).setName("nginx").build());
+        containers.add(LogstashProtos.ContainerState.newBuilder()
+            .setType(STREAMING)
+            .setImageName("nginx")
+            .build());
 
-        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
-            LogstashProtos.ContainerState.LoggingStateType.STREAMING).setName("website").build());
+        containers.add(LogstashProtos.ContainerState.newBuilder()
+            .setType(STREAMING)
+            .setImageName("website")
+            .build());
 
-        containers.add(LogstashProtos.ContainerState.newBuilder().setType(
-            LogstashProtos.ContainerState.LoggingStateType.NOT_STREAMING).setName("hadoop")
+        containers.add(LogstashProtos.ContainerState.newBuilder()
+            .setType(NOT_STREAMING)
+            .setImageName("hadoop")
             .build());
 
         return containers;
+    }
+
+    private ExecutorStatus getRandomStatus() {
+        return ExecutorStatus.values()[new Random().nextInt(ExecutorStatus.values().length)];
     }
 
     private Task randomTask(String taskId, String slaveId, String executorId) {
@@ -30,7 +47,8 @@ public class MockLiveState implements LiveState {
             Protos.SlaveID.newBuilder().setValue(slaveId).build(),
             Protos.ExecutorID.newBuilder().setValue(executorId).build()
         ),
-            getRandomContainers());
+            getRandomContainers(),
+            getRandomStatus());
 
         task.setStatus(Protos.TaskState.TASK_RUNNING);
 
@@ -66,8 +84,7 @@ public class MockLiveState implements LiveState {
     }
 
     @Override
-    public void updateStats(Protos.SlaveID slaveId,
-        List<LogstashProtos.ContainerState> containers) {
+    public void updateStats(Protos.SlaveID slaveId, LogstashProtos.ExecutorMessage message) {
 
     }
 }

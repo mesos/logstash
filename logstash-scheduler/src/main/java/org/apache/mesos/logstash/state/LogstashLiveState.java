@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.scheduler.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -36,8 +37,7 @@ public class LogstashLiveState implements LiveState {
     }
 
     @Override
-    public void updateStats(Protos.SlaveID slaveID,
-        List<LogstashProtos.ContainerState> containers) {
-        tasks.put(slaveID, new Task(tasks.get(slaveID), containers));
+    public void updateStats(Protos.SlaveID slaveID, ExecutorMessage messages) {
+        tasks.put(slaveID, new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus()));
     }
 }

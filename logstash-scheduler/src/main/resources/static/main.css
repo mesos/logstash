@@ -223,7 +223,6 @@ body,
 
 .status--healthy:before {
     color: #11D17B;
-    content: "Healthy";
 }
 
 .status--sick:before {

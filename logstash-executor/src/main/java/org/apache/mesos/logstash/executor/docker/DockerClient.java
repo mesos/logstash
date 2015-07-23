@@ -3,18 +3,21 @@ package org.apache.mesos.logstash.executor.docker;
 import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.Container;
-import org.apache.mesos.logstash.executor.StartupListener;
+import org.apache.mesos.logstash.common.ConcurrentUtils;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 
-public class DockerClient implements ContainerizerClient, StartupListener {
+public class DockerClient implements ContainerizerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
     private final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class.toString());
@@ -22,30 +25,34 @@ public class DockerClient implements ContainerizerClient, StartupListener {
     private com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
 
+    private ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+
     public void setDelegate(Consumer<List<String>> consumer) {
         this.frameworkDiscoveryListener = consumer;
     }
 
     public DockerClient() {
+
     }
 
     public DockerClient(com.spotify.docker.client.DockerClient dockerClient) {
         this.dockerClient = dockerClient;
     }
 
-    public void startMonitoringContainerState() {
-        // FIXME: We are never stopping this. Maybe consider making this class a service.
+    public void start() {
+        executorService.scheduleWithFixedDelay(this::updateContainerState, 0, 5, TimeUnit.SECONDS);
+    }
 
-        Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                updateContainerState();
-            }
-        }, 0, (long) 5000);
+    public void stop() {
+        ConcurrentUtils.stop(executorService);
     }
 
     public void startupComplete(String hostName) {
+        // There is currently no what (what we know of) to reliably
+        // get the address of the host we are running on without waiting
+        // for the executor to register itself. This is called by the
+        // executor itself.
+
         this.dockerClient = DefaultDockerClient.builder()
             .readTimeoutMillis(HOURS.toMillis(1))
             .uri(URI.create("http://" + hostName + ":2376"))
@@ -93,8 +100,8 @@ public class DockerClient implements ContainerizerClient, StartupListener {
         try {
             List<Container> latestRunningContainers = getContainers();
 
-            LOGGER
-                .info(String.format("Found %d running containers", latestRunningContainers.size()));
+            LOGGER.info(
+                String.format("Found %d running containers", latestRunningContainers.size()));
 
             Map<String, String> latestRunningContainerIdAndNames = getContainerIdAndNames(
                 latestRunningContainers);
@@ -108,7 +115,7 @@ public class DockerClient implements ContainerizerClient, StartupListener {
                 notifyFrameworkListener();
             }
         } catch (DockerException | InterruptedException e) {
-            throw new IllegalStateException("Failed to update container states", e);
+            throw new IllegalStateException("Failed to onNewConfigsFromScheduler container states", e);
         }
     }
 

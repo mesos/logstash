@@ -16,5 +16,5 @@ public interface LiveState {
 
     void addRunningTask(Task task);
 
-    void updateStats(Protos.SlaveID slaveID, List<LogstashProtos.ContainerState> containers);
+    void updateStats(Protos.SlaveID slaveID, LogstashProtos.ExecutorMessage messages);
 }

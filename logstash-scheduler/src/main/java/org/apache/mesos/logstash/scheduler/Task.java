@@ -4,6 +4,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
+import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 
 import java.util.Collections;
 import java.util.List;
@@ -15,20 +16,24 @@ public class Task {
     private final Protos.ExecutorID executorID;
     private final List<ContainerState> containers;
 
-    private Protos.TaskState status = null;
+    private final ExecutorStatus status;
+
+    private Protos.TaskState state = null;
 
     public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID) {
         this.taskId = taskId;
         this.slaveID = slaveID;
         this.executorID = executorID;
         this.containers = Collections.emptyList();
+        this.status = ExecutorStatus.INITIALIZING;
     }
 
-    public Task(Task other, List<ContainerState> containers) {
+    public Task(Task other, List<ContainerState> containers, ExecutorStatus status) {
         this.containers = containers;
         this.taskId = other.taskId;
         this.slaveID = other.slaveID;
         this.executorID = other.executorID;
+        this.status = status;
     }
 
     public Protos.SlaveID getSlaveID() {
@@ -59,12 +64,16 @@ public class Task {
             isEquals();
     }
 
-    public Protos.TaskState getStatus() {
+    public Protos.TaskState getTaskState() {
+        return state;
+    }
+
+    public ExecutorStatus getExecutorStatus() {
         return status;
     }
 
     public void setStatus(Protos.TaskState status) {
-        this.status = status;
+        this.state = status;
     }
 
     public long getActiveStreamCount() {

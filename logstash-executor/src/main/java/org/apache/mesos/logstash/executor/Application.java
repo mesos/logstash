@@ -6,7 +6,6 @@ import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import org.apache.mesos.logstash.executor.docker.DockerStreamer;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
-import org.apache.mesos.logstash.executor.state.DockerInfoCache;
 import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
 
 import java.util.logging.Logger;
@@ -22,33 +21,36 @@ public class Application implements Runnable {
 
     public void run() {
         DockerClient dockerClient = new DockerClient();
-        DockerLogSteamManager streamManager = new DockerLogSteamManager(
-            new DockerStreamer(new FileLogSteamWriter(MAX_LOG_SIZE), dockerClient));
 
-        ConfigManager controller = createController(dockerClient, streamManager);
-        GlobalStateInfo globalStateInfo = new GlobalStateInfo(dockerClient, streamManager);
+        FileLogSteamWriter writer = new FileLogSteamWriter(MAX_LOG_SIZE);
+        DockerStreamer streamer = new DockerStreamer(writer, dockerClient);
+        DockerLogSteamManager streamManager = new DockerLogSteamManager(streamer);
 
-        LogstashExecutor executor = new LogstashExecutor(controller, dockerClient, globalStateInfo);
+        LogstashService logstashService = new LogstashService(dockerClient);
+        logstashService.start();
+
+        ConfigManager configManager = new ConfigManager(logstashService, dockerClient, streamManager);
+        GlobalStateInfo globalStateInfo = new GlobalStateInfo(logstashService, dockerClient, streamManager);
+
+        LogstashExecutor executor = new LogstashExecutor(configManager, dockerClient, globalStateInfo, logstashService);
+
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 
-        dockerClient
-            .startMonitoringContainerState(); // we start after the controller is initiated because it's sets a frameworkListener
+        // we start after the config manager is initiated
+        // because it's sets a frameworkListener
+        dockerClient.start();
 
         LOGGER.info("Mesos Logstash Executor Started");
         Protos.Status status = driver.run();
         LOGGER.info("Mesos Logstash Executor Stopped");
+
+        logstashService.stop();
+        dockerClient.stop();
 
         if (status.equals(Protos.Status.DRIVER_STOPPED)) {
             System.exit(0);
         } else {
             System.exit(1);
         }
-    }
-
-    private ConfigManager createController(DockerClient dockerClient,
-        DockerLogSteamManager streamManager) {
-        LogstashService logstashService = new LogstashService();
-
-        return new ConfigManager(dockerClient, logstashService, streamManager);
     }
 }

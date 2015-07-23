@@ -6,10 +6,12 @@ import org.apache.mesos.logstash.common.LogType;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
-import org.apache.mesos.logstash.executor.state.DockerInfoCache;
+import org.apache.mesos.logstash.executor.util.ConfigUtil;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -17,17 +19,11 @@ import static org.mockito.Mockito.*;
 
 public class ConfigManagerTest {
 
-    private ConfigManager configManager;
     private ContainerizerClient client;
-    private LogstashService logstash;
 
     @Before
-    public void s() {
+    public void before() {
         client = mock(ContainerizerClient.class);
-        logstash = mock(LogstashService.class);
-        DockerLogSteamManager streamManager = mock(DockerLogSteamManager.class);
-
-        configManager = new ConfigManager(client, logstash, streamManager);
     }
 
     @Test
@@ -45,10 +41,12 @@ public class ConfigManagerTest {
         when(client.getImageNameOfContainer("789")).thenReturn("bas");
         when(client.getImageNameOfContainer("012")).thenReturn("foo");
 
-        configManager.onConfigUpdated(LogType.DOCKER, frameworks.stream());
+        List<FrameworkInfo> hostFrameworks = Lists.newArrayList();
+        hostFrameworks.add(new FrameworkInfo("ui", "host-config"));
 
-        verify(logstash, times(1)).updateConfig(LogType.DOCKER,
-            "# bas\nbas-config\n# foo\nfoo-config\n# foo\nfoo-config");
+        Assert.assertEquals(
+            "# bas\nbas-config\n# foo\nfoo-config\n# foo\nfoo-config\n# ui\nhost-config\n",
+            ConfigUtil.generateConfigFile(client, frameworks, hostFrameworks));
     }
 
 }

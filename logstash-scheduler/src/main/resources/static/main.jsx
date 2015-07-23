@@ -263,12 +263,17 @@ let NodePage = React.createClass({
             );
         };
 
+        let formatName = function (c) {
+            let text = c.imageName + " (" + c.containerId.substr(0, 8) + ")";
+            return text.substr(0, 40);
+        };
+
         let renderTask = function (t) {
             return (
                 <div className="box box--list">
                     <div className="box__header">
                         <div>{t.executorId}</div>
-                        <div className="status status--healthy"></div>
+                        <div className="status status--healthy">{t.status}</div>
                     </div>
                     <div className="box__body">
                         <ul className="box-list">
@@ -277,7 +282,7 @@ let NodePage = React.createClass({
                             {renderItem("Executor ID", t.executorId)}
                             {renderItem("Containers Configs", t.containers.length)}
                             {t.containers.map(function(c) {
-                                return renderItem(c.name, c.status);
+                                return renderItem(formatName(c), c.status);
                             })}
                         </ul>
                     </div>
