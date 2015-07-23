@@ -1,7 +1,9 @@
 package org.apache.mesos.logstash.executor;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class FrameworkTest {
 
     @Test
