@@ -88,11 +88,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     public void logstashSetsUpLoggingForFrameworksStartedAfterConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
         // create clusterConfig
-        FileUtils
-            .write(Paths.get(configFolder.dockerConfDir.getAbsolutePath(), "busybox.conf").toFile(),
-                BUSYBOX_CONF);
-        FileUtils.write(Paths.get(configFolder.hostConfDir.getAbsolutePath(), "host.conf").toFile(),
-            HOST_CONF);
+        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"), BUSYBOX_CONF.getBytes());
+        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
 
         createAndStartDummyContainer();
         simulateLogEvent(logString);
