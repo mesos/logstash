@@ -27,6 +27,7 @@ public class LocalCluster {
     }
 
     private void run() throws Exception {
+        Runtime.getRuntime().addShutdownHook(new Thread(cluster::stop));
         cluster.start();
 
         createAndStartDummyContainer();
@@ -37,14 +38,15 @@ public class LocalCluster {
         pullDindImagesAndRetagWithoutRepoAndLatestTag(clusterConfig.dockerClient,
             cluster.getMesosContainer().getMesosContainerID(), dindImages);
 
-
-        printRunningContainers();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(cluster::stop));
-
+        System.out.println("");
         System.out.println("Cluster Started.");
         System.out.println("MASTER URL: " + cluster.getMesosContainer().getMesosMasterURL());
-        Thread.currentThread().join();
+        System.out.println("");
+
+        while (!Thread.currentThread().isInterrupted()) {
+            Thread.sleep(5000);
+            printRunningContainers();
+        }
     }
 
     private String printRunningContainers() {
@@ -60,7 +62,9 @@ public class LocalCluster {
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
         String runningDockerContainers = DockerUtil.consumeInputStream(execCmdStream);
 
+        System.out.println("");
         System.out.println(runningDockerContainers);
+        System.out.println("");
 
         return runningDockerContainers;
     }
