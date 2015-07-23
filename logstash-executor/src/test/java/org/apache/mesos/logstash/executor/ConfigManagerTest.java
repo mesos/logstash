@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.executor;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.mesos.logstash.common.LogType;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
@@ -11,19 +10,26 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ConfigManagerTest {
 
+    private ConfigManager configManager;
     private ContainerizerClient client;
+    private LogstashService logstash;
+    private DockerLogSteamManager streamManager;
 
     @Before
-    public void before() {
+    public void setup() {
         client = mock(ContainerizerClient.class);
+        logstash = mock(LogstashService.class);
+        streamManager = mock(DockerLogSteamManager.class);
+
+        configManager = new ConfigManager(logstash, client, streamManager);
     }
 
     @Test

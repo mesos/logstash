@@ -22,24 +22,39 @@ public class DockerStreamer {
         this.client = client;
     }
 
-    public void startStreaming(DockerLogPath path) {
+    public LogStream startStreaming(DockerLogPath path) {
         LOGGER
             .info("Stream from " + path.getContainerLogPath() + " to " + path.getExecutorLogPath());
 
+        LogStream logStream = createContainerLogStream(path.getContainerId(),
+            path.getContainerLogPath());
         try {
-            LogStream logStream = createContainerLogStream(path.getContainerId(),
-                path.getContainerLogPath());
             writer.write(path.getExecutorLogPath(), logStream);
+
             LOGGER.info(String.format("Logging file: %s", path.getExecutorLogPath()));
+
+            return logStream;
+
         } catch (IOException e) {
             LOGGER.error("Failed", e);
+            logStream.close();
+            return null;
         }
     }
 
     private LogStream createContainerLogStream(String containerId, String logLocation) {
-        String MONITOR_CMD = String
-            .format(BASH_COMMAND, logLocation, HeartbeatFilterOutputStream.MAGIC_CHARACTER, logLocation);
+        String MONITOR_CMD = getMonitorCmd(logLocation);
         LOGGER.info("Running: " + MONITOR_CMD);
         return client.exec(containerId, "sh", "-c", MONITOR_CMD);
+    }
+
+    String getMonitorCmd(String logLocation) {
+        return String
+            .format(BASH_COMMAND, logLocation, HeartbeatFilterOutputStream.MAGIC_CHARACTER,
+                logLocation);
+    }
+
+    public void stopStreaming(LogStream logStream) {
+        logStream.close();
     }
 }

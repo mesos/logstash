@@ -1,5 +1,7 @@
-package org.apache.mesos.logstash.executor.logging;
+package org.apache.mesos.logstash.executor.docker;
 
+import org.apache.mesos.logstash.executor.logging.LogStream;
+import org.apache.mesos.logstash.executor.logging.LogStreamWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,14 +21,7 @@ public class ByteBufferLogSteamWriter implements LogStreamWriter {
     public void write(String name, LogStream logStream) throws IOException {
 
         // FIXME: We should really stop all these gracefully on shutdown.
-
-        Executors.newSingleThreadExecutor().execute(() -> {
-            try {
-                logStream.attach(stdout, stderr);
-            } catch (IOException e) {
-                LOGGER.error("Error writing to file.", e);
-            }
-        });
+        logStream.attach(stdout, stderr);
     }
 
     public String getStdOutContent() throws UnsupportedEncodingException {

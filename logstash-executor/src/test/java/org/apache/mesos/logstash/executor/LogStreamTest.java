@@ -2,14 +2,11 @@ package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
-import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
@@ -22,12 +19,12 @@ public class LogStreamTest {
 
     File testLogFile;
     FileLogSteamWriter writer;
-    TestLogStream testLogStream;
+    TestableLogStream testableLogStream;
 
     @Test
     public void simpleRotation() throws IOException {
         String testString = "123456789ABCDEFGH";
-        testLogStream.outputStream.write(testString.getBytes("UTF-8"));
+        testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
         Assert.assertEquals("CDEFGH", FileUtils.readFileToString(testLogFile));
     }
@@ -35,7 +32,7 @@ public class LogStreamTest {
     @Test
     public void rotatesMultipleTimesIfNecessary() throws IOException {
         String testString = "123456789ABCDEFGHIJKLMNOPQRSTUV";
-        testLogStream.outputStream.write(testString.getBytes("UTF-8"));
+        testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
         Assert.assertEquals("NOPQRSTUV", FileUtils.readFileToString(testLogFile));
     }
@@ -43,7 +40,7 @@ public class LogStreamTest {
     @Test
     public void noRotationUntilLimitIsReached() throws IOException {
         String testString = "1234";
-        testLogStream.outputStream.write(testString.getBytes("UTF-8"));
+        testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
         Assert.assertEquals("1234", FileUtils.readFileToString(testLogFile));
     }
@@ -51,7 +48,7 @@ public class LogStreamTest {
     @Test
     public void emptyContentJustAfterRotation() throws IOException {
         String testString = "123456789AB";
-        testLogStream.outputStream.write(testString.getBytes("UTF-8"));
+        testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
         Assert.assertEquals("", FileUtils.readFileToString(testLogFile));
     }
@@ -60,7 +57,7 @@ public class LogStreamTest {
     @Test
     public void cutsMultibyteUnicodeCharactersInHalf() throws IOException {
         String testString = "        Flörüan";
-        testLogStream.outputStream.write(testString.getBytes("UTF-8"));
+        testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
         Assert.assertEquals("�rüan", FileUtils.readFileToString(testLogFile));
     }
@@ -71,65 +68,28 @@ public class LogStreamTest {
             testLogFile = folder.newFile("testLog.log");
             writer = new FileLogSteamWriter(MAX_LOG_SIZE);
 
-            testLogStream = new TestLogStream();
+            testableLogStream = new TestableLogStream();
 
-            writer.write(testLogFile.getAbsolutePath(), testLogStream);
-            waitForTestLogStreamIsAttached(testLogStream);
+            writer.write(testLogFile.getAbsolutePath(), testableLogStream);
+            waitForTestLogStreamIsAttached(testableLogStream);
         } catch (Throwable e) {
-            if (testLogStream != null && testLogStream.isAttached()) {
-                testLogStream.close();
+            if (testableLogStream != null && testableLogStream.isAttached()) {
+                testableLogStream.close();
             }
         }
     }
 
     @After
     public void tearDown() throws IOException {
-        if (testLogStream != null && testLogStream.isAttached()) {
-            testLogStream.close();
+        if (testableLogStream != null && testableLogStream.isAttached()) {
+            testableLogStream.close();
         }
     }
 
-    private void waitForTestLogStreamIsAttached(final TestLogStream testLogStream) {
+    private void waitForTestLogStreamIsAttached(final TestableLogStream testableLogStream) {
         await("Waiting for attached LogStream")
             .atMost(5, TimeUnit.SECONDS)
-            .until(testLogStream::isAttached);
-    }
-
-    static class TestLogStream implements LogStream, Closeable {
-
-        OutputStream outputStream;
-        OutputStream stdout;
-        OutputStream stderr;
-
-        @Override
-        public void attach(OutputStream stdout, OutputStream stderr) throws IOException {
-            if (isAttached()) {
-                throw new IllegalStateException("TestLogStream already used...");
-            }
-            this.stderr = stderr;
-            this.stdout = stdout;
-
-            outputStream = new OutputStream() {
-                @Override
-                public void write(int b) throws IOException {
-                    stdout.write(b);
-                }
-            };
-        }
-
-        boolean isAttached() {
-            return outputStream != null;
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (outputStream != null) {
-                outputStream.close();
-                outputStream = null;
-            }
-            stdout.close();
-            stderr.close();
-        }
+            .until(testableLogStream::isAttached);
     }
 
 }
