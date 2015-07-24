@@ -42,6 +42,7 @@ public class LogstashService {
     }
 
     public void stop() {
+        if (process != null) process.destroy();
         ConcurrentUtils.stop(executorService);
     }
 
