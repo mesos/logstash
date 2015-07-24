@@ -22,16 +22,19 @@ public class MockLiveState implements LiveState {
         containers.add(LogstashProtos.ContainerState.newBuilder()
             .setType(STREAMING)
             .setImageName("nginx")
+            .setContainerId("1231243")
             .build());
 
         containers.add(LogstashProtos.ContainerState.newBuilder()
             .setType(STREAMING)
             .setImageName("website")
+            .setContainerId("2231243")
             .build());
 
         containers.add(LogstashProtos.ContainerState.newBuilder()
             .setType(NOT_STREAMING)
             .setImageName("hadoop")
+            .setContainerId("3231243")
             .build());
 
         return containers;
