@@ -40,3 +40,6 @@ task dockerBuild(type: Exec) {
     args 'build', '-t', 'mesos/logstash-executor', '.'
 }
 
+
+
+build.dependsOn "dockerBuild"

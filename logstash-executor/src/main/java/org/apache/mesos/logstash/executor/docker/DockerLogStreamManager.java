@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class DockerLogSteamManager {
+public class DockerLogStreamManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -17,7 +17,7 @@ public class DockerLogSteamManager {
 
     private final DockerStreamer streamer;
 
-    public DockerLogSteamManager(DockerStreamer streamer) {
+    public DockerLogStreamManager(DockerStreamer streamer) {
         this.streamer = streamer;
 
         this.processedContainers = new HashMap<>();

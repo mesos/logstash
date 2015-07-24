@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
+import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.slf4j.Logger;
@@ -27,16 +27,16 @@ public class ConfigManager {
 
     private final LogstashService logstash;
     private ContainerizerClient containerizerClient;
-    private DockerLogSteamManager dockerLogSteamManager;
+    private DockerLogStreamManager dockerLogStreamManager;
 
     public List<FrameworkInfo> dockerInfo = new ArrayList<>();
     private List<FrameworkInfo> hostInfo = new ArrayList<>();
 
     public ConfigManager(LogstashService logstash, ContainerizerClient containerizerClient,
-        DockerLogSteamManager dockerLogSteamManager) {
+        DockerLogStreamManager dockerLogStreamManager) {
         this.logstash = logstash;
         this.containerizerClient = containerizerClient;
-        this.dockerLogSteamManager = dockerLogSteamManager;
+        this.dockerLogStreamManager = dockerLogStreamManager;
         this.containerizerClient.setDelegate(this::onContainerListUpdated);
     }
 
@@ -74,13 +74,13 @@ public class ConfigManager {
 
         // - For each new running container start streaming logs.
 
-        frameworks.forEach(dockerLogSteamManager::setupContainerLogfileStreaming);
+        frameworks.forEach(dockerLogStreamManager::setupContainerLogfileStreaming);
 
 
-        Set<String> frameworksToStopStreaming = dockerLogSteamManager.getProcessedContainers()
+        Set<String> frameworksToStopStreaming = dockerLogStreamManager.getProcessedContainers()
             .stream().filter(hasUnknownConfig).collect(Collectors.toSet());
 
-        frameworksToStopStreaming.stream().forEach(dockerLogSteamManager::stopStreamingForWholeFramework);
+        frameworksToStopStreaming.stream().forEach(dockerLogStreamManager::stopStreamingForWholeFramework);
     }
 
     private Function<String, FrameworkInfo> createLookupHelper(List<FrameworkInfo> logstashInfos) {

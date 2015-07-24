@@ -5,7 +5,7 @@ import org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingSta
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.executor.LogstashService;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
+import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,10 +13,10 @@ import java.util.stream.Collectors;
 public class LiveState {
     private final LogstashService logstash;
     private final DockerClient dockerClient;
-    private final DockerLogSteamManager streamManager;
+    private final DockerLogStreamManager streamManager;
 
     public LiveState(LogstashService logstash, DockerClient dockerClient,
-        DockerLogSteamManager streamManager) {
+        DockerLogStreamManager streamManager) {
         this.logstash = logstash;
         this.dockerClient = dockerClient;
         this.streamManager = streamManager;

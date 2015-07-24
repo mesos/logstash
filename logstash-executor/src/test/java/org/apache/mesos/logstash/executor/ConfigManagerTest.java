@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
+import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.junit.Before;
@@ -22,7 +22,7 @@ public class ConfigManagerTest {
     private ConfigManager configManager;
     private ContainerizerClient client;
     private LogstashService logstash;
-    private DockerLogSteamManager streamManager;
+    private DockerLogStreamManager streamManager;
 
     ArgumentCaptor<DockerFramework> dockerFrameworkArgumentCaptor = ArgumentCaptor
         .forClass(DockerFramework.class);
@@ -37,7 +37,7 @@ public class ConfigManagerTest {
     public void setup() {
         client = mock(ContainerizerClient.class);
         logstash = mock(LogstashService.class);
-        streamManager = mock(DockerLogSteamManager.class);
+        streamManager = mock(DockerLogStreamManager.class);
 
         configManager = new ConfigManager(logstash, client, streamManager);
 

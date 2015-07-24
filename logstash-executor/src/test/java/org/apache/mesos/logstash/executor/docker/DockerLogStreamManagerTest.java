@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-public class DockerLogSteamManagerTest {
+public class DockerLogStreamManagerTest {
 
     public static final String SOME_CONTAINER_ID_1 = "someContainerId";
     public static final String SOME_CONTAINER_ID_2 = "someOtherContainerId";
@@ -32,13 +32,13 @@ public class DockerLogSteamManagerTest {
     ArgumentCaptor<LogStream> logStreamArgumentCaptor = ArgumentCaptor.forClass(LogStream.class);
 
 
-    private  DockerLogSteamManager dockerLogStreamManager;
+    private DockerLogStreamManager dockerLogStreamManager;
 
     @Before
     public void setup(){
         streamer = mock(DockerStreamer.class);
 
-        dockerLogStreamManager = new DockerLogSteamManager(streamer);
+        dockerLogStreamManager = new DockerLogStreamManager(streamer);
 
         // return a new instance of a LogStream for each start streaming call
         when(streamer.startStreaming(any())).thenAnswer(new Answer<LogStream>() {
@@ -194,9 +194,9 @@ public class DockerLogSteamManagerTest {
     private LogStream getLogStream(String containerId, final String logFile) {
         return dockerLogStreamManager.processedContainers.get(containerId).stream()
             .filter(
-                new Predicate<DockerLogSteamManager.ProcessedDockerLogPath>() {
+                new Predicate<DockerLogStreamManager.ProcessedDockerLogPath>() {
                     @Override public boolean test(
-                        DockerLogSteamManager.ProcessedDockerLogPath processedDockerLogPath) {
+                        DockerLogStreamManager.ProcessedDockerLogPath processedDockerLogPath) {
                         return processedDockerLogPath.dockerLogPath.getContainerLogPath()
                             .equals(logFile);
                     }

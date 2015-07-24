@@ -1,10 +1,5 @@
 package org.apache.mesos.logstash.executor.util;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import org.apache.mesos.logstash.executor.ConfigManager;
-import org.apache.mesos.logstash.executor.LogstashService;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.junit.Assert;
 import org.junit.Before;
@@ -15,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 public class ConfigUtilTest {
