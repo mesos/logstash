@@ -107,8 +107,7 @@ public class DockerLogSteamManagerTest {
         LogStream logStreamOfFile1 = getLogStream(SOME_CONTAINER_ID_1, SOME_LOG_FILE_1);
         LogStream logStreamOfFile2 = getLogStream(SOME_CONTAINER_ID_1, SOME_LOG_FILE_2);
 
-        dockerLogStreamManager.stopStreamingForWholeFramework(
-            createDockerFramework(SOME_CONTAINER_ID_1));
+        dockerLogStreamManager.stopStreamingForWholeFramework(SOME_CONTAINER_ID_1);
 
 
         verify(streamer, times(2)).stopStreaming(logStreamArgumentCaptor.capture());
@@ -181,25 +180,6 @@ public class DockerLogSteamManagerTest {
 
         assertTrue(logPaths.contains(SOME_LOG_FILE_1));
         assertTrue(logPaths.contains(SOME_LOG_FILE_2));
-    }
-
-    @Test
-    public void getProcessedFiles_withSomeAlreadyStreamedLogFilesAreNotIncludedInNextUpdate_shouldRemoveThem() throws Exception {
-        dockerLogStreamManager.setupContainerLogfileStreaming(
-            createDockerFramework(SOME_CONTAINER_ID_1, SOME_LOG_FILE_1, SOME_LOG_FILE_2,
-                SOME_LOG_FILE_3));
-
-        assertEquals(3, dockerLogStreamManager.getProcessedFiles(SOME_CONTAINER_ID_1).size());
-
-        dockerLogStreamManager.setupContainerLogfileStreaming(
-            createDockerFramework(SOME_CONTAINER_ID_1, SOME_LOG_FILE_1));
-
-        assertEquals(1, dockerLogStreamManager.getProcessedFiles(SOME_CONTAINER_ID_1).size());
-
-        Set<String> logPaths=  dockerLogStreamManager.getProcessedFiles(SOME_CONTAINER_ID_1).stream()
-            .map(DockerLogPath::getContainerLogPath).collect(Collectors.toSet());
-
-        assertTrue(logPaths.contains(SOME_LOG_FILE_1));
     }
 
     private DockerFramework createDockerFramework(String containerId, String ... logfiles) {

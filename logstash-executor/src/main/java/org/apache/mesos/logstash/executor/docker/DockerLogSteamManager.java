@@ -38,17 +38,14 @@ public class DockerLogSteamManager {
         LOGGER.info("Done processing: " + framework.getName());
     }
 
-    public void stopStreamingForWholeFramework(DockerFramework framework){
-        List<DockerLogPath> frameWorkLogFiles = framework.getLogFiles();
+    public void stopStreamingForWholeFramework(String containerId){
 
-        for (ProcessedDockerLogPath processedDockerLogPath : processedContainers.get(framework.getContainerId())){
-            if (!frameWorkLogFiles.contains(processedDockerLogPath.dockerLogPath)){
+        for (ProcessedDockerLogPath processedDockerLogPath : processedContainers.get(containerId)){
                 LOGGER.info("Stop streaming of " + processedDockerLogPath.dockerLogPath);
                 streamer.stopStreaming(processedDockerLogPath.logStream);
-            }
         }
 
-        processedContainers.remove(framework.getContainerId());
+        processedContainers.remove(containerId);
     }
 
     public Set<String> getProcessedContainers() {

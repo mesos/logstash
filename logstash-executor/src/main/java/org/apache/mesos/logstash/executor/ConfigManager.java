@@ -10,8 +10,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
@@ -60,6 +62,7 @@ public class ConfigManager {
         Function<String, FrameworkInfo> lookupConfig = createLookupHelper(dockerInfo);
 
         Predicate<String> hasKnownConfig = c -> lookupConfig.apply(c) != null;
+        Predicate<String> hasUnknownConfig = c -> lookupConfig.apply(c) == null;
         Function<String, DockerFramework> createFramework = c -> new DockerFramework(
             lookupConfig.apply(c), new DockerFramework.ContainerId(c));
 
@@ -72,6 +75,12 @@ public class ConfigManager {
         // - For each new running container start streaming logs.
 
         frameworks.forEach(dockerLogSteamManager::setupContainerLogfileStreaming);
+
+
+        Set<String> frameworksToStopStreaming = dockerLogSteamManager.getProcessedContainers()
+            .stream().filter(hasUnknownConfig).collect(Collectors.toSet());
+
+        frameworksToStopStreaming.stream().forEach(dockerLogSteamManager::stopStreamingForWholeFramework);
     }
 
     private Function<String, FrameworkInfo> createLookupHelper(List<FrameworkInfo> logstashInfos) {
