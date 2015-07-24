@@ -268,21 +268,42 @@ let NodePage = React.createClass({
             return text.substr(0, 40);
         };
 
+        let statusIcon = function (status) {
+            switch (status) {
+                case "STREAMING":
+                    return <div title="Logging Enabled" className="status-icon status--healthy"></div>;
+                default:
+                    return <div title="Not Logging" className="status-icon status--idle"></div>;
+            }
+        };
+
+        let healthText = function (status) {
+            if (status === "RUNNING") {
+                return <div className="status status--healthy">Healthy</div>
+            }
+            else if (status === "ERROR") {
+                return <div className="status status--error">Sick</div>
+            }
+            else {
+                return <div className="status status--idle">Initializing</div>
+            }
+        };
+
         let renderTask = function (t) {
             return (
                 <div className="box box--list">
                     <div className="box__header">
-                        <div>{t.executorId}</div>
-                        <div className="status status--healthy">{t.status}</div>
+                        <div>{t.executorId.substr(0, 24)}...</div>
+                        <div className="status status--healthy">{healthText(t.status)}</div>
                     </div>
                     <div className="box__body">
                         <ul className="box-list">
                             {renderItem("Task ID", t.taskId)}
                             {renderItem("Slave ID", t.slaveId)}
                             {renderItem("Executor ID", t.executorId)}
-                            {renderItem("Containers Configs", t.containers.length)}
+                            {renderItem("", "")}
                             {t.containers.map(function(c) {
-                                return renderItem(formatName(c), c.status);
+                                return renderItem(formatName(c), statusIcon(c.status));
                             })}
                         </ul>
                     </div>

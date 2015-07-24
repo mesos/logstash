@@ -221,7 +221,25 @@ body,
     font-size: 12px;
 }
 
-.status--healthy:before {
+.status-icon {
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
+}
+
+.status-icon.status--healthy {
+    background-color: #11D17B;
+}
+
+.status-icon.status--error {
+    background-color: #11D17B;
+}
+
+.status-icon.status--idle {
+    background-color: #c5c5c5;
+}
+
+.status--healthy {
     color: #11D17B;
 }
 
