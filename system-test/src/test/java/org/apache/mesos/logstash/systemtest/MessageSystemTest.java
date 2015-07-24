@@ -4,20 +4,16 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.jayway.awaitility.core.ConditionTimeoutException;
-import org.apache.commons.io.FileUtils;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.state.State;
-import org.hamcrest.Matchers;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +23,7 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.NOT_STREAMING;
 import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.STREAMING;
 import static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorMessageType.STATS;
-import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -87,7 +83,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     @Test
     public void logstashSetsUpLoggingForFrameworksStartedAfterConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
-        // create clusterConfig
+
         Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"), BUSYBOX_CONF.getBytes());
         Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
 
@@ -100,7 +96,6 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     @Test
     public void logstashSetsUpLoggingForFrameworksStartedBeforeConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
-        // create clusterConfig
 
         createAndStartDummyContainer();
         simulateLogEvent(logString);
@@ -126,7 +121,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
             .map(ContainerState::getType).collect(
                 toSet());
 
-        assertThat(stateTypes, contains(STREAMING, NOT_STREAMING));
+        assertThat(stateTypes, containsInAnyOrder(STREAMING, NOT_STREAMING));
     }
 
     private void waitForLogstashToProcessLogEvents(final String logString, String executorId) {
