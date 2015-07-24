@@ -10,12 +10,12 @@ import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class GlobalStateInfo {
+public class LiveState {
     private final LogstashService logstash;
     private final DockerClient dockerClient;
     private final DockerLogSteamManager streamManager;
 
-    public GlobalStateInfo(LogstashService logstash, DockerClient dockerClient,
+    public LiveState(LogstashService logstash, DockerClient dockerClient,
         DockerLogSteamManager streamManager) {
         this.logstash = logstash;
         this.dockerClient = dockerClient;

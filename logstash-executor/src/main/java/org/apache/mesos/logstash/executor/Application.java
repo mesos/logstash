@@ -6,7 +6,7 @@ import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogSteamManager;
 import org.apache.mesos.logstash.executor.docker.DockerStreamer;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
-import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
+import org.apache.mesos.logstash.executor.state.LiveState;
 
 import java.util.logging.Logger;
 
@@ -30,9 +30,9 @@ public class Application implements Runnable {
         logstashService.start();
 
         ConfigManager configManager = new ConfigManager(logstashService, dockerClient, streamManager);
-        GlobalStateInfo globalStateInfo = new GlobalStateInfo(logstashService, dockerClient, streamManager);
+        LiveState liveState = new LiveState(logstashService, dockerClient, streamManager);
 
-        LogstashExecutor executor = new LogstashExecutor(configManager, dockerClient, globalStateInfo, logstashService);
+        LogstashExecutor executor = new LogstashExecutor(configManager, dockerClient, liveState);
 
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 

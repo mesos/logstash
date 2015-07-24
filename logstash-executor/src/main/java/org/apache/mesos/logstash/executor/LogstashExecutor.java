@@ -6,7 +6,7 @@ import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
-import org.apache.mesos.logstash.executor.state.GlobalStateInfo;
+import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,16 +23,14 @@ public class LogstashExecutor implements Executor {
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class.toString());
 
     private final ConfigManager configManager;
-    private final GlobalStateInfo globalStateInfo;
-    private final LogstashService logstash;
+    private final LiveState liveState;
     private final DockerClient dockerClient;
 
     public LogstashExecutor(ConfigManager configManager, DockerClient dockerClient,
-        GlobalStateInfo globalStateInfo, LogstashService logstash) {
+        LiveState liveState) {
         this.configManager = configManager;
         this.dockerClient = dockerClient;
-        this.globalStateInfo = globalStateInfo;
-        this.logstash = logstash;
+        this.liveState = liveState;
     }
 
     @Override
@@ -64,11 +62,10 @@ public class LogstashExecutor implements Executor {
             LOGGER.info("SchedulerMessage. message={}", message);
 
             if (message.getType().equals(REQUEST_STATS)) {
-                sendStatsToScheduler(driver, message);
+                sendStatsToScheduler(driver);
             } else {
                 updateConfig(message);
             }
-
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler.", e);
         }
@@ -81,8 +78,8 @@ public class LogstashExecutor implements Executor {
         configManager.onNewConfigsFromScheduler(hostInfo, dockerInfo);
     }
 
-    private void sendStatsToScheduler(ExecutorDriver driver, SchedulerMessage schedulerMessage) {
-        driver.sendFrameworkMessage(globalStateInfo.getStateAsExecutorMessage().toByteArray());
+    private void sendStatsToScheduler(ExecutorDriver driver) {
+        driver.sendFrameworkMessage(liveState.getStateAsExecutorMessage().toByteArray());
 
     }
 
@@ -94,7 +91,8 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void shutdown(ExecutorDriver driver) {
-        // The task i killed automatically.
+        // The task i killed automatically, so we don't have to
+        // do anything.
         LOGGER.info("Shutting down framework.");
     }
 
