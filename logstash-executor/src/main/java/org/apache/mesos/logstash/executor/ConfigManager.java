@@ -43,12 +43,13 @@ public class ConfigManager {
     public void onNewConfigsFromScheduler(List<FrameworkInfo> hostInfo, List<FrameworkInfo> dockerConfig) {
         this.dockerInfo = dockerConfig;
         this.hostInfo = hostInfo;
+        LOGGER.info("New configuration received. Reconfiguring...");
         updateDockerStreams();
-        logstash.update(dockerInfo, hostInfo);
+        logstash.update(dockerConfig, hostInfo);
     }
 
     private void onContainerListUpdated(List<String> images) {
-        LOGGER.info("New Containers Discovered. Reconfiguring.");
+        LOGGER.info("New Containers Discovered. Reconfiguring...");
         updateDockerStreams();
         logstash.update(dockerInfo, hostInfo);
     }

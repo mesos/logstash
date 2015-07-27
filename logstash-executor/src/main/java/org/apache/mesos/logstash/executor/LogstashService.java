@@ -49,7 +49,9 @@ public class LogstashService {
     public void update(List<FrameworkInfo> dockerInfo, List<FrameworkInfo> hostInfo) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
-        setLatestConfig(ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo));
+        String config = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
+        LOGGER.debug("Writing new configuration: {}", config);
+        setLatestConfig(config);
     }
 
     private void run() {

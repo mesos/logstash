@@ -179,8 +179,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             sendMessage(e.getExecutorID(), e.getSlaveID(), message));
     }
 
-    private void sendMessage(ExecutorID executorId, SlaveID slaveId, SchedulerMessage config) {
-        driver.sendFrameworkMessage(executorId, slaveId, config.toByteArray());
+    private void sendMessage(ExecutorID executorId, SlaveID slaveId, SchedulerMessage schedulerMessage) {
+
+        LOGGER.debug("Sending message to executor {}", schedulerMessage);
+        driver.sendFrameworkMessage(executorId, slaveId, schedulerMessage.toByteArray());
     }
 
     @Override
