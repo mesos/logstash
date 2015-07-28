@@ -14,7 +14,10 @@ import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
 import org.apache.mesos.mini.util.Predicate;
 import org.hamcrest.Matchers;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
@@ -95,8 +98,9 @@ public abstract class AbstractLogstashFrameworkTest {
 
         LiveState liveState = new LogstashLiveState();
 
-        scheduler = new LogstashScheduler(liveState, new LogstashSettings(null, null),
-            cluster.getMesosContainer().getMesosMasterURL(), false);
+        String zkURL = "zk://" + cluster.getMesosContainer().getIpAddress() + ":2181/mesos";
+
+        scheduler = new LogstashScheduler(liveState, new LogstashSettings(null, null), zkURL, false);
         scheduler.start();
 
         ConfigManager configManager = new ConfigManager(scheduler, folder.getRoot().toPath());
