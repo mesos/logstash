@@ -285,7 +285,7 @@ let NodePage = React.createClass({
                 return <div className="status status--error">Sick</div>
             }
             else {
-                return <div className="status status--idle">Initializing</div>
+                return <div className="status status--idle">{status}</div>
             }
         };
 
