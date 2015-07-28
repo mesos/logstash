@@ -5,7 +5,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class TestableLogStream implements LogStream, Closeable, AutoCloseable {
+public class TestableLogStream implements LogStream {
 
     public OutputStream outputStream;
     public OutputStream stdout;
@@ -51,5 +51,13 @@ public class TestableLogStream implements LogStream, Closeable, AutoCloseable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override public String readFully() {
+        throw new RuntimeException("Not implemented");
+    }
+
+    @Override public String getLogstashPid() {
+        return "SOME_PID";
     }
 }

@@ -42,7 +42,7 @@ public class DockerLogStreamManager {
 
         for (ProcessedDockerLogPath processedDockerLogPath : processedContainers.get(containerId)){
                 LOGGER.info("Stop streaming of " + processedDockerLogPath.dockerLogPath);
-                streamer.stopStreaming(processedDockerLogPath.logStream);
+                streamer.stopStreaming(containerId, processedDockerLogPath.logStream);
         }
 
         processedContainers.remove(containerId);
@@ -100,7 +100,7 @@ public class DockerLogStreamManager {
 
             if (!frameWorkLogFiles.contains(processedDockerLogPath.dockerLogPath)){
                 LOGGER.info("Stop streaming of " + processedDockerLogPath.dockerLogPath);
-                streamer.stopStreaming(processedDockerLogPath.logStream);
+                streamer.stopStreaming(framework.getContainerId(), processedDockerLogPath.logStream);
                 iterator.remove();
             }
         }

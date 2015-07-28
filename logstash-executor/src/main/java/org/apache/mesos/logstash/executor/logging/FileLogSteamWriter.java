@@ -4,10 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
@@ -76,7 +73,13 @@ public class FileLogSteamWriter implements LogStreamWriter {
 
                 // Note: the only thing we stream in logstash-mesos is the output of 'tail -F', so
                 // we don't care that much about standard error
-                logStream.attach(myOutput, System.out);
+                logStream.attach(myOutput, new OutputStream() {
+                    @Override public void write(int b) throws IOException {
+                        //noop
+                    }
+                });
+
+                LOGGER.debug("THREAD finished ");
             } catch (IOException e) {
                 LOGGER.error("Error writing to file", e);
             }

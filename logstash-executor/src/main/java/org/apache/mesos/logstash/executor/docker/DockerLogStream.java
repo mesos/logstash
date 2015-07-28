@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor.docker;
 
-import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.apache.mesos.logstash.executor.logging.LogStream;
+import org.apache.mesos.logstash.executor.logging.LogstashPidFilterOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +13,7 @@ public class DockerLogStream implements LogStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
     private final com.spotify.docker.client.LogStream innerLogStream;
 
-    private OutputStream stdout;
+    private LogstashPidFilterOutputStream stdout;
     private OutputStream stderr;
 
     public DockerLogStream(com.spotify.docker.client.LogStream innerLogStream) {
@@ -30,32 +30,34 @@ public class DockerLogStream implements LogStream {
         }
 
         // Filter out heartbeats that keep the socket alive.
-        HeartbeatFilterOutputStream heartbeatFilterOutputStream = new HeartbeatFilterOutputStream(stdout);
+        LogstashPidFilterOutputStream logstashPidFilterOutputStream = new LogstashPidFilterOutputStream(stdout);
         this.stderr = stderr;
-        this.stdout = heartbeatFilterOutputStream;
+        this.stdout = logstashPidFilterOutputStream;
 
-        innerLogStream.attach(heartbeatFilterOutputStream, stderr);
+        innerLogStream.attach(logstashPidFilterOutputStream, stderr);
+    }
+
+    @Override public String readFully() {
+        return innerLogStream.readFully();
     }
 
     @Override public void close() {
 
         try {
-            innerLogStream.close();
-        } catch (RuntimeException e){
-            LOGGER.error("Error while closing docker log stream", e);
-        }
-
-        try {
             stdout.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Error while closing docker log stream stdout", e);
         }
         try {
             stderr.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Error while closing docker log stream stderr", e);
         }
 
+    }
+
+    @Override public String getLogstashPid() {
+        return stdout.pid;
     }
 
 }

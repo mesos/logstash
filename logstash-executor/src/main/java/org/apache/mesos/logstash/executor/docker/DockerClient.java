@@ -20,7 +20,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 public class DockerClient implements ContainerizerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
-    private final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class.toString());
+    private final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class);
 
     private com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
@@ -133,8 +133,8 @@ public class DockerClient implements ContainerizerClient {
 
         try {
             String id = dockerClient.execCreate(containerId, command,
-                com.spotify.docker.client.DockerClient.ExecParameter.STDOUT,
-                com.spotify.docker.client.DockerClient.ExecParameter.STDERR);
+                com.spotify.docker.client.DockerClient.ExecParameter.STDOUT);
+
             return new DockerLogStream(dockerClient.execStart(id));
 
         } catch (DockerException | InterruptedException e) {

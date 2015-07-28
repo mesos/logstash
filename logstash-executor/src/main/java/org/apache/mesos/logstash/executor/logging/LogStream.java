@@ -5,5 +5,7 @@ import java.io.OutputStream;
 
 public interface LogStream {
     void attach(OutputStream stdout, OutputStream stderr) throws IOException;
-    void close() ;
+    String readFully();
+    void close();
+    String getLogstashPid();
 }

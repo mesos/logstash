@@ -1,8 +1,8 @@
 package org.apache.mesos.logstash.executor.docker;
 
-import org.apache.mesos.logstash.executor.logging.HeartbeatFilterOutputStream;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.apache.mesos.logstash.executor.logging.LogStreamWriter;
+import org.apache.mesos.logstash.executor.logging.LogstashPidFilterOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +10,8 @@ import java.io.IOException;
 
 public class DockerStreamer {
 
-    private static final String BASH_COMMAND = "touch %s; while sleep 3; do echo '%c HEARTBEAT'; done & tail -F %s";
+    private static final String BASH_START_LOGSTASH_COMMAND = "touch %s; tail -F %s & echo %s$!";
+    private static final String BASH_STOP_LOGSTASH_COMMAND = "kill %s";
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
 
     private final LogStreamWriter writer;
@@ -50,11 +51,29 @@ public class DockerStreamer {
 
     String getMonitorCmd(String logLocation) {
         return String
-            .format(BASH_COMMAND, logLocation, HeartbeatFilterOutputStream.MAGIC_CHARACTER,
-                logLocation);
+            .format(BASH_START_LOGSTASH_COMMAND, logLocation, logLocation,
+                LogstashPidFilterOutputStream.MAGIC_CHARACTER);
     }
 
-    public void stopStreaming(LogStream logStream) {
+    String getKillLogstashCmd(String pid) {
+        return String
+            .format(BASH_STOP_LOGSTASH_COMMAND, pid);
+    }
+
+    public void stopStreaming(String containerId, LogStream logStream) {
+        String logstashPid = logStream.getLogstashPid();
+        String killLogstashCmd = getKillLogstashCmd(logstashPid);
+
+        LOGGER.debug("Killing logstash process in container {} - logstash pid {}", containerId, logstashPid);
+
+        // we need to kill the logstash process within the container to stop the docker exec streaming
+        LogStream ls = client
+            .exec(containerId, "sh", "-c", killLogstashCmd);
+        ls.readFully();
+
+        LOGGER.debug("Finished killing logstash process in container {} and logstash pid {}",
+            containerId, logstashPid);
+
         logStream.close();
     }
 }

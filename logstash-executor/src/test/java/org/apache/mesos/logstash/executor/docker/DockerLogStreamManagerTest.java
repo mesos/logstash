@@ -91,7 +91,7 @@ public class DockerLogStreamManagerTest {
         dockerLogStreamManager.setupContainerLogfileStreaming(
             createDockerFramework(SOME_CONTAINER_ID_1, SOME_LOG_FILE_1));
 
-        verify(streamer, times(1)).stopStreaming(logStreamArgumentCaptor.capture());
+        verify(streamer, times(1)).stopStreaming(eq(SOME_CONTAINER_ID_1),logStreamArgumentCaptor.capture());
         assertEquals(
             logStreamOfFile2,
             logStreamArgumentCaptor.getValue());
@@ -110,7 +110,7 @@ public class DockerLogStreamManagerTest {
         dockerLogStreamManager.stopStreamingForWholeFramework(SOME_CONTAINER_ID_1);
 
 
-        verify(streamer, times(2)).stopStreaming(logStreamArgumentCaptor.capture());
+        verify(streamer, times(2)).stopStreaming(eq(SOME_CONTAINER_ID_1),logStreamArgumentCaptor.capture());
 
         assertTrue(logStreamArgumentCaptor.getAllValues().contains(logStreamOfFile1));
         assertTrue(logStreamArgumentCaptor.getAllValues().contains(logStreamOfFile2));
