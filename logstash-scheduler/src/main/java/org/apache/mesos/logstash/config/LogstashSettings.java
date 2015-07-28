@@ -1,25 +1,83 @@
 package org.apache.mesos.logstash.config;
 
+import org.springframework.stereotype.Component;
 
+import java.util.Properties;
+
+@Component
 public class LogstashSettings {
 
-    private final static double DEFAULT_CPUS = 0.2;
-    private final static double DEFAULT_MEM = 256;
+    private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 512;
+    private static final int DEFAULT_EXECUTOR_HEAP_SIZE = 256;
 
-    private final Double cpus;
-    private final Double mem;
+    private static final double DEFAULT_CPUS = 0.1;
+    private static final double DEFAULT_EXECUTOR_CPUS = DEFAULT_CPUS;
 
-    public LogstashSettings(Double cpus, Double mem) {
+    private static final int DEFAULT_FAILOVER_TIMEOUT = 31449600;
+    private static final int DEFAULT_ZK_TIME_MS = 20000;
 
-        this.cpus = cpus;
-        this.mem = mem;
+    private final Properties props;
+
+    private int getInt(String key, int defaultValue) {
+        String value = props.getProperty(key);
+        return (value != null) ? Integer.valueOf(value, 10) : defaultValue;
     }
 
-    public double getMemForTask() {
-        return mem != null ? mem : DEFAULT_MEM;
+    private double getDouble(String key, double defaultValue) {
+        String value = props.getProperty(key);
+        return (value != null) ? Double.valueOf(value) : defaultValue;
     }
 
-    public double getCpuForTask() {
-        return cpus != null ? cpus : DEFAULT_CPUS;
+    private long getLong(String key, long defaultValue) {
+        String value = props.getProperty(key);
+        return (value != null) ? Long.valueOf(value) :defaultValue;
+    }
+
+    public LogstashSettings() {
+        this.props = System.getProperties();
+    }
+
+    public String getNativeLibrary() {
+        return props.getProperty("mesos.native.library", null);
+    }
+
+    public double getExecutorCpus() {
+        return getDouble("mesos.logstash.executor.cpus", DEFAULT_EXECUTOR_CPUS);
+    }
+
+    public int getExecutorHeapSize() {
+        return getInt("mesos.logstash.executor.heap.size", DEFAULT_EXECUTOR_HEAP_SIZE);
+    }
+
+    public int getLogstashHeapSize() {
+        return getInt("mesos.logstash.logstash.heap.size", DEFAULT_LOGSTASH_HEAP_SIZE);
+    }
+
+    public String getMesosMasterUri() {
+        return props.getProperty("mesos.master.uri", "zk://localhost:2181/mesos");
+    }
+
+    public String getFrameworkName() {
+        return props.getProperty("mesos.logstash.framework.name", "logstash");
+    }
+
+    public long getFailoverTimeout() {
+        return getLong("mesos.failover.timeout.sec", DEFAULT_FAILOVER_TIMEOUT);
+    }
+
+    public String getLogstashUser() {
+        return props.getProperty("mesos.logstash.user", "logstash");
+    }
+
+    public String getLogstashRole() {
+        return props.getProperty("mesos.logstash.role", "*");
+    }
+
+    public String getStateZkServers() {
+        return props.getProperty("mesos.logstash.state.zk", "localhost:2181");
+    }
+
+    public int getStateZkTimeout() {
+        return getInt("mesos.logstash.state.zk.timeout.ms", DEFAULT_ZK_TIME_MS);
     }
 }

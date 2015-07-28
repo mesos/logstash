@@ -12,6 +12,7 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -33,6 +35,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
     private final LiveState liveState;
+    private final PersistentState persistentState;
     private final LogstashSettings settings;
     private final boolean isNoCluster;
     private final Collection<FrameworkMessageListener> listeners;
@@ -41,43 +44,64 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private SchedulerMessage latestConfig;
 
-    private final MesosSchedulerDriver driver;
+    private MesosSchedulerDriver driver;
 
     @Autowired
     public LogstashScheduler(
         LiveState liveState,
+        PersistentState persistentState,
         LogstashSettings settings,
-        @Qualifier("masterURL") String masterURL,
         @Qualifier("offline") boolean offline) {
 
         this.liveState = liveState;
+        this.persistentState = persistentState;
         this.settings = settings;
 
         this.isNoCluster = offline;
 
         this.listeners = synchronizedCollection(new ArrayList<>());
         this.clock = new Clock();
-
-        Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
-            .setName(LogstashConstants.FRAMEWORK_NAME)
-            .setUser("root") // TODO: We should read this from the config.
-            .setCheckpoint(true)
-            .setFailoverTimeout(LogstashConstants.FAILOVER_TIMEOUT);
-
-        driver = new MesosSchedulerDriver(this, frameworkBuilder.build(), masterURL);
     }
 
     @PostConstruct
     public void start() {
         if (!isNoCluster) {
+            Protos.FrameworkInfo.Builder frameworkInfo = Protos.FrameworkInfo.newBuilder()
+                .setName(settings.getFrameworkName())
+                .setUser(settings.getLogstashUser())
+                .setRole(settings.getLogstashRole())
+                .setFailoverTimeout(settings.getFailoverTimeout());
+
+            try {
+                FrameworkID frameworkID = persistentState.getFrameworkID();
+                if (frameworkID != null) {
+                    frameworkInfo.setId(frameworkID);
+                }
+            } catch (InterruptedException | ExecutionException | InvalidProtocolBufferException e) {
+                throw new SchedulerException("Error recovering framework id", e);
+            }
+
+            driver = new MesosSchedulerDriver(this, frameworkInfo.build(),
+                settings.getMesosMasterUri());
+
             driver.start();
         }
     }
 
     @PreDestroy
-    public void stop() {
+    public void stop() throws ExecutionException, InterruptedException {
         if (!isNoCluster) {
+            // We are doing a graceful shutdown so we should
+            // remove our framework id, so we don't try to reconnect
+            // on startup.
+            persistentState.removeFrameworkId();
             driver.stop(false);
+        }
+    }
+
+    public void fail() {
+        if (!isNoCluster) {
+            driver.stop(true);
         }
     }
 
@@ -93,13 +117,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     @Override
-    public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkID,
+    public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkId,
         MasterInfo masterInfo) {
-        // FIXME: We are required to persist this between runs for DCOS.
-        // persistentState.setFrameworkId(frameworkID);
 
-        // TODO: reconcile tasks upon registration
-        // reconcileTasks(driver);
+        try {
+            persistentState.setFrameworkId(frameworkId);
+        } catch (InterruptedException | ExecutionException e) {
+            // these are zk exceptions... we are unable to maintain state.
+            throw new SchedulerException("Error setting framework id in persistent state", e);
+            // FIXME: reconcileTasks(driver);
+        }
     }
 
     @Override
@@ -149,7 +176,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             }
             // TODO (thb) discuss this. How should we ensure the order configs are sent.
             // We need to prevent tasks receiving old configs because of race condition.
-            liveState.addRunningTask(new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
+            liveState.addRunningTask(
+                new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
         } else if (isTerminalState(status)) {
             liveState.removeRunningTask(status.getSlaveId());
         } else {
@@ -175,6 +203,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         builder.setType(SchedulerMessage.SchedulerMessageType.NEW_CONFIG);
 
         SchedulerMessage message = this.latestConfig = builder.build();
+
+        LOGGER.debug("Sending new config to all executors.");
+
         liveState.getTasks().forEach(e ->
             sendMessage(e.getExecutorID(), e.getSlaveID(), message));
     }
@@ -192,7 +223,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         try {
             ExecutorMessage message = ExecutorMessage.parseFrom(bytes);
 
-            LOGGER.debug("Received Stats from Executor. executorId={}", executorID);
+            LOGGER.debug("Received Stats from Executor. executorId={}", executorID.getValue());
             message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
 
             liveState.updateStats(slaveID, message);
@@ -237,27 +268,29 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .addAllResources(getResourcesList())
             .setName(LogstashConstants.TASK_NAME)
             .setTaskId(TaskID.newBuilder().setValue(formatTaskId(offer)))
-            // TODO (thb) Consider using setData to pass the current config.
-            // This would prevent a round trip, asking the scheduler for it.
-            // e.g. .setData(latestConfig.toByteString())
+                // TODO (thb) Consider using setData to pass the current config.
+                // This would prevent a round trip, asking the scheduler for it.
+                // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
             .build();
     }
 
     private List<Resource> getResourcesList() {
 
+        int memNeeded = settings.getExecutorHeapSize() + settings.getLogstashHeapSize();
+
         return Arrays.asList(
             Resource.newBuilder()
                 .setName("cpus")
                 .setType(Value.Type.SCALAR)
                 .setScalar(Value.Scalar.newBuilder()
-                    .setValue(settings.getCpuForTask()).build())
+                    .setValue(settings.getExecutorCpus()).build())
                 .build(),
             Resource.newBuilder()
                 .setName("mem")
                 .setType(Value.Type.SCALAR)
                 .setScalar(Value.Scalar.newBuilder()
-                    .setValue(settings.getMemForTask()).build())
+                    .setValue(memNeeded).build())
                 .build()
         );
     }

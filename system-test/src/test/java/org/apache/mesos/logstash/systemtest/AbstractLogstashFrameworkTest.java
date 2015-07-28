@@ -9,6 +9,7 @@ import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.LogstashLiveState;
+import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.docker.DockerUtil;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static com.jayway.awaitility.Awaitility.await;
@@ -33,12 +35,8 @@ import static org.junit.Assert.assertThat;
 
 public abstract class AbstractLogstashFrameworkTest {
     public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
-        // Note: Logstash-mesos uses container discovery, and mesos-local runs all
-        // the executors in the same docker host. So it is safest to just use 1 slave for now..
         .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
-            //            .imagesToBuild(new MesosClusterConfig.ImageToBuild(new File("../executor"), "logstash-executor"))
         .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-            //            .dockerInDockerImages(new String[]{"logstash-executor"})
         .build();
 
     @ClassRule
@@ -66,7 +64,11 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @After
     public void stopContainers() {
-        scheduler.stop();
+        try {
+            scheduler.stop();
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
 
         if (containersToBeStopped.isEmpty()) {
             return;
@@ -96,11 +98,20 @@ public abstract class AbstractLogstashFrameworkTest {
 
         configFolder = new ConfigFolder(dockerConf, hostConf);
 
+
+        String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
+
+        System.setProperty("mesos.master.uri", "zk://" + zkAddress + "/mesos");
+        System.setProperty("mesos.logstash.state.zk", zkAddress);
+        System.setProperty("mesos.logstash.logstash.heap.size", "128");
+        System.setProperty("mesos.logstash.executor.heap.size", "64");
+
+        LogstashSettings settings = new LogstashSettings();
+
         LiveState liveState = new LogstashLiveState();
+        PersistentState persistentState = new PersistentState(settings);
 
-        String zkURL = "zk://" + cluster.getMesosContainer().getIpAddress() + ":2181/mesos";
-
-        scheduler = new LogstashScheduler(liveState, new LogstashSettings(null, null), zkURL, false);
+        scheduler = new LogstashScheduler(liveState, persistentState, settings, false);
         scheduler.start();
 
         ConfigManager configManager = new ConfigManager(scheduler, folder.getRoot().toPath());
@@ -110,7 +121,6 @@ public abstract class AbstractLogstashFrameworkTest {
         printRunningContainers();
         System.out.println("*********************************************************************");
 
-        // TODO move out into a Rule
         waitForLogstashFramework();
         waitForExcutorTaskIsRunning();
     }

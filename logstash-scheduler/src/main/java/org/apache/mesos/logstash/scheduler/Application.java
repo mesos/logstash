@@ -71,12 +71,6 @@ public class Application {
         return new JettyEmbeddedServletContainerFactory(port);
     }
 
-    @Bean
-    public LogstashSettings getSetting() {
-        // FIXME: Read these from commandline or system props.
-        return new LogstashSettings(null, null);
-    }
-
     private static String getParam(String[] args, String argName, String propName, String defaultValue) {
 
         List<String> argList = asList(args);
