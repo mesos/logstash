@@ -27,19 +27,15 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+
+// TODO clean up and use more object oriented style
 public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
-    public static final String BUSYBOX_CONF =
-        "input {\n" +
-            "  file {\n" +
-            "    docker-path => \"/tmp/testlogs/systemtest.log\"\n" +
-            "    start_position => \"beginning\"\n" +
-            "    debug => true\n" +
-            "  }\n" +
-            "}\n";
     private static final String HOST_CONF = "output { file {path=>\"/tmp/logstash.out\" \n" +
         "codec => \"plain\" \n" +
         "flush_interval => 0}}"; // the flush interval is important for our test
+    public static final String SOME_LOG_FILE = "systemtest.log";
+    public static final String SOME_OTHER_LOG_FILE = "systemtest2.log";
 
     @Before
     public void giveTimeToDockerDaemonCleanup() {
@@ -84,11 +80,12 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     public void logstashSetsUpLoggingForFrameworksStartedAfterConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
 
-        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"), BUSYBOX_CONF.getBytes());
+        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"),
+            getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
         Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
 
         createAndStartDummyContainer();
-        simulateLogEvent(logString);
+        simulateLogEvent(logString, SOME_LOG_FILE);
 
         verifyLogstashProcessesLogEvents(logString);
     }
@@ -98,13 +95,38 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         final String logString = "Hello Test";
 
         createAndStartDummyContainer();
-        simulateLogEvent(logString);
+        simulateLogEvent(logString, SOME_LOG_FILE);
 
         Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"),
-            BUSYBOX_CONF.getBytes());
+            getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
         Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
 
         verifyLogstashProcessesLogEvents(logString);
+    }
+
+    @Test
+    public void logstashReconfiguresLoggingAndStopsObsoleteStreamsAndStartsStreamingOfNewFiles() throws Exception {
+        final String logStringForLogfile1 = "Hello Test";
+        final String logStringForLogfile2 = "Good to see you";
+
+        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"), getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
+        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
+
+        String dummyContainerId = createAndStartDummyContainer();
+        simulateLogEvent(logStringForLogfile1, SOME_LOG_FILE);
+        simulateLogEvent(logStringForLogfile2, SOME_OTHER_LOG_FILE);
+
+        verifyLogstashProcessesLogEvents(logStringForLogfile1);
+        waitForPsAux(dummyContainerId, new String[]{"tail -F /tmp/testlogs/" + SOME_LOG_FILE},
+            new String[]{"tail -F /tmp/testlogs/" + SOME_OTHER_LOG_FILE});
+
+        // ------- now reconfigure ----------
+
+        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox.conf"),
+            getBusyBoxConfigFor(SOME_OTHER_LOG_FILE).getBytes());
+
+        verifyLogstashProcessesLogEvents(logStringForLogfile2);
+        waitForPsAux(dummyContainerId, new String[]{"tail -F /tmp/testlogs/" + SOME_OTHER_LOG_FILE}, new String[]{"tail -F /tmp/testlogs/" + SOME_LOG_FILE});
     }
 
     private void verifyLogstashProcessesLogEvents(String logString) {
@@ -124,23 +146,22 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         assertThat(stateTypes, containsInAnyOrder(STREAMING, NOT_STREAMING));
     }
 
-    private void waitForLogstashToProcessLogEvents(final String logString, String executorId) {
+    private void waitForLogstashToProcessLogEvents(final String logString, String executorContainerId) {
         DockerClient dockerClient = clusterConfig.dockerClient;
         ExecCreateCmdResponse execCreateCmdResponse;
 
         execCreateCmdResponse = dockerClient
             .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
             .withAttachStdout(true)
-            .withCmd("bash", "-c", "docker exec " + executorId + " cat /tmp/logstash.out").exec();
+            .withCmd("bash", "-c", "docker exec " + executorContainerId + " cat /tmp/logstash.out").exec();
 
         final ExecCreateCmdResponse finalExecCreateCmdResponse = execCreateCmdResponse;
 
         try {
             await().atMost(90, TimeUnit.SECONDS).until(() -> {
                 try {
-                    InputStream execCmdStream = dockerClient
-                        .execStartCmd(finalExecCreateCmdResponse.getId()).exec();
-                    String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
+                    String logstashOut = DockerUtil.consumeInputStream(dockerClient
+                        .execStartCmd(finalExecCreateCmdResponse.getId()).exec());
                     if (logstashOut != null && logstashOut.contains(logString)) {
                         System.out.println("Logstash output: " + logstashOut);
                         return true;
@@ -149,7 +170,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
                 } catch (InternalServerErrorException e) {
                     System.out.println(
-                        "ERROR while polling logstash executor (" + executorId + "): " + e);
+                        "ERROR while polling logstash executor (" + executorContainerId + "): " + e);
 
                     return false;
                 }
@@ -159,13 +180,73 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
                 .execStartCmd(finalExecCreateCmdResponse.getId()).exec();
             String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
             System.out.println(
-                "Unmatched logstash output of executor (" + executorId + "): " + logstashOut);
+                "Unmatched logstash output of executor (" + executorContainerId + "): " + logstashOut);
+
+            throw e;
+        }
+    }
+
+    private void waitForPsAux(String containerId, String [] existingProcesses, String [] notExistingProcesses) {
+        DockerClient dockerClient = clusterConfig.dockerClient;
+        ExecCreateCmdResponse execCreateCmdResponse;
+
+        execCreateCmdResponse = dockerClient
+            .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
+            .withAttachStdout(true)
+            .withCmd("sh", "-c", "docker exec " + containerId + " ps aux").exec();
+
+        final ExecCreateCmdResponse finalExecCreateCmdResponse = execCreateCmdResponse;
+
+
+        try {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> {
+                try {
+                    String psAuxOutput = DockerUtil.consumeInputStream(dockerClient
+                        .execStartCmd(finalExecCreateCmdResponse.getId()).exec());
+
+
+                    if (existingProcesses != null){
+                        for (String process : existingProcesses){
+                            if (!psAuxOutput.contains(process)) {
+                                return false;
+                            }
+                        }
+                    }
+
+
+                    if (notExistingProcesses != null){
+                        for (String process : notExistingProcesses){
+                            if (psAuxOutput.contains(process)) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+
+                } catch (InternalServerErrorException e) {
+                    System.out.println(
+                        "ERROR while polling logstash executor (" + containerId + "): " + e);
+
+                    return false;
+                }
+            });
+        } catch (ConditionTimeoutException e) {
+            InputStream execCmdStream = dockerClient
+                .execStartCmd(finalExecCreateCmdResponse.getId()).exec();
+            String logstashOut = DockerUtil.consumeInputStream(execCmdStream);
+            System.out.println(
+                "Unmatched ps aux output of executor (" + containerId + "): " + logstashOut);
 
             throw e;
         }
     }
 
     private String getExecutorContainerId() {
+        return getContainerId("logstash");
+    }
+
+    private String getContainerId(String identifier) {
         DockerClient dockerClient = clusterConfig.dockerClient;
         ExecCreateCmdResponse execCreateCmdResponse;
         InputStream execCmdStream;
@@ -173,13 +254,16 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         execCreateCmdResponse = dockerClient
             .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
             .withAttachStdout(true)
-            .withCmd("bash", "-c", "docker ps | grep logstash | awk '{ print $1 }'").exec();
+            .withCmd("bash", "-c", "docker ps | grep "+identifier+" | awk '{ print $1 }'").exec();
 
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
         return DockerUtil.consumeInputStream(execCmdStream).replaceAll("[^a-z0-9]*", "");
     }
 
-    private void simulateLogEvent(String logString) {
+
+
+
+    private void simulateLogEvent(String logString, String dest) {
         DockerClient dockerClient = clusterConfig.dockerClient;
         ExecCreateCmdResponse execCreateCmdResponse;
         InputStream execCmdStream;
@@ -187,12 +271,14 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         execCreateCmdResponse = dockerClient
             .execCreateCmd(cluster.getMesosContainer().getMesosContainerID())
             .withAttachStdout(true)
-            .withCmd("bash", "-c", "echo \"" + logString + "\" > /tmp/systemtest.log").exec();
+            .withCmd("bash", "-c", "echo \"" + logString + "\" > /tmp/" + dest).exec();
 
         execCmdStream = dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec();
         System.out.println(DockerUtil.consumeInputStream(execCmdStream));
     }
 
+
+    // TODO use latest mini-mesos and more object oriented style: create new container type with methods get logs or something like that
     private String createAndStartDummyContainer() {
         DockerClient dockerClient = clusterConfig.dockerClient;
 
@@ -210,5 +296,17 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         this.containersToBeStopped.add(containerId);
 
         return containerId;
+    }
+
+    private String getBusyBoxConfigFor(String file){
+        String BUSYBOX_CONF ="input {\n" +
+            "  file {\n" +
+            "    docker-path => \"/tmp/testlogs/%s\"\n" +
+            "    start_position => \"beginning\"\n" +
+            "    debug => true\n" +
+            "  }\n" +
+            "}\n";
+
+        return String.format(BUSYBOX_CONF, file);
     }
 }
