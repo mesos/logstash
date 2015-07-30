@@ -1,8 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.mesos.logstash.config.LogstashSettings;
+import org.apache.mesos.logstash.state.ILiveState;
 import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.LogstashLiveState;
 import org.apache.mesos.logstash.state.MockLiveState;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.SpringApplication;
@@ -62,8 +61,8 @@ public class Application {
     }
 
     @Bean
-    public LiveState getSchedulerStatus() {
-        return (offline) ? new MockLiveState() : new LogstashLiveState();
+    public ILiveState getSchedulerStatus() {
+        return (offline) ? new MockLiveState() : new LiveState();
     }
 
     @Bean

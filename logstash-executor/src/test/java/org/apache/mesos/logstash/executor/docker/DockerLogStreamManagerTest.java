@@ -1,19 +1,19 @@
 package org.apache.mesos.logstash.executor.docker;
+import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.TestableLogStream;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.DOCKER;
 import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -23,7 +23,6 @@ public class DockerLogStreamManagerTest {
     public static final String SOME_CONTAINER_ID_2 = "someOtherContainerId";
     public static final String SOME_LOG_FILE_1 = "/var/log/foo.log";
     public static final String SOME_LOG_FILE_2 = "/var/log/bar.log";
-    public static final String SOME_LOG_FILE_3 = "/var/log/baz.log";
     public static final String SOME_FRAMEWORK_NAME = "some framework name";
     private DockerStreamer streamer;
 
@@ -41,11 +40,8 @@ public class DockerLogStreamManagerTest {
         dockerLogStreamManager = new DockerLogStreamManager(streamer);
 
         // return a new instance of a LogStream for each start streaming call
-        when(streamer.startStreaming(any())).thenAnswer(new Answer<LogStream>() {
-            @Override public LogStream answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return mock(TestableLogStream.class);
-            }
-        });
+        when(streamer.startStreaming(any())).thenAnswer(
+            invocationOnMock -> mock(TestableLogStream.class));
     }
 
 
@@ -183,23 +179,29 @@ public class DockerLogStreamManagerTest {
     }
 
     private DockerFramework createDockerFramework(String containerId, String ... logfiles) {
-        String logLocations  = Stream.of(logfiles).map(f -> String.format("docker-path => \"%s\"", f)).collect(
-            Collectors.joining("\n"));
+        String logLocations  = Stream.of(logfiles)
+            .map(f -> String.format("docker-path => \"%s\"", f))
+            .collect(Collectors.joining("\n"));
 
-        return new DockerFramework(new FrameworkInfo(SOME_FRAMEWORK_NAME, logLocations), new DockerFramework.ContainerId(
-                containerId));
+        LogstashConfig config = LogstashConfig.newBuilder()
+            .setFrameworkName(SOME_FRAMEWORK_NAME)
+            .setConfig(logLocations)
+            .setType(DOCKER)
+            .build();
+
+        return new DockerFramework(config, new DockerFramework.ContainerId(containerId));
     }
 
 
     private LogStream getLogStream(String containerId, final String logFile) {
-        return dockerLogStreamManager.processedContainers.get(containerId).stream()
-            .filter(
-                new Predicate<DockerLogStreamManager.ProcessedDockerLogPath>() {
-                    @Override public boolean test(
-                        DockerLogStreamManager.ProcessedDockerLogPath processedDockerLogPath) {
-                        return processedDockerLogPath.dockerLogPath.getContainerLogPath()
-                            .equals(logFile);
-                    }
-                }).collect(Collectors.toSet()).iterator().next().logStream;
+        return dockerLogStreamManager
+            .processedContainers
+            .get(containerId)
+            .stream()
+            .filter(path -> path.dockerLogPath.getContainerLogPath().equals(logFile))
+            .collect(Collectors.toSet())
+            .iterator()
+            .next()
+            .logStream;
     }
 }

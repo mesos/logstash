@@ -4,8 +4,13 @@ option java_package = "org.apache.mesos.logstash.common";
 option java_outer_classname = "LogstashProtos";
 
 message LogstashConfig {
+  enum LogstashConfigType {
+    DOCKER = 1;
+    HOST = 2;
+  }
   required string frameworkName = 1;
   required string config = 2;
+  required LogstashConfigType type = 3;
 }
 
 message SchedulerMessage {
@@ -16,8 +21,7 @@ message SchedulerMessage {
   required SchedulerMessageType type = 1;
 
   // NEW_CONFIG
-  repeated LogstashConfig dockerConfig = 2;
-  repeated LogstashConfig hostConfig = 3;
+  repeated LogstashConfig configs = 2;
 }
 
 message ContainerState {

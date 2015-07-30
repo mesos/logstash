@@ -2,15 +2,22 @@ package org.apache.mesos.logstash.systemtest;
 
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.jayway.awaitility.core.ConditionTimeoutException;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.mini.state.State;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static com.jayway.awaitility.Awaitility.await;
@@ -18,6 +25,8 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.NOT_STREAMING;
 import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.LoggingStateType.STREAMING;
 import static org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorMessageType.STATS;
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.DOCKER;
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.HOST;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -26,10 +35,6 @@ import static org.junit.Assert.assertThat;
 public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
     public static final String SOME_LOGSTASH_OUTPUT_FILE = "/tmp/logstash.out";
-    private static final String HOST_CONF =
-        "output { file {path=>\"" + SOME_LOGSTASH_OUTPUT_FILE + "\" \n" +
-            "codec => \"plain\" \n" +
-            "flush_interval => 0}}"; // the flush interval is important for our test
     public static final String SOME_LOG_FILE = "/tmp/systemtest.log";
     public static final String SOME_OTHER_LOG_FILE = "/tmp/systemtest2.log";
 
@@ -78,9 +83,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     public void logstashSetsUpLoggingForFrameworksStartedAfterConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
 
-        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox:latest.conf"),
-            getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
-        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
+        setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
+        setConfigFor(HOST, "host", getFile("host.conf"));
 
         startContainer(dummyFramework);
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
@@ -95,9 +99,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         startContainer(dummyFramework);
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
-        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox:latest.conf"),
-            getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
-        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
+        setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
+        setConfigFor(HOST, "host", getFile("host.conf"));
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
     }
@@ -108,9 +111,8 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         final String logStringForLogfile1 = "Hello Test";
         final String logStringForLogfile2 = "Good to see you";
 
-        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox:latest.conf"),
-            getBusyBoxConfigFor(SOME_LOG_FILE).getBytes());
-        Files.write(configFolder.hostConfDir.toPath().resolve("host.conf"), HOST_CONF.getBytes());
+        setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
+        setConfigFor(HOST, "host", getFile("host.conf"));
 
         startContainer(dummyFramework);
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logStringForLogfile1);
@@ -122,8 +124,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
         // ------- now reconfigure ----------
 
-        Files.write(configFolder.dockerConfDir.toPath().resolve("busybox:latest.conf"),
-            getBusyBoxConfigFor(SOME_OTHER_LOG_FILE).getBytes());
+        setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_OTHER_LOG_FILE));
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logStringForLogfile2);
         waitForPsAux(dummyFramework, new String[]{"tail -F " + SOME_OTHER_LOG_FILE},
@@ -216,15 +217,26 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         }
     }
 
-    private String getBusyBoxConfigFor(String file) {
-        String BUSYBOX_CONF = "input {\n" +
-            "  file {\n" +
-            "    docker-path => \"%s\"\n" +
-            "    start_position => \"beginning\"\n" +
-            "    debug => true\n" +
-            "  }\n" +
-            "}\n";
+    private String getFile(String filename) throws IOException, URISyntaxException {
+        Path conf = Paths.get(getClass().getClassLoader().getResource(filename).toURI());
+        return new String(Files.readAllBytes(conf));
+    }
 
-        return String.format(BUSYBOX_CONF, file);
+
+    private String getBusyboxConfigFor(String file) throws IOException, URISyntaxException {
+        return getFile("busybox.conf").replace("{{FILENAME}}", file);
+    }
+
+
+    private void setConfigFor(LogstashConfigType type, String name, String configText) {
+        try {
+            configManager.save(LogstashProtos.LogstashConfig.newBuilder()
+                .setFrameworkName(name)
+                .setConfig(configText)
+                .setType(type)
+                .build());
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

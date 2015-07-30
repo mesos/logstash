@@ -1,5 +1,7 @@
 package org.apache.mesos.logstash.ui;
 
+import org.apache.mesos.logstash.common.LogstashProtos;
+
 import java.util.Map;
 
 // For Request Mapping
@@ -33,7 +35,7 @@ public class Config {
         this.input = input;
     }
 
-    public static Config fromMapEntry(Map.Entry<String, String> e) {
-        return new Config(e.getKey(), e.getValue());
+    public static Config fromMapEntry(LogstashProtos.LogstashConfig c) {
+        return new Config(c.getFrameworkName(), c.getConfig());
     }
 }

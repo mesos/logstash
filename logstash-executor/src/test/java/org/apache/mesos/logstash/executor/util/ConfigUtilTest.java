@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.executor.util;
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,10 +16,10 @@ import static org.mockito.Mockito.when;
 public class ConfigUtilTest {
     private ContainerizerClient client;
 
-    private FrameworkDescription framework1 = new FrameworkDescription("foo");
-    private FrameworkDescription framework2 = new FrameworkDescription("bar");
-    private FrameworkDescription framework3 = new FrameworkDescription("baz");
-    private FrameworkDescription framework4 = new FrameworkDescription("far");
+    private FrameworkDescription framework1 = new FrameworkDescription("foo", LogstashConfigType.DOCKER);
+    private FrameworkDescription framework2 = new FrameworkDescription("bar", LogstashConfigType.DOCKER);
+    private FrameworkDescription framework3 = new FrameworkDescription("baz", LogstashConfigType.DOCKER);
+    private FrameworkDescription framework4 = new FrameworkDescription("far", LogstashConfigType.HOST);
 
     @Before
     public void setup() {
@@ -31,17 +32,17 @@ public class ConfigUtilTest {
 
     @Test
     public void onlyWritesConfigsForRunningContainers() {
-        List<FrameworkInfo> frameworks = asFrameworkInfoList(framework1, framework2, framework3);
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> frameworks = asFrameworkInfoList(framework1, framework2, framework3);
+        List<LogstashConfig> hostFrameworks = asFrameworkInfoList(framework4);
 
         configureAsRunningFrameworks(framework1, framework2, framework3);
 
         String generateConfigFile = ConfigUtil.generateConfigFile(client, frameworks, hostFrameworks);
 
 
-        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework1.frameworkInfo.getName(), framework1.frameworkInfo.getConfiguration())));
-        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework2.frameworkInfo.getName(), framework2.frameworkInfo.getConfiguration())));
-        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework3.frameworkInfo.getName(), framework3.frameworkInfo.getConfiguration())));
+        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework1.frameworkInfo.getFrameworkName(), framework1.frameworkInfo.getConfig())));
+        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework2.frameworkInfo.getFrameworkName(), framework2.frameworkInfo.getConfig())));
+        Assert.assertTrue(generateConfigFile.contains(String.format("# %s\n%s\n",framework3.frameworkInfo.getFrameworkName(), framework3.frameworkInfo.getConfig())));
     }
 
 
@@ -54,7 +55,7 @@ public class ConfigUtilTest {
 
     private void configureMocks(FrameworkDescription ... frameworkDescriptions){
         for (FrameworkDescription desc : frameworkDescriptions){
-            when(client.getImageNameOfContainer(desc.id)).thenReturn(desc.frameworkInfo.getName());
+            when(client.getImageNameOfContainer(desc.id)).thenReturn(desc.frameworkInfo.getFrameworkName());
         }
     }
 
@@ -63,26 +64,27 @@ public class ConfigUtilTest {
             Collectors.toSet());
     }
 
-    private List<FrameworkInfo> asFrameworkInfoList(FrameworkDescription ... frameworkDescriptions){
+    private List<LogstashConfig> asFrameworkInfoList(
+        FrameworkDescription... frameworkDescriptions){
         return Arrays.asList(frameworkDescriptions).stream().map(FrameworkDescription::getFrameworkInfo).collect(
             Collectors.toList());
     }
 
 
     private static class FrameworkDescription {
-        final FrameworkInfo frameworkInfo;
+        final LogstashConfig frameworkInfo;
         final String id;
 
         public String getId() {
             return id;
         }
 
-        private FrameworkDescription(String id) {
-            this.frameworkInfo = new FrameworkInfo(id + "-name", id + "-config");
+        private FrameworkDescription(String id, LogstashConfigType type) {
+            this.frameworkInfo = LogstashConfig.newBuilder().setType(type).setFrameworkName(id + "-name").setConfig(id + "-config").build();
             this.id = id;
         }
 
-        public FrameworkInfo getFrameworkInfo() {
+        public LogstashConfig getFrameworkInfo() {
             return frameworkInfo;
         }
     }

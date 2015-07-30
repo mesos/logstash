@@ -1,9 +1,9 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,8 +29,8 @@ public class ConfigManager {
     private ContainerizerClient containerizerClient;
     private DockerLogStreamManager dockerLogStreamManager;
 
-    public List<FrameworkInfo> dockerInfo = new ArrayList<>();
-    private List<FrameworkInfo> hostInfo = new ArrayList<>();
+    public List<LogstashConfig> dockerInfo = new ArrayList<>();
+    private List<LogstashConfig> hostInfo = new ArrayList<>();
 
     public ConfigManager(LogstashService logstash, ContainerizerClient containerizerClient,
         DockerLogStreamManager dockerLogStreamManager) {
@@ -40,12 +40,14 @@ public class ConfigManager {
         this.containerizerClient.setDelegate(this::onContainerListUpdated);
     }
 
-    public void onNewConfigsFromScheduler(List<FrameworkInfo> hostInfo, List<FrameworkInfo> dockerConfig) {
-        this.dockerInfo = dockerConfig;
+    public void onNewConfigsFromScheduler(List<LogstashConfig> hostInfo,
+        List<LogstashConfig> dockerInfo) {
+        LOGGER.info("onNewConfigsFromScheduler, {}\n-------\n{}", dockerInfo, hostInfo);
+        this.dockerInfo = dockerInfo;
         this.hostInfo = hostInfo;
         LOGGER.info("New configuration received. Reconfiguring...");
         updateDockerStreams();
-        logstash.update(dockerConfig, hostInfo);
+        logstash.update(dockerInfo, hostInfo);
     }
 
     private void onContainerListUpdated(List<String> images) {
@@ -60,12 +62,12 @@ public class ConfigManager {
 
         // - Find running containers that have a matching config.
 
-        Function<String, FrameworkInfo> lookupConfig = createLookupHelper(dockerInfo);
+        Function<String, LogstashConfig> lookupConfig = createLookupHelper(dockerInfo);
 
         Predicate<String> hasKnownConfig = c -> lookupConfig.apply(c) != null;
         Predicate<String> hasUnknownConfig = c -> lookupConfig.apply(c) == null;
-        Function<String, DockerFramework> createFramework = c -> new DockerFramework(
-            lookupConfig.apply(c), new DockerFramework.ContainerId(c));
+
+        Function<String, DockerFramework> createFramework = c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c));
 
         Stream<DockerFramework> frameworks = containerizerClient
             .getRunningContainers()
@@ -77,18 +79,19 @@ public class ConfigManager {
 
         frameworks.forEach(dockerLogStreamManager::setupContainerLogfileStreaming);
 
-
         Set<String> frameworksToStopStreaming = dockerLogStreamManager.getProcessedContainers()
             .stream().filter(hasUnknownConfig).collect(Collectors.toSet());
 
-        frameworksToStopStreaming.stream().forEach(dockerLogStreamManager::stopStreamingForWholeFramework);
+        frameworksToStopStreaming.stream()
+            .forEach(dockerLogStreamManager::stopStreamingForWholeFramework);
     }
 
-    private Function<String, FrameworkInfo> createLookupHelper(List<FrameworkInfo> logstashInfos) {
+    private Function<String, LogstashConfig> createLookupHelper(
+        List<LogstashConfig> logstashInfos) {
 
-        Map<String, FrameworkInfo> logstashInfoMap = logstashInfos
+        Map<String, LogstashConfig> logstashInfoMap = logstashInfos
             .stream()
-            .collect(toMap(FrameworkInfo::getName, x -> x));
+            .collect(toMap(LogstashConfig::getFrameworkName, x -> x));
 
         return c -> logstashInfoMap.get(containerizerClient.getImageNameOfContainer(c));
     }

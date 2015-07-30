@@ -5,16 +5,16 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.DOCKER;
+import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.HOST;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
 
@@ -72,8 +72,13 @@ public class LogstashExecutor implements Executor {
     }
 
     private void updateConfig(SchedulerMessage message) {
-        List<FrameworkInfo> dockerInfo = extractConfigs(message.getDockerConfigList());
-        List<FrameworkInfo> hostInfo = extractConfigs(message.getHostConfigList());
+        List<LogstashConfig> dockerInfo = message.getConfigsList().stream()
+            .filter(c -> c.getType() == DOCKER)
+            .collect(Collectors.toList());
+
+        List<LogstashConfig> hostInfo = message.getConfigsList().stream()
+            .filter(c -> c.getType() == HOST)
+            .collect(Collectors.toList());
 
         configManager.onNewConfigsFromScheduler(hostInfo, dockerInfo);
     }
@@ -81,12 +86,6 @@ public class LogstashExecutor implements Executor {
     private void sendStatsToScheduler(ExecutorDriver driver) {
         driver.sendFrameworkMessage(liveState.getStateAsExecutorMessage().toByteArray());
 
-    }
-
-    private List<FrameworkInfo> extractConfigs(Collection<LogstashConfig> cfgs) {
-        return cfgs.stream()
-            .map(c -> new FrameworkInfo(c.getFrameworkName(), c.getConfig()))
-            .collect(toList());
     }
 
     @Override

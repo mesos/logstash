@@ -9,8 +9,9 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
+import org.apache.mesos.logstash.state.ILiveState;
+import org.apache.mesos.logstash.state.IPersistentState;
 import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.LogstashLiveState;
 import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.container.AbstractContainer;
@@ -22,7 +23,6 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +44,13 @@ public abstract class AbstractLogstashFrameworkTest {
     public static MesosCluster cluster = new MesosCluster(clusterConfig);
 
     public static LogstashScheduler scheduler;
-    public static ConfigFolder configFolder;
 
     public static DockerClient clusterDockerClient;
 
     protected List<AbstractContainer> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
+    protected ConfigManager configManager;
     public LogstashExecutorContainer executorContainer;
 
     @BeforeClass
@@ -89,14 +89,10 @@ public abstract class AbstractLogstashFrameworkTest {
     }
 
     @Before
-    public void startLogstashFramework() throws IOException {
+    public void startLogstashFramework()
+        throws IOException, ExecutionException, InterruptedException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
-
-        File dockerConf = folder.newFolder("docker");
-        File hostConf = folder.newFolder("host");
-
-        configFolder = new ConfigFolder(dockerConf, hostConf);
 
         String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
 
@@ -107,14 +103,15 @@ public abstract class AbstractLogstashFrameworkTest {
 
         LogstashSettings settings = new LogstashSettings();
 
-        LiveState liveState = new LogstashLiveState();
-        PersistentState persistentState = new PersistentState(settings);
+        ILiveState liveState = new LiveState();
+        IPersistentState persistentState = new PersistentState(settings);
 
-        scheduler = new LogstashScheduler(liveState, persistentState, settings, false);
-        scheduler.start();
-
-        ConfigManager configManager = new ConfigManager(scheduler, folder.getRoot().toPath());
+        configManager = new ConfigManager(persistentState);
         configManager.start();
+
+        scheduler = new LogstashScheduler(
+            liveState, persistentState, configManager, settings, false);
+        scheduler.start();
 
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
         printRunningContainers();
@@ -126,6 +123,7 @@ public abstract class AbstractLogstashFrameworkTest {
         executorContainer = new LogstashExecutorContainer(clusterDockerClient);
     }
 
+
     private void printRunningContainers() {
         DockerClient dockerClient = clusterConfig.dockerClient;
 
@@ -134,11 +132,13 @@ public abstract class AbstractLogstashFrameworkTest {
             System.out.println(container.getImage());
         }
     }
-
+    
+    
     private static void waitForLogstashFramework() {
         // wait for our framework
         cluster.waitForState(state -> state.getFramework("logstash") != null);
     }
+
 
     private static void waitForExcutorTaskIsRunning() {
         // wait for our executor
@@ -157,6 +157,7 @@ public abstract class AbstractLogstashFrameworkTest {
      */
     public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(
         Predicate<List<ExecutorMessage>> predicate) {
+
         int seconds = 10;
         int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
 
@@ -199,15 +200,5 @@ public abstract class AbstractLogstashFrameworkTest {
      */
     public List<ExecutorMessage> requestInternalStatusAndWaitForResponse() {
         return requestInternalStatusAndWaitForResponse(executorMessages -> true);
-    }
-
-    static class ConfigFolder {
-        final File dockerConfDir;
-        final File hostConfDir;
-
-        ConfigFolder(File dockerConfDir, File hostConfDir) {
-            this.dockerConfDir = dockerConfDir;
-            this.hostConfDir = hostConfDir;
-        }
     }
 }

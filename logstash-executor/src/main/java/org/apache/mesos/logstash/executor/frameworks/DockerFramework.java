@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.executor.frameworks;
 
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.docker.DockerLogPath;
 
 import java.util.ArrayList;
@@ -11,14 +12,14 @@ import java.util.stream.Collectors;
 public class DockerFramework implements Framework {
 
     private final ContainerId containerId;
-    private final FrameworkInfo frameworkInfo;
+    private final LogstashConfig frameworkInfo;
     private List<String> logLocations;
 
-    public DockerFramework(FrameworkInfo frameworkInfo, ContainerId containerId) {
+    public DockerFramework(LogstashConfig frameworkInfo, ContainerId containerId) {
         this.frameworkInfo = frameworkInfo;
 
         this.containerId = containerId;
-        this.logLocations = parseLogLocations(frameworkInfo.getConfiguration());
+        this.logLocations = parseLogLocations(frameworkInfo.getConfig());
     }
 
     public String getContainerId() {
@@ -30,11 +31,11 @@ public class DockerFramework implements Framework {
      */
     @Override
     public String getConfiguration() {
-        String generatedConfiguration = frameworkInfo.getConfiguration();
+        String generatedConfiguration = frameworkInfo.getConfig();
 
         // Replace all log paths with paths to temporary files
         for (String logLocation : logLocations) {
-            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getName(),
+            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getFrameworkName(),
                 logLocation).getExecutorLogPath();
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
@@ -71,6 +72,6 @@ public class DockerFramework implements Framework {
     }
 
     public String getName() {
-        return frameworkInfo.getName();
+        return frameworkInfo.getFrameworkName();
     }
 }

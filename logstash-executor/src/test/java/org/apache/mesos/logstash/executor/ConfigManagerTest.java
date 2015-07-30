@@ -1,9 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
+import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -28,10 +29,10 @@ public class ConfigManagerTest {
         .forClass(DockerFramework.class);
     ArgumentCaptor<String> stringArgumentCaptor = ArgumentCaptor.forClass(String.class);
 
-    private FrameworkDescription framework1 = new FrameworkDescription("foo");
-    private FrameworkDescription framework2 = new FrameworkDescription("bar");
-    private FrameworkDescription framework3 = new FrameworkDescription("baz");
-    private FrameworkDescription framework4 = new FrameworkDescription("far");
+    private FrameworkDescription framework1 = new FrameworkDescription("foo", LogstashConfigType.DOCKER);
+    private FrameworkDescription framework2 = new FrameworkDescription("bar", LogstashConfigType.DOCKER);
+    private FrameworkDescription framework3 = new FrameworkDescription("baz", LogstashConfigType.DOCKER);
+    private FrameworkDescription hostFramework = new FrameworkDescription("far", LogstashConfigType.HOST);
 
     @Before
     public void setup() {
@@ -41,14 +42,15 @@ public class ConfigManagerTest {
 
         configManager = new ConfigManager(logstash, client, streamManager);
 
-        configureMocks(framework1, framework2, framework3, framework4);
+        configureMocks(framework1, framework2, framework3, hostFramework);
     }
 
     @Test
-    public void onNewConfigsFromScheduler_callsLogstashServiceWithFrameworkInfos() {
-        List<FrameworkInfo> dockerFrameworks = asFrameworkInfoList(framework1, framework2,
+    public void onNewConfigsFromScheduler_callsLogstashServiceWithLogstashConfigs() {
+        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(framework1,
+            framework2,
             framework3);
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
 
         configureAsRunningFrameworks(framework1, framework2, framework3);
 
@@ -59,9 +61,9 @@ public class ConfigManagerTest {
 
     @Test
     public void onNewConfigsFromScheduler_shouldStartContainerLogfileFileStreamingWithCorrectDockerFramework() {
-        List<FrameworkInfo> dockerFrameworks = asFrameworkInfoList(framework1, framework2,
+        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(framework1, framework2,
             framework3);
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
 
         configureAsRunningFrameworks(framework1);
 
@@ -70,7 +72,7 @@ public class ConfigManagerTest {
         verify(streamManager, times(1)).setupContainerLogfileStreaming(
             dockerFrameworkArgumentCaptor.capture());
 
-        DockerFramework expectedDockerFramework = new DockerFramework(framework1.getFrameworkInfo(),
+        DockerFramework expectedDockerFramework = new DockerFramework(framework1.getLogstashConfig(),
             new DockerFramework.ContainerId(framework1.getId()));
 
         assertEquals(expectedDockerFramework.getContainerId(),
@@ -83,9 +85,9 @@ public class ConfigManagerTest {
 
     @Test
     public void onNewConfigsFromScheduler_shouldStartContainerLogFileStreamingWithAllMatchingContainers() {
-        List<FrameworkInfo> dockerFrameworks = asFrameworkInfoList(framework1, framework2,
+        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(framework1, framework2,
             framework3);
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
 
         configureAsRunningFrameworks(framework1, framework3);
 
@@ -103,9 +105,9 @@ public class ConfigManagerTest {
 
     @Test
     public void onNewConfigsFromScheduler_shouldStopRunningContainerLogFileStreamingWithNoMatchingConfiguration() {
-        List<FrameworkInfo> dockerFrameworks = asFrameworkInfoList(
+        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(
             framework1); // only one docker container config, but three running container which were streaming
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
 
         configureAsRunningFrameworks(framework1, framework2, framework3);
 
@@ -123,9 +125,9 @@ public class ConfigManagerTest {
 
     @Test
     public void onNewConfigsFromScheduler_shouldNotStopAnyRunningContainerLogFileStreamingWhenAllHaveMatchingConfiguration() {
-        List<FrameworkInfo> dockerFrameworks = asFrameworkInfoList(
+        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(
             framework1, framework2, framework3);
-        List<FrameworkInfo> hostFrameworks = asFrameworkInfoList(framework4);
+        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
 
         configureAsRunningFrameworks(framework1, framework2, framework3);
 
@@ -143,7 +145,8 @@ public class ConfigManagerTest {
 
     private void configureMocks(FrameworkDescription... frameworkDescriptions) {
         for (FrameworkDescription desc : frameworkDescriptions) {
-            when(client.getImageNameOfContainer(desc.id)).thenReturn(desc.frameworkInfo.getName());
+            when(client.getImageNameOfContainer(desc.id)).thenReturn(
+                desc.logstashConfig.getFrameworkName());
         }
     }
 
@@ -153,27 +156,31 @@ public class ConfigManagerTest {
                 Collectors.toSet());
     }
 
-    private List<FrameworkInfo> asFrameworkInfoList(FrameworkDescription... frameworkDescriptions) {
+    private List<LogstashConfig> asLogstashConfigList(FrameworkDescription... frameworkDescriptions) {
         return Arrays.asList(frameworkDescriptions).stream()
-            .map(FrameworkDescription::getFrameworkInfo).collect(
+            .map(FrameworkDescription::getLogstashConfig).collect(
                 Collectors.toList());
     }
 
     private static class FrameworkDescription {
-        final FrameworkInfo frameworkInfo;
+        final LogstashConfig logstashConfig;
         final String id;
 
         public String getId() {
             return id;
         }
 
-        private FrameworkDescription(String id) {
-            this.frameworkInfo = new FrameworkInfo(id + "-ID", id + "-config");
+        private FrameworkDescription(String id, LogstashConfigType type) {
+            this.logstashConfig = LogstashConfig.newBuilder()
+                .setType(type)
+                .setFrameworkName(id + "-ID")
+                .setConfig(id + "-config")
+                .build();
             this.id = id;
         }
 
-        public FrameworkInfo getFrameworkInfo() {
-            return frameworkInfo;
+        public LogstashConfig getLogstashConfig() {
+            return logstashConfig;
         }
     }
 

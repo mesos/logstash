@@ -10,9 +10,10 @@ import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
+import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.LogstashSettings;
-import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.PersistentState;
+import org.apache.mesos.logstash.state.ILiveState;
+import org.apache.mesos.logstash.state.IPersistentState;
 import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,35 +30,36 @@ import java.util.concurrent.ExecutionException;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
+import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.NEW_CONFIG;
 
 @Component
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
-    private final LiveState liveState;
-    private final PersistentState persistentState;
+    private final ILiveState liveState;
+    private final IPersistentState persistentState;
+    private final ConfigManager configManager;
     private final LogstashSettings settings;
-    private final boolean isNoCluster;
+    private final boolean offline;
     private final Collection<FrameworkMessageListener> listeners;
 
     private final Clock clock;
-
-    private SchedulerMessage latestConfig;
-
     private MesosSchedulerDriver driver;
 
     @Autowired
     public LogstashScheduler(
-        LiveState liveState,
-        PersistentState persistentState,
+        ILiveState liveState,
+        IPersistentState persistentState,
+        ConfigManager configManager,
         LogstashSettings settings,
         @Qualifier("offline") boolean offline) {
 
         this.liveState = liveState;
         this.persistentState = persistentState;
+        this.configManager = configManager;
         this.settings = settings;
 
-        this.isNoCluster = offline;
+        this.offline = offline;
 
         this.listeners = synchronizedCollection(new ArrayList<>());
         this.clock = new Clock();
@@ -65,7 +67,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @PostConstruct
     public void start() {
-        if (!isNoCluster) {
+        configManager.setOnConfigUpdate(this::updateExecutorConfig);
+
+        if (!offline) {
             Protos.FrameworkInfo.Builder frameworkInfo = Protos.FrameworkInfo.newBuilder()
                 .setName(settings.getFrameworkName())
                 .setUser(settings.getLogstashUser())
@@ -90,7 +94,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
-        if (!isNoCluster) {
+        configManager.setOnConfigUpdate(null);
+
+        if (!offline) {
             // We are doing a graceful shutdown so we should
             // remove our framework id, so we don't try to reconnect
             // on startup.
@@ -100,7 +106,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     public void fail() {
-        if (!isNoCluster) {
+        if (!offline) {
             driver.stop(true);
         }
     }
@@ -171,10 +177,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         if (isRunningState(status)) {
             // Send the executor the newest configuration.
-            if (latestConfig != null) {
-                sendMessage(status.getExecutorId(), status.getSlaveId(), latestConfig);
-            }
-            // TODO (thb) discuss this. How should we ensure the order configs are sent.
+
+            SchedulerMessage message = SchedulerMessage.newBuilder()
+                .setType(NEW_CONFIG)
+                .addAllConfigs(configManager.getLatestConfig())
+                .build();
+
+            sendMessage(status.getExecutorId(), status.getSlaveId(), message);
+
             // We need to prevent tasks receiving old configs because of race condition.
             liveState.addRunningTask(
                 new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
@@ -185,24 +195,11 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         }
     }
 
-    public void configUpdated(Map<String, String> dockerConfig, Map<String, String> hostConfig) {
-        SchedulerMessage.Builder builder = SchedulerMessage.newBuilder();
-
-        for (Map.Entry<String, String> entry : dockerConfig.entrySet()) {
-            builder.addDockerConfig(LogstashProtos.LogstashConfig.newBuilder()
-                .setConfig(entry.getValue())
-                .setFrameworkName(entry.getKey()));
-        }
-
-        for (Map.Entry<String, String> entry : hostConfig.entrySet()) {
-            builder.addHostConfig(LogstashProtos.LogstashConfig.newBuilder()
-                .setConfig(entry.getValue())
-                .setFrameworkName(entry.getKey()));
-        }
-
-        builder.setType(SchedulerMessage.SchedulerMessageType.NEW_CONFIG);
-
-        SchedulerMessage message = this.latestConfig = builder.build();
+    public void updateExecutorConfig(List<LogstashProtos.LogstashConfig> configs) {
+        SchedulerMessage message = SchedulerMessage.newBuilder()
+            .addAllConfigs(configs)
+            .setType(NEW_CONFIG)
+            .build();
 
         LOGGER.debug("Sending new config to all executors.");
 
@@ -257,6 +254,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setContainer(container)
             .setCommand(CommandInfo.newBuilder()
                 .addArguments("java")
+                    // TODO: pass the JVM options from settings.
                 .addArguments("-Djava.library.path=/usr/local/lib")
                 .addArguments("-jar")
                 .addArguments("/tmp/logstash-executor.jar")

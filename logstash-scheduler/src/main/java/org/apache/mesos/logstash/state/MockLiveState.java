@@ -14,7 +14,7 @@ import static org.apache.mesos.logstash.common.LogstashProtos.ContainerState.Log
  * Mock Live State for use while developing the UI without having to run against
  * a live Mesos Cluster.
  */
-public class MockLiveState implements LiveState {
+public class MockLiveState implements ILiveState {
 
     private List<LogstashProtos.ContainerState> getRandomContainers() {
         List<LogstashProtos.ContainerState> containers = new ArrayList<>();

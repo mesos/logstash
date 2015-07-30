@@ -1,9 +1,9 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.ConcurrentUtils;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
-import org.apache.mesos.logstash.executor.frameworks.FrameworkInfo;
 import org.apache.mesos.logstash.executor.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +46,12 @@ public class LogstashService {
         ConcurrentUtils.stop(executorService);
     }
 
-    public void update(List<FrameworkInfo> dockerInfo, List<FrameworkInfo> hostInfo) {
+    public void update(List<LogstashProtos.LogstashConfig> dockerInfo, List<LogstashProtos.LogstashConfig> hostInfo) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
+        LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
         String config = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
-        LOGGER.debug("Writing new configuration: {}", config);
+        LOGGER.debug("Writing new configuration:\n{}", config);
         setLatestConfig(config);
     }
 
