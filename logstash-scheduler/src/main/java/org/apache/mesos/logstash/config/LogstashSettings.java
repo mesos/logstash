@@ -16,6 +16,8 @@ public class LogstashSettings {
     private static final int DEFAULT_FAILOVER_TIMEOUT = 31449600;
     private static final int DEFAULT_ZK_TIME_MS = 20000;
 
+    private static final int DEFAULT_WEB_SERVER_PORT = 9092;
+
     private final Properties props;
 
     private int getInt(String key, int defaultValue) {
@@ -26,6 +28,11 @@ public class LogstashSettings {
     private double getDouble(String key, double defaultValue) {
         String value = props.getProperty(key);
         return (value != null) ? Double.valueOf(value) : defaultValue;
+    }
+
+    private boolean getBoolean(String key, boolean defaultValue) {
+        String value = props.getProperty(key);
+        return (value != null) ? Boolean.valueOf(value) : defaultValue;
     }
 
     private long getLong(String key, long defaultValue) {
@@ -63,6 +70,22 @@ public class LogstashSettings {
 
     public long getFailoverTimeout() {
         return getLong("mesos.failover.timeout.sec", DEFAULT_FAILOVER_TIMEOUT);
+    }
+
+    public boolean getWebServerEnabled() {
+        return getBoolean("mesos.logstash.web.enabled", true);
+    }
+
+    /**
+     * When set to true, the scheduler will not actually connect to mesos.
+     * It will emulate events so see the events show up in the GUI.
+     */
+    public boolean getWebServerDebug() {
+        return getBoolean("mesos.logstash.web.debug", false);
+    }
+
+    public int getWebServerPort() {
+        return getInt("mesos.logstash.web.port", DEFAULT_WEB_SERVER_PORT);
     }
 
     public String getLogstashUser() {

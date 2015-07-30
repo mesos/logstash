@@ -40,7 +40,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private final IPersistentState persistentState;
     private final ConfigManager configManager;
     private final LogstashSettings settings;
-    private final boolean offline;
     private final Collection<FrameworkMessageListener> listeners;
 
     private final Clock clock;
@@ -51,15 +50,12 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         ILiveState liveState,
         IPersistentState persistentState,
         ConfigManager configManager,
-        LogstashSettings settings,
-        @Qualifier("offline") boolean offline) {
+        LogstashSettings settings) {
 
         this.liveState = liveState;
         this.persistentState = persistentState;
         this.configManager = configManager;
         this.settings = settings;
-
-        this.offline = offline;
 
         this.listeners = synchronizedCollection(new ArrayList<>());
         this.clock = new Clock();
@@ -69,7 +65,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
 
-        if (!offline) {
+        if (!settings.getWebServerDebug()) {
             Protos.FrameworkInfo.Builder frameworkInfo = Protos.FrameworkInfo.newBuilder()
                 .setName(settings.getFrameworkName())
                 .setUser(settings.getLogstashUser())
@@ -96,7 +92,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void stop() throws ExecutionException, InterruptedException {
         configManager.setOnConfigUpdate(null);
 
-        if (!offline) {
+        if (!settings.getWebServerDebug()) {
             // We are doing a graceful shutdown so we should
             // remove our framework id, so we don't try to reconnect
             // on startup.
@@ -106,7 +102,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     public void fail() {
-        if (!offline) {
+        if (!settings.getWebServerDebug()) {
             driver.stop(true);
         }
     }

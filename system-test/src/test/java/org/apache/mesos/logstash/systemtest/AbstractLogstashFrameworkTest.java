@@ -109,8 +109,7 @@ public abstract class AbstractLogstashFrameworkTest {
         configManager = new ConfigManager(persistentState);
         configManager.start();
 
-        scheduler = new LogstashScheduler(
-            liveState, persistentState, configManager, settings, false);
+        scheduler = new LogstashScheduler(liveState, persistentState, configManager, settings);
         scheduler.start();
 
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
