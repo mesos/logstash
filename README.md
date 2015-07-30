@@ -149,10 +149,10 @@ Updates an existing framework config.
 
 __Expected Format__
 
-```json
+```js
 {
-    name: String, // The name of the docker image to match when,
-    input: String // The Logstash configuration segment for this framework.
+    "name": "String", // The name of the docker image to match when,
+    "input": "String" // The Logstash configuration segment for this framework.
 }
 ```
 
