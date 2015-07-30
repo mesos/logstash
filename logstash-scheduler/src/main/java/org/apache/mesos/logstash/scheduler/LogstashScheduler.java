@@ -75,11 +75,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             try {
                 FrameworkID frameworkID = persistentState.getFrameworkID();
                 if (frameworkID != null) {
+                    LOGGER.info("Found previous framework id: {}", frameworkID);
                     frameworkInfo.setId(frameworkID);
                 }
             } catch (InterruptedException | ExecutionException | InvalidProtocolBufferException e) {
                 throw new SchedulerException("Error recovering framework id", e);
             }
+
+            LOGGER.info("Starting Logstash Framework: \n{}", frameworkInfo);
 
             driver = new MesosSchedulerDriver(this, frameworkInfo.build(),
                 settings.getMesosMasterUri());
@@ -121,7 +124,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkId,
         MasterInfo masterInfo) {
-
+        LOGGER.info("Framework registered as: {}",frameworkId);
         try {
             persistentState.setFrameworkId(frameworkId);
         } catch (InterruptedException | ExecutionException e) {
@@ -129,6 +132,15 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             throw new SchedulerException("Error setting framework id in persistent state", e);
             // FIXME: reconcileTasks(driver);
         }
+
+        List<Protos.Resource> resources = getResourcesList();
+
+        Protos.Request request = Protos.Request.newBuilder()
+            .addAllResources(resources)
+            .build();
+
+        List<Protos.Request> requests = Collections.singletonList(request);
+        driver.requestResources(requests);
     }
 
     @Override
