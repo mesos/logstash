@@ -57,7 +57,7 @@ public class HomeController {
             LogstashProtos.LogstashConfig.newBuilder()
                 .setType(DOCKER)
                     // Ensure that the name matches the URL.
-                .setConfig(config.getName())
+                .setConfig(config.getInput())
                 .setFrameworkName(config.getName())
                 .build());
     }
@@ -69,7 +69,7 @@ public class HomeController {
             LogstashProtos.LogstashConfig.newBuilder()
                 .setType(DOCKER)
                 // Ensure that the name matches the URL.
-                .setConfig(name)
+                .setConfig(config.getInput())
                 .setFrameworkName(config.getName())
                 .build());
 
