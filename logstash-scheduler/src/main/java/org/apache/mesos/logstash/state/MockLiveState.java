@@ -59,7 +59,7 @@ public class MockLiveState implements ILiveState {
     }
 
     @Override
-    public Set<Task> getTasks() {
+    public Set<Task> getRunningTasks() {
         Set<Task> tasks = new HashSet<>();
         Random random = new Random();
 
@@ -76,8 +76,12 @@ public class MockLiveState implements ILiveState {
         return tasks;
     }
 
+    @Override public boolean isAlreadyStaging(Protos.SlaveID slaveID) {
+        return false;
+    }
+
     @Override
-    public void removeRunningTask(Protos.SlaveID slaveId) {
+    public void removeTask(Protos.SlaveID slaveId) {
 
     }
 
@@ -88,6 +92,10 @@ public class MockLiveState implements ILiveState {
 
     @Override
     public void updateStats(Protos.SlaveID slaveId, LogstashProtos.ExecutorMessage message) {
+
+    }
+
+    @Override public void addStagingTaskOnSlave(Protos.SlaveID slaveId) {
 
     }
 }

@@ -36,7 +36,7 @@ public class StatService {
     public void start() {
         executorService.scheduleAtFixedRate(() ->
             template.convertAndSend("/topic/stats", new StatMessageBuilder()
-                .setNumNodes(liveState.getTasks().size())
+                .setNumNodes(liveState.getRunningTasks().size())
                 .setCpus(Math.random())
                 .setMem(Math.random())
                 .setDisk(Math.random())
@@ -45,7 +45,7 @@ public class StatService {
 
         executorService.scheduleAtFixedRate(() -> {
             try {
-                template.convertAndSend("/topic/nodes", TaskListPacket.fromTaskList(liveState.getTasks()));
+                template.convertAndSend("/topic/nodes", TaskListPacket.fromTaskList(liveState.getRunningTasks()));
             } catch (Exception e) {
                 LOGGER.error("Could not send node packet.", e);
             }

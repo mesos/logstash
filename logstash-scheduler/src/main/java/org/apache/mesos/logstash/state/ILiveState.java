@@ -10,11 +10,15 @@ import java.util.stream.Stream;
 
 public interface ILiveState {
 
-    Set<Task> getTasks();
+    Set<Task> getRunningTasks();
 
-    void removeRunningTask(Protos.SlaveID slaveId);
+    boolean isAlreadyStaging(Protos.SlaveID slaveID);
+
+    void removeTask(Protos.SlaveID slaveId);
 
     void addRunningTask(Task task);
 
     void updateStats(Protos.SlaveID slaveID, LogstashProtos.ExecutorMessage messages);
+
+    void addStagingTaskOnSlave(Protos.SlaveID slaveId);
 }

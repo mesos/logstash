@@ -11,6 +11,7 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
+import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.state.ILiveState;
 import org.apache.mesos.logstash.state.IPersistentState;
@@ -18,7 +19,6 @@ import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -160,12 +160,17 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             // it can be used to debug why executes are not spinning up.
 
             if (shouldAcceptOffer(offer)) {
+
                 LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
                     offer.getId().getValue(),
                     offer.getSlaveId());
+
                 schedulerDriver.launchTasks(
                     singletonList(offer.getId()),
                     singletonList(buildTask(offer)));
+
+                liveState.addStagingTaskOnSlave(offer.getSlaveId());
+
             } else {
                 LOGGER.debug("Declining Offer. offerId={}, slaveId={}",
                     offer.getId().getValue(),
@@ -197,7 +202,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             liveState.addRunningTask(
                 new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
         } else if (isTerminalState(status)) {
-            liveState.removeRunningTask(status.getSlaveId());
+            liveState.removeTask(status.getSlaveId());
         } else {
             LOGGER.debug("No action required after status update. state={}", status.getState());
         }
@@ -211,7 +216,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         LOGGER.debug("Sending new config to all executors.");
 
-        liveState.getTasks().forEach(e ->
+        liveState.getRunningTasks().forEach(e ->
             sendMessage(e.getExecutorID(), e.getSlaveID(), message));
     }
 
@@ -256,16 +261,18 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setType(Type.DOCKER)
             .setDocker(dockerExecutor.build());
 
+        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(settings);
+
         ExecutorInfo executorInfo = ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
             .setExecutorId(ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
             .setContainer(container)
             .setCommand(CommandInfo.newBuilder()
-                .addArguments("java")
-                    // TODO: pass the JVM options from settings.
-                .addArguments("-Djava.library.path=/usr/local/lib")
-                .addArguments("-jar")
-                .addArguments("/tmp/logstash-executor.jar")
+                .addArguments("dummyArgument")
+                .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
+                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME).build())
+                .setEnvironment(Protos.Environment.newBuilder()
+                    .addAllVariables(executorEnvVars.getList()))
                 .setShell(false))
             .build();
 
@@ -302,17 +309,34 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     private boolean shouldAcceptOffer(Offer offer) {
+
+        boolean enoughCPU = hasEnoughOfResourceType(offer, "cpus", settings.getExecutorCpus());
+        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem", settings.getExecutorHeapSize());
+
+        if (!enoughCPU || !enoughMEM) {
+            return false;
+        }
+
         // Don't run the same framework multiple times on the same host
+        if (liveState.isAlreadyStaging(offer.getSlaveId())){
+            return false;
+        }
 
-        // FIXME (thb): What if we never actually manage to get an executor running on
-        // this host or it fails after a while. We will never try again.
-
-        boolean slaveHasTask = liveState.getTasks().stream().anyMatch(e ->
+        boolean slaveHasTask = liveState.getRunningTasks().stream().anyMatch(e ->
             e.getSlaveID().equals(offer.getSlaveId()));
 
-        // FIXME: What if the offer does not contain enough resources?
-        // e.g. only 32MB mem when we need 200MB
         return !slaveHasTask;
+    }
+
+    private boolean hasEnoughOfResourceType(Offer offer, String resourceName, double minSize) {
+
+        for (Resource resource : offer.getResourcesList()) {
+            if (resourceName.equals(resource.getName())) {
+                return resource.getScalar().getValue() >= minSize;
+            }
+        }
+
+        return false;
     }
 
     public void requestExecutorStats() {
@@ -321,7 +345,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
             .build();
 
-        liveState.getTasks().forEach(e ->
+        liveState.getRunningTasks().forEach(e ->
             sendMessage(e.getExecutorID(), e.getSlaveID(), message));
     }
 
