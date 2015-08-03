@@ -1,0 +1,8 @@
+{
+  "name": "logstash",
+  "version": "0.1.0",
+  "scm": "https://github.com/mesos/logstash.git",
+  "maintainer": "thb@trifork.com",
+  "description": "Logstash framwork for Mesos.",
+  "website": "https://github.com/mesos/logstash"
+}

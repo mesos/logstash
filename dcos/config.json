@@ -1,0 +1,112 @@
+{
+  "type": "object",
+  "properties": {
+    "properties": {
+
+      "mesos": {
+        "description": "Mesos specific configuration properties",
+        "type": "object",
+        "properties": {
+          "master": {
+            "default": "zk://master.mesos:2181/mesos",
+            "description": "The URL of the Mesos master. The format is a comma-delimited list of hosts like zk://host1:port,host2:port/mesos. If using ZooKeeper, pay particular attention to the leading zk:// and trailing /mesos! If not using ZooKeeper, standard host:port patterns, like localhost:5050 or 10.0.0.5:5050,10.0.0.6:5050, are also acceptable.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "master"
+        ]
+      },
+
+    "logstash": {
+      "type": "object",
+      "description": "Chronos Framework Configuration Properties",
+      "additionalProperties": false,
+
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the app consisting of a series of names separated by slashes.",
+          "type": "string",
+          "default": "/logstash"
+        },
+
+        "framework-name": {
+          "description": "The framework name (default = logstash)",
+          "type": "string",
+          "default": "logstash"
+        },
+
+        "scheduler-cpus": {
+          "description": "CPU shares to allocate to the Logstash Scheduler.",
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.1
+        },
+
+        "scheduler-mem": {
+          "description": "Memory (MB) to allocate to the Logstash Scheduler.",
+          "type": "number",
+          "minimum": 128.0,
+          "default": 128.0
+        },
+
+        "task-cpus": {
+          "description": "CPU shares to allocate to each Logstash node.",
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 0.1
+        },
+
+        "executor-heap-size": {
+          "description": "JVM Heap Size (MB) to allocate to each Logstash Executor.",
+          "type": "number",
+          "minimum": 64.0,
+          "default": 128.0
+        },
+
+        "logstash-heap-size": {
+          "description": "JVM Heap Size (MB) to allocate to each Logstash Process.",
+          "type": "number",
+          "minimum": 64.0,
+          "default": 128.0
+        },
+
+        "failover-timeout": {
+          "description": "The failover timeout in seconds for Mesos (default = 31449600)",
+          "type": "integer",
+          "default": 31449600
+        },
+
+        "scheduler-port": {
+          "description": "The tcp port to start the GUI and REST API on. (default = 9092)",
+          "type": "integer",
+          "default": 9092
+        },
+
+        "zk-timeout": {
+          "description": "The timeout for ZooKeeper in milliseconds (default = 20000)",
+          "type": "integer",
+          "default": 20000
+        },
+
+        "zk-hosts": {
+          "description": "The list of ZooKeeper servers for storing state (default = mesos.master:2181)",
+          "type": "string",
+          "default": "master.mesos:2181"
+        },
+
+        "user": {
+          "description": "The user to run the processes under (default = root)",
+          "type": "string",
+          "default": "root"
+        }
+      }
+    }
+  },
+  "required": [
+    "mesos",
+    "logstash"
+  ]
+}

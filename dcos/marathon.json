@@ -1,0 +1,64 @@
+{
+  "id": "{{logstash.id}",
+  "cpus": {{logstash.scheduler-cpus}},
+  "mem": {{logstash.scheduler-mem}},
+  "instances": 1,
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "mesos/logstash-scheduler:latest",
+      "network": "BRIDGE",
+      "portMappings": [
+        {
+          "containerPort": {{logstash.scheduler-port}},
+          "hostPort": {{logstash.scheduler-port}},
+          "servicePort": 0,
+          "protocol": "tcp"
+        }
+      ],
+      "args": [
+        "-DNO_OP=logstash",
+        
+        {{#mesos.master}}
+        , "-Dmesos.master.uri={{mesos.master}}"
+        {{/mesos.master}}
+
+        {{#logstash.framework-name}}
+        "-Dmesos.logstash.framework.name={{logstash.framework-name}}"
+        {{/logstash.framework-name}}
+
+        {{#logstash.task-cpus}}
+        , "-Dmesos.logstash.executor.cpus={{logstash.task-cpus}}"
+        {{/logstash.task-cpus}}
+
+        {{#logstash.executor-heap-size}}
+        , "-Dmesos.logstash.executor.heap.size={{logstash.executor-heap-size}}"
+        {{/logstash.executor-heap-size}}
+
+        {{#logstash.logstash-heap-size}}
+        , "-Dmesos.logstash.logstash.heap.size={{logstash.logstash-heap-size}}"
+        {{/logstash.logstash-heap-size}}
+
+        {{#logstash.failover-timeout}}
+        , "-Dmesos.failover.timeout.sec={{logstash.failover-timeout}}"
+        {{/logstash.failover-timeout}}
+
+        {{#logstash.scheduler-port}}
+        , "-Dmesos.logstash.web.port={{logstash.scheduler-port}}"
+        {{/logstash.scheduler-port}}
+
+        {{#logstash.zk-timeout}}
+        , "-Dmesos.logstash.state.zk.timeout.ms={{logstash.zk-timeout}}"
+        {{/logstash.zk-timeout}}
+
+        {{#logstash.zk-hosts}}
+        , "-Dmesos.logstash.state.zk={{logstash.zk-hosts}}"
+        {{/logstash.zk-hosts}}
+
+        {{#logstash.user}}
+        , "-Dmesos.logstash.user={{logstash.user}}"
+        {{/logstash.user}}
+      ]
+    }
+  }
+}
