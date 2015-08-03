@@ -123,7 +123,7 @@ nodes have executors deployed.
 
 ## REST API
 
-Along with the GUI there is a RESTful API available. Currenly is is only enabled if you also run the
+Along with the GUI there is a RESTful API available. Currently is is only enabled if you also run the
 GUI.
 
 The available endpoints are:
@@ -146,6 +146,8 @@ PUT /configs/{framework-name}
 ```
 
 Updates an existing framework config.
+
+// TODO: Write about native config endpoints.
 
 __Expected Format__
 
