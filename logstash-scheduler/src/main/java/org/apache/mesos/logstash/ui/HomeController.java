@@ -6,11 +6,8 @@ import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
-import javax.websocket.server.PathParam;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -49,9 +46,9 @@ public class HomeController {
             .collect(Collectors.toList());
     }
 
-    @RequestMapping(method = POST, value = "/api/configs")
+    @RequestMapping(method = POST, value = "/api/configs", consumes = "application/json", produces= "application/json")
     @ResponseBody
-    public void createConfig(Config config)
+    public Config createConfig(@RequestBody Config config)
         throws IOException, ExecutionException, InterruptedException {
         configManager.save(
             LogstashProtos.LogstashConfig.newBuilder()
@@ -60,21 +57,24 @@ public class HomeController {
                 .setConfig(config.getInput())
                 .setFrameworkName(config.getName())
                 .build());
+
+        return config;
     }
 
-    @RequestMapping(method = RequestMethod.PUT, value = "/api/configs/{name}")
-    public String updateConfig(@PathParam("name") String name, Config config)
+    @RequestMapping(method = RequestMethod.PUT, value = "/api/configs", consumes = "application/json", produces= "application/json")
+    @ResponseBody
+    public Config updateConfig(@RequestParam("name") String name, @RequestBody Config config)
         throws IOException, ExecutionException, InterruptedException {
         configManager.save(
             LogstashProtos.LogstashConfig.newBuilder()
                 .setType(DOCKER)
-                // Ensure that the name matches the URL.
+                    // Ensure that the name matches the URL.
                 .setConfig(config.getInput())
-                .setFrameworkName(config.getName())
+                .setFrameworkName(name)
                 .build());
 
-        // TODO: This redirect does not work.
-        return "index";
+        config.setName(name);
+        return config;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/api/host-config")
@@ -86,7 +86,7 @@ public class HomeController {
 
     @RequestMapping(method = RequestMethod.PUT, value = "/api/host-config")
     @ResponseBody
-    public void updateHostConfig(Config config)
+    public Config updateHostConfig(Config config)
         throws IOException, ExecutionException, InterruptedException {
         configManager.save(
             LogstashProtos.LogstashConfig.newBuilder()
@@ -94,9 +94,12 @@ public class HomeController {
                 .setConfig(config.getInput())
                 .setFrameworkName(HOST_FILE_NAME)
                 .build());
+
+        return config;
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/app/settings")
+    @ResponseBody
     public LogstashSettings getSettings() {
         return settings;
     }
@@ -109,9 +112,11 @@ public class HomeController {
             .collect(Collectors.toList());
     }
 
-    @RequestMapping(method = RequestMethod.DELETE, value = "/api/configs/{name}")
-    public void deleteConfig(@PathParam("name") String name)
+    @RequestMapping(method = RequestMethod.DELETE, value = "/api/configs")
+    @ResponseBody
+    public String deleteConfig(@RequestParam("name") String name)
         throws IOException, ExecutionException, InterruptedException {
         configManager.delete(name);
+        return "Removed config " + name;
     }
 }
