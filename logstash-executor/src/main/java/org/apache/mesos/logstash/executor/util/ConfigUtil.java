@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor.util;
 
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
-import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 
 import java.util.List;
@@ -14,7 +14,7 @@ public final class ConfigUtil {
     protected ConfigUtil() {
     }
 
-    public static String generateConfigFile(ContainerizerClient client,
+    public static String generateConfigFile(DockerClient client,
         List<LogstashConfig> dockerInfo, List<LogstashConfig> hostInfo) {
 
         final StringBuilder text = new StringBuilder();

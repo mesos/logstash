@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 
-public class DockerClient implements ContainerizerClient {
+public class DockerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
     private final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class);
@@ -63,6 +63,7 @@ public class DockerClient implements ContainerizerClient {
         return this.runningContainers.keySet();
     }
 
+    // TODO this method does not just return an image name -> only if we tracked the container as running too -> refactor
     public String getImageNameOfContainer(String containerId) {
         return this.runningContainers.get(containerId);
     }

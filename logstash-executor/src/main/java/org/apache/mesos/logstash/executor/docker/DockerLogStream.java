@@ -8,12 +8,16 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 
-
+/**
+ * Represents the output stream from a docker exec command.
+ *
+ *  TODO: remove this class put the logic to whom who uses attach
+ */
 public class DockerLogStream implements LogStream {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
     private final com.spotify.docker.client.LogStream innerLogStream;
 
-    private LogstashPidFilterOutputStream stdout;
+    private LogstashPidFilterOutputStream logstashPidFilterOutputStream;
     private OutputStream stderr;
 
     public DockerLogStream(com.spotify.docker.client.LogStream innerLogStream) {
@@ -25,14 +29,14 @@ public class DockerLogStream implements LogStream {
     @Override
     public synchronized void attach(OutputStream stdout, OutputStream stderr) throws IOException {
 
-        if (this.stdout != null || this.stderr != null){
+        if (this.logstashPidFilterOutputStream != null || this.stderr != null){
             throw new IllegalStateException("To use an allready attached DockerLogStream is not supported");
         }
 
         // Filter out heartbeats that keep the socket alive.
         LogstashPidFilterOutputStream logstashPidFilterOutputStream = new LogstashPidFilterOutputStream(stdout);
         this.stderr = stderr;
-        this.stdout = logstashPidFilterOutputStream;
+        this.logstashPidFilterOutputStream = logstashPidFilterOutputStream;
 
         innerLogStream.attach(logstashPidFilterOutputStream, stderr);
     }
@@ -44,9 +48,9 @@ public class DockerLogStream implements LogStream {
     @Override public void close() {
 
         try {
-            stdout.close();
+            logstashPidFilterOutputStream.close();
         } catch (Exception e) {
-            LOGGER.error("Error while closing docker log stream stdout", e);
+            LOGGER.error("Error while closing docker log stream logstashPidFilterOutputStream", e);
         }
         try {
             stderr.close();
@@ -57,7 +61,7 @@ public class DockerLogStream implements LogStream {
     }
 
     @Override public String getLogstashPid() {
-        return stdout.pid;
+        return logstashPidFilterOutputStream.pid;
     }
 
 }

@@ -2,6 +2,9 @@ package org.apache.mesos.logstash.executor.docker;
 
 import java.nio.file.Paths;
 
+/**
+ * Gathers all static information for one log file we're streaming from a docker container.
+ */
 public class DockerLogPath {
 
     private final String executorLogPath;

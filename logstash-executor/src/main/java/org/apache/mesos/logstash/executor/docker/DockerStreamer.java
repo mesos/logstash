@@ -15,9 +15,9 @@ public class DockerStreamer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
 
     private final LogStreamWriter writer;
-    private final ContainerizerClient client;
+    private final DockerClient client;
 
-    public DockerStreamer(LogStreamWriter writer, ContainerizerClient client) {
+    public DockerStreamer(LogStreamWriter writer, DockerClient client) {
 
         this.writer = writer;
         this.client = client;
@@ -64,16 +64,21 @@ public class DockerStreamer {
         String logstashPid = logStream.getLogstashPid();
         String killLogstashCmd = getKillLogstashCmd(logstashPid);
 
-        LOGGER.debug("Killing logstash process in container {} - logstash pid {}", containerId, logstashPid);
+        LOGGER.debug("Killing logstash process in container {} - logstash pid {}", containerId,
+            logstashPid);
 
-        // we need to kill the logstash process within the container to stop the docker exec streaming
-        LogStream ls = client
-            .exec(containerId, "sh", "-c", killLogstashCmd);
-        ls.readFully();
+        // TODO ask config manage whether the container is running and only if so stop docker exec...
 
-        LOGGER.debug("Finished killing logstash process in container {} and logstash pid {}",
-            containerId, logstashPid);
 
+        if (client.getRunningContainers().contains(containerId)) {
+            // we need to kill the logstash process within the container to stop the docker exec streaming
+            LogStream ls = client
+                .exec(containerId, "sh", "-c", killLogstashCmd);
+            ls.readFully();
+
+            LOGGER.debug("Finished killing logstash process in container {} and logstash pid {}",
+                containerId, logstashPid);
+        }
         logStream.close();
     }
 }

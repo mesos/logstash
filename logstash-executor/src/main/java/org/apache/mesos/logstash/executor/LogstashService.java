@@ -3,7 +3,7 @@ package org.apache.mesos.logstash.executor;
 import org.apache.mesos.logstash.common.ConcurrentUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
-import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
-    private final ContainerizerClient client;
+    private final DockerClient client;
 
     private ExecutorStatus status;
 
@@ -31,7 +31,7 @@ public class LogstashService {
     private String latestConfig;
     private Process process;
 
-    public LogstashService(ContainerizerClient client) {
+    public LogstashService(DockerClient client) {
         this.client = client;
         status = ExecutorStatus.INITIALIZING;
         executorService = Executors.newSingleThreadScheduledExecutor();

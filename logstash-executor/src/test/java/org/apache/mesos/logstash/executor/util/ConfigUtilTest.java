@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor.util;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
-import org.apache.mesos.logstash.executor.docker.ContainerizerClient;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 public class ConfigUtilTest {
-    private ContainerizerClient client;
+    private DockerClient client;
 
     private FrameworkDescription framework1 = new FrameworkDescription("foo", LogstashConfigType.DOCKER);
     private FrameworkDescription framework2 = new FrameworkDescription("bar", LogstashConfigType.DOCKER);
@@ -23,7 +23,7 @@ public class ConfigUtilTest {
 
     @Before
     public void setup() {
-        client = mock(ContainerizerClient.class);
+        client = mock(DockerClient.class);
 
         configureMocks(framework1, framework2, framework3, framework4);
     }
