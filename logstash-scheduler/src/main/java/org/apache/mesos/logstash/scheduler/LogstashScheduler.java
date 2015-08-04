@@ -70,6 +70,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 .setName(settings.getFrameworkName())
                 .setUser(settings.getLogstashUser())
                 .setRole(settings.getLogstashRole())
+                .setCheckpoint(true)
                 .setFailoverTimeout(settings.getFailoverTimeout());
 
             try {
@@ -140,7 +141,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .build();
 
         List<Protos.Request> requests = Collections.singletonList(request);
-        driver.requestResources(requests);
+        schedulerDriver.requestResources(requests);
     }
 
     @Override

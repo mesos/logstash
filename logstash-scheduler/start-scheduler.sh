@@ -1,2 +1,2 @@
 #!/bin/bash
-java -Djava.library.path=/usr/local/lib $@ -jar /tmp/logstash-scheduler.jar
+java $JAVA_OPTS -Djava.library.path=/usr/local/lib -jar /tmp/logstash-scheduler.jar
