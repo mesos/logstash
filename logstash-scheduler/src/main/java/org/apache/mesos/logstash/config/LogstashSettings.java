@@ -89,7 +89,7 @@ public class LogstashSettings {
     }
 
     public String getLogstashUser() {
-        return props.getProperty("mesos.logstash.user", "logstash");
+        return props.getProperty("mesos.logstash.user", "root");
     }
 
     public String getLogstashRole() {
