@@ -1,0 +1,17 @@
+{
+  "id": "/busylogger",
+  "cpus": 0.1,
+  "mem": 256.0,
+  "instances": 1,
+  "constraints": [["hostname", "UNIQUE"]],
+  "cmd": "touch /var/log/test.log; while sleep 10; do  echo \"`hostname`\" \" -- test log -- \" \"`date`\" >> /var/log/test.log; done;",
+  "container": {
+    "type": "DOCKER",
+    "docker": {
+      "image": "busybox:latest",
+      "portMappings": []
+    }
+  }
+
+}
+
