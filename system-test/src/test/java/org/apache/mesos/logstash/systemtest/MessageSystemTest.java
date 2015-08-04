@@ -31,7 +31,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-// TODO clean up and use more object oriented style
 public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
     public static final String SOME_LOGSTASH_OUTPUT_FILE = "/tmp/logstash.out";
@@ -46,7 +45,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     @Before
     public void addExecutorMessageListener() {
         try {
-            Thread.sleep(3_000);
+            Thread.sleep(3_000); // TODO remove and wait if necessary until a clean test setup (e.g. only one running executor) is available...
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -131,6 +130,30 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
             new String[]{"tail -F " + SOME_LOG_FILE});
     }
 
+
+    @Test
+    public void logstashLoggingForFrameworksWhichIsStartedAndRestartedExterally() throws Exception {
+        final String logString = "Hello Test";
+        setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
+        setConfigFor(HOST, "host", getFile("host.conf"));
+
+        try {
+            dummyFramework.start();
+            waitForNumberOfObservingFrameworks(2); // the executor itself is running in a container too
+
+        } finally {
+            dummyFramework.remove(); // we simulate an external removal of the framework by e.g. marathon scale down
+        }
+
+        waitForNumberOfObservingFrameworks(1);
+
+        startContainer(dummyFramework); // we start the framework again - this time safely so it's removed autmoatically
+        dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
+
+        verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
+    }
+
+
     private void verifyLogstashProcessesLogEvents(String path, String logString) {
         waitForLogstashToProcessLogEvents(path, logString);
 
@@ -139,7 +162,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         assertEquals(STATS, executorMessages.get(0).getType());
 
         List<ContainerState> containers = executorMessages.get(0).getContainersList();
-        //        assertEquals(2, containers.size()); // TODO FIX that several executors are running
+                assertEquals(2, containers.size());
 
         Set<ContainerState.LoggingStateType> stateTypes = containers.stream()
             .map(ContainerState::getType).collect(
@@ -173,6 +196,26 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
             throw e;
         }
+    }
+    private void waitForNumberOfObservingFrameworks(int count) {
+            await().atMost(90, TimeUnit.SECONDS).until(() -> {
+                try {
+                    List<ExecutorMessage> executorMessages = requestInternalStatusAndWaitForResponse();
+                    if (executorMessages.size() == 1 && STATS.equals(executorMessages.get(0).getType())){
+                        List<ContainerState> containers = executorMessages.get(0).getContainersList();
+                        if (count == containers.size()){
+                          return true;
+                        }
+                    }
+
+                    return false;
+
+                } catch (InternalServerErrorException e) {
+                    System.out.println(
+                        "ERROR while waiting for " + count + " running containers: " + e );
+                    return false;
+                }
+            });
     }
 
     private void waitForPsAux(DummyFrameworkContainer framework, String[] existingProcesses,
