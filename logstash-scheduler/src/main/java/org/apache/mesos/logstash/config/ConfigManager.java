@@ -2,7 +2,7 @@ package org.apache.mesos.logstash.config;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.state.IPersistentState;
+import org.apache.mesos.logstash.state.PersistentState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 @Component
 public class ConfigManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
-    private final IPersistentState persistentState;
+    private final PersistentState persistentState;
 
     private final Map<String, LogstashProtos.LogstashConfig> configCache;
 
@@ -26,7 +26,7 @@ public class ConfigManager {
     private Consumer<List<LogstashProtos.LogstashConfig>> onConfigUpdate;
 
     @Autowired
-    public ConfigManager(IPersistentState persistentState) {
+    public ConfigManager(PersistentState persistentState) {
         this.isRunning = false;
         this.persistentState = persistentState;
         configCache = Collections.synchronizedMap(new HashMap<>());

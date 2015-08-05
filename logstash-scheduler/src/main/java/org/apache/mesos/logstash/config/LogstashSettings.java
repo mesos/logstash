@@ -76,14 +76,6 @@ public class LogstashSettings {
         return getBoolean("mesos.logstash.web.enabled", true);
     }
 
-    /**
-     * When set to true, the scheduler will not actually connect to mesos.
-     * It will emulate events so see the events show up in the GUI.
-     */
-    public boolean getWebServerDebug() {
-        return getBoolean("mesos.logstash.web.debug", false);
-    }
-
     public int getWebServerPort() {
         return getInt("mesos.logstash.web.port", DEFAULT_WEB_SERVER_PORT);
     }

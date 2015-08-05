@@ -10,8 +10,6 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.LogstashSettings;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
-import org.apache.mesos.logstash.state.ILiveState;
-import org.apache.mesos.logstash.state.IPersistentState;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.mini.MesosCluster;
@@ -104,8 +102,8 @@ public abstract class AbstractLogstashFrameworkTest {
 
         LogstashSettings settings = new LogstashSettings();
 
-        ILiveState liveState = new LiveState();
-        IPersistentState persistentState = new PersistentState(settings);
+        LiveState liveState = new LiveState();
+        PersistentState persistentState = new PersistentState(settings);
 
         configManager = new ConfigManager(persistentState);
         configManager.start();

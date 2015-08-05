@@ -12,9 +12,7 @@ import org.apache.mesos.state.ZooKeeperState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.io.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +22,7 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
  * Manages the persists needs of the scheduler.  It handles frameworkID and the list of tasks on each host.
  */
 @Component
-public class PersistentState implements IPersistentState {
+public class PersistentState {
 
   private static final String FRAMEWORK_ID_KEY = "frameworkId";
   private static final String LATEST_CONFIG_KEY = "latestConfig";
@@ -44,7 +42,7 @@ public class PersistentState implements IPersistentState {
       "/logstash-mesos/" + logstashSettings.getFrameworkName());
   }
 
-  @Override public FrameworkID getFrameworkID() throws InterruptedException, ExecutionException, InvalidProtocolBufferException {
+  public FrameworkID getFrameworkID() throws InterruptedException, ExecutionException, InvalidProtocolBufferException {
     byte[] existingFrameworkId = zkState.fetch(FRAMEWORK_ID_KEY).get().value();
     if (existingFrameworkId.length > 0) {
       return FrameworkID.parseFrom(existingFrameworkId);
@@ -53,20 +51,20 @@ public class PersistentState implements IPersistentState {
     }
   }
 
-  @Override public void setFrameworkId(FrameworkID frameworkId) throws InterruptedException,
+  public void setFrameworkId(FrameworkID frameworkId) throws InterruptedException,
     ExecutionException {
     Variable value = zkState.fetch(FRAMEWORK_ID_KEY).get();
     value = value.mutate(frameworkId.toByteArray());
     zkState.store(value).get();
   }
 
-  @Override public boolean removeFrameworkId() throws ExecutionException, InterruptedException {
+  public boolean removeFrameworkId() throws ExecutionException, InterruptedException {
     Variable value = zkState.fetch(FRAMEWORK_ID_KEY).get();
     return zkState.expunge(value).get();
   }
 
 
-  @Override public void setLatestConfig(List<LogstashProtos.LogstashConfig> configs)
+  public void setLatestConfig(List<LogstashProtos.LogstashConfig> configs)
       throws ExecutionException, InterruptedException {
     SchedulerMessage message = SchedulerMessage.newBuilder()
         .addAllConfigs(configs)
@@ -79,7 +77,7 @@ public class PersistentState implements IPersistentState {
   }
 
 
-  @Override public SchedulerMessage getLatestConfig()
+  public SchedulerMessage getLatestConfig()
       throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
     byte[] existingConfig = zkState.fetch(LATEST_CONFIG_KEY).get().value();
     if (existingConfig.length > 0) {

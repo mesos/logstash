@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.ui;
 
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
-import org.apache.mesos.logstash.state.ILiveState;
+import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.ui.packets.TaskListPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,10 +22,10 @@ public class StatService {
 
     private final ScheduledExecutorService executorService;
     private final SimpMessagingTemplate template;
-    private final ILiveState liveState;
+    private final LiveState liveState;
     private final LogstashScheduler scheduler;
 
-    @Autowired StatService(SimpMessagingTemplate template, ILiveState liveState, LogstashScheduler scheduler) {
+    @Autowired StatService(SimpMessagingTemplate template, LiveState liveState, LogstashScheduler scheduler) {
         this.template = template;
         this.liveState = liveState;
         this.scheduler = scheduler;

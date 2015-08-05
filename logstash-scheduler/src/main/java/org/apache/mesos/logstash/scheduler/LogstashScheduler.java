@@ -13,8 +13,8 @@ import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.LogstashSettings;
-import org.apache.mesos.logstash.state.ILiveState;
-import org.apache.mesos.logstash.state.IPersistentState;
+import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,8 +36,8 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
-    private final ILiveState liveState;
-    private final IPersistentState persistentState;
+    private final LiveState liveState;
+    private final PersistentState persistentState;
     private final ConfigManager configManager;
     private final LogstashSettings settings;
     private final Collection<FrameworkMessageListener> listeners;
@@ -47,8 +47,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Autowired
     public LogstashScheduler(
-        ILiveState liveState,
-        IPersistentState persistentState,
+        LiveState liveState,
+        PersistentState persistentState,
         ConfigManager configManager,
         LogstashSettings settings) {
 
@@ -65,7 +65,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
 
-        if (!settings.getWebServerDebug()) {
             Protos.FrameworkInfo.Builder frameworkInfo = Protos.FrameworkInfo.newBuilder()
                 .setName(settings.getFrameworkName())
                 .setUser(settings.getLogstashUser())
@@ -89,27 +88,22 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 settings.getMesosMasterUri());
 
             driver.start();
-        }
     }
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
         configManager.setOnConfigUpdate(null);
 
-        if (!settings.getWebServerDebug()) {
+//        if (!settings.getWebServerDebug()) {
             // We are doing a graceful shutdown so we should
             // remove our framework id, so we don't try to reconnect
             // on startup.
-            persistentState.removeFrameworkId();
-            driver.stop(false);
-        }
+//            persistentState.removeFrameworkId();
+//            driver.stop(false);
+//        }
+          driver.stop(false); // TODO return true to enable failover -> look at system tests how to handle that
     }
 
-    public void fail() {
-        if (!settings.getWebServerDebug()) {
-            driver.stop(true);
-        }
-    }
 
     // Used by tests
     @SuppressWarnings("unused")
@@ -125,7 +119,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkId,
         MasterInfo masterInfo) {
-        LOGGER.info("Framework registered as: {}",frameworkId);
+        LOGGER.info("Framework registered as: {}", frameworkId);
         try {
             persistentState.setFrameworkId(frameworkId);
         } catch (InterruptedException | ExecutionException e) {
@@ -192,16 +186,25 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         if (isRunningState(status)) {
             // Send the executor the newest configuration.
 
-            SchedulerMessage message = SchedulerMessage.newBuilder()
-                .setType(NEW_CONFIG)
-                .addAllConfigs(configManager.getLatestConfig())
-                .build();
+            if (status.hasExecutorId()) {
 
-            sendMessage(status.getExecutorId(), status.getSlaveId(), message);
+                SchedulerMessage message = SchedulerMessage.newBuilder()
+                    .setType(NEW_CONFIG)
+                    .addAllConfigs(configManager.getLatestConfig())
+                    .build();
 
-            // We need to prevent tasks receiving old configs because of race condition.
-            liveState.addRunningTask(
-                new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
+                sendMessage(status.getExecutorId(), status.getSlaveId(), message);
+
+                // We need to prevent tasks receiving old configs because of race condition.
+                liveState.addRunningTask(
+                    new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
+            } else {
+                LOGGER.info("NO executor id passed: {}", status);
+                TaskStatus taskStatus = TaskStatus.newBuilder().setTaskId(status.getTaskId()).setState(status.getState()).build();
+                ArrayList<TaskStatus> statuses = new ArrayList<>();
+                statuses.add(taskStatus);
+                driver.reconcileTasks(statuses);
+            }
         } else if (isTerminalState(status)) {
             liveState.removeTask(status.getSlaveId());
         } else {
