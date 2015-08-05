@@ -54,7 +54,7 @@ The executor will require access to its docker host in order to be able to disco
 and stream from docker containers.
 
 Since the executor runs inside its own docker container it will try to reach its host using:
-`http://slavehostname:2376`.
+`http://<slavehostname>:2376`.
 
 ### Requirements on Docker Containers
 
@@ -63,6 +63,34 @@ must have the following binaries installed and executable:
 
 - tail
 - sh
+
+## Running as Marathon app
+
+To run the logstash framework as a Marathon app use the following app template (save e.g. as logstash.json):
+Update the JAVA_OPTS attribute with your Zookeeper servers.
+
+ ```
+ {
+   "id": "/logstash",
+   "cpus": 1,
+   "mem": 1024.0,
+   "instances": 1,
+   "container": {
+     "type": "DOCKER",
+     "docker": {
+       "image": "mesos/logstash-scheduler",
+       "network": "HOST",
+       "forcePullImage": true,
+       "portMappings": []
+     }
+   },
+   "env": {
+     "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_framework -Dmesos.logstash.state.zk=<zkserver:port> -Dmesos.master.uri=zk://<zkserver:port>,<zkserver:port>/mesos"
+   }
+ }
+
+ ```
+ 
 
 ## <a name="configuration"></a> Configuration
 
@@ -129,11 +157,11 @@ GUI.
 The available endpoints are:
 
 ```
-GET /configs
+GET api/configs
 ```
 
 Returns an array of configurations. (See format below)
-The new framework will be available at `/configs/{name}`.
+The new framework will be available at `api/configs/{name}`.
 
 ```
 POST /configs
@@ -145,7 +173,7 @@ Creates a new configuration for a framework. (See format below)
 PUT /configs/{framework-name}
 ```
 
-Updates an existing framework config.
+Updates an existing framework config. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
 
 // TODO: Write about native config endpoints.
 
@@ -162,7 +190,7 @@ __Expected Format__
 DELETE /configs/{framework-name}
 ```
 
-Removes the configuration for this framework.
+Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
 
 # Technical Details
 
