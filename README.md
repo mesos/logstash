@@ -78,7 +78,7 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
    "container": {
      "type": "DOCKER",
      "docker": {
-       "image": "mesos/logstash-scheduler",
+       "image": "mesos/logstash-scheduler:0.0.2",
        "network": "HOST",
        "forcePullImage": true,
        "portMappings": []
@@ -267,3 +267,4 @@ and output to the same destination it's using for another framework.
 
 This project is sponsored by `Cisco Cloud Services`. Thank you for contributing to the Open Source
 community!
+

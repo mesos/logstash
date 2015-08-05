@@ -6,7 +6,7 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "mesos/logstash-scheduler",
+      "image": "mesos/logstash-scheduler:0.0.2",
       "network": "HOST",
       "forcePullImage": true,
       "portMappings": []
