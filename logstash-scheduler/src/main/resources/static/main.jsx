@@ -445,7 +445,7 @@ let ConfigPage = React.createClass({
                                   placeholder="Logstash Config"
                                   defaultValue={self.state.hostConfig}></textarea>
                     <br />
-                    <button type="button">Update</button>
+                    <button type="submit">Update</button>
                 </form>
               }
               <h2>Docker Configurations</h2>
