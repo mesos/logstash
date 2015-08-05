@@ -38,6 +38,7 @@ public class LogstashExecutor implements Executor {
 
         LOGGER.info("Notifying scheduler that executor has started.");
 
+        // TODO send TASK_RUNNING status only if we can talk to the docker daemon and whatever we need for running logstash
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setExecutorId(task.getExecutor().getExecutorId())
             .setTaskId(task.getTaskId())
