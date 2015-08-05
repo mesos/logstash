@@ -5,6 +5,7 @@ import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.LogstashSettings;
@@ -56,7 +57,7 @@ public abstract class AbstractLogstashFrameworkTest {
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
 
-        cluster.injectImage("mesos/logstash-executor");
+        cluster.injectImage(LogstashConstants.EXECUTOR_IMAGE_NAME, LogstashConstants.EXECUTOR_IMAGE_TAG);
     }
 
     public void startContainer(AbstractContainer container) {

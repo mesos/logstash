@@ -256,7 +256,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         DockerInfo.Builder dockerExecutor = DockerInfo.newBuilder()
             .setForcePullImage(false)
-            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME);
+            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
         ContainerInfo.Builder container = ContainerInfo.newBuilder()
             .setType(Type.DOCKER)
@@ -271,7 +271,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setCommand(CommandInfo.newBuilder()
                 .addArguments("dummyArgument")
                 .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME).build())
+                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
                 .setEnvironment(Protos.Environment.newBuilder()
                     .addAllVariables(executorEnvVars.getList()))
                 .setShell(false))
