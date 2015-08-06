@@ -17,7 +17,7 @@ public class ExecutorEnvironmentalVariables {
     /**
      * @param configuration The mesos cluster configuration
      */
-    public ExecutorEnvironmentalVariables(LogstashSettings configuration) {
+    public ExecutorEnvironmentalVariables(Configuration configuration) {
         populateEnvMap(configuration);
     }
 
@@ -33,7 +33,7 @@ public class ExecutorEnvironmentalVariables {
      * Adds environmental variables to the list. Please add new environmental variables here.
      * @param configuration
      */
-    private void populateEnvMap(LogstashSettings configuration) {
+    private void populateEnvMap(Configuration configuration) {
         addToList(native_mesos_library_key, native_mesos_library_path);
         addToList(JAVA_OPTS, getHeapSpaceString(configuration));
     }
@@ -52,7 +52,7 @@ public class ExecutorEnvironmentalVariables {
      * @param configuration The mesos cluster configuration
      * @return A string representing the java heap space.
      */
-    private String getHeapSpaceString(LogstashSettings configuration) {
+    private String getHeapSpaceString(Configuration configuration) {
         return "-Xmx" + configuration.getExecutorHeapSize() + "m";
     }
 }

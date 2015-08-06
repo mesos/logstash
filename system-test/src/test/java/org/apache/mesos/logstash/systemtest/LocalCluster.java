@@ -43,8 +43,7 @@ public class LocalCluster {
 
         String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
 
-        System.setProperty("mesos.master.uri", "zk://" + zkAddress + "/mesos");
-        System.setProperty("mesos.logstash.state.zk", zkAddress);
+        System.setProperty("mesos.zk", "zk://" + zkAddress + "/mesos");
         System.setProperty("mesos.logstash.logstash.heap.size", "128");
         System.setProperty("mesos.logstash.executor.heap.size", "64");
 

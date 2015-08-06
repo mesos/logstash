@@ -8,10 +8,10 @@ import com.github.dockerjava.core.DockerClientConfig;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.LogstashSettings;
+import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.scheduler.Application;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.container.AbstractContainer;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
@@ -95,20 +95,21 @@ public abstract class AbstractLogstashFrameworkTest {
 
         String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
 
-        System.setProperty("mesos.master.uri", "zk://" + zkAddress + "/mesos");
-        System.setProperty("mesos.logstash.state.zk", zkAddress);
+        System.setProperty("mesos.zk", "zk://" + zkAddress + "/mesos");
         System.setProperty("mesos.logstash.logstash.heap.size", "128");
-        System.setProperty("mesos.logstash.executor.heap.size", "64");
+        System.setProperty("mesos.logstash.executor.heap.size", "128");
 
-        LogstashSettings settings = new LogstashSettings();
 
         LiveState liveState = new LiveState();
-        PersistentState persistentState = new PersistentState(settings);
+        Configuration configuration = new Application().getLogstashConfiguration();
+        configuration.setDisableFailover(true); // we remove our framework completely
 
-        configManager = new ConfigManager(persistentState);
+
+        configManager = new ConfigManager(configuration);
+
         configManager.start();
 
-        scheduler = new LogstashScheduler(liveState, persistentState, configManager, settings);
+        scheduler = new LogstashScheduler(liveState, configuration, configManager);
         scheduler.start();
 
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");

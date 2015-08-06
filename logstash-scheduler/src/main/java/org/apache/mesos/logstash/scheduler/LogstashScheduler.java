@@ -1,20 +1,23 @@
 package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.ContainerInfo.DockerInfo;
 import org.apache.mesos.Protos.ContainerInfo.Type;
 import org.apache.mesos.SchedulerDriver;
+import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
+import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
-import org.apache.mesos.logstash.config.LogstashSettings;
+import org.apache.mesos.logstash.state.ClusterState;
+import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.PersistentState;
 import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,26 +39,26 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
-    private final LiveState liveState;
-    private final PersistentState persistentState;
     private final ConfigManager configManager;
-    private final LogstashSettings settings;
     private final Collection<FrameworkMessageListener> listeners;
-
+    private final LiveState liveState;
     private final Clock clock;
+    private final Configuration configuration;
+
     private MesosSchedulerDriver driver;
+    private boolean registered;
+    private ClusterMonitor clusterMonitor = null;
+    private Observable statusUpdateWatchers = new StatusUpdateObservable();
 
     @Autowired
     public LogstashScheduler(
         LiveState liveState,
-        PersistentState persistentState,
-        ConfigManager configManager,
-        LogstashSettings settings) {
-
+        Configuration configuration,
+        ConfigManager configManager) {
         this.liveState = liveState;
-        this.persistentState = persistentState;
+
+        this.configuration = configuration;
         this.configManager = configManager;
-        this.settings = settings;
 
         this.listeners = synchronizedCollection(new ArrayList<>());
         this.clock = new Clock();
@@ -65,44 +68,40 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
 
-            Protos.FrameworkInfo.Builder frameworkInfo = Protos.FrameworkInfo.newBuilder()
-                .setName(settings.getFrameworkName())
-                .setUser(settings.getLogstashUser())
-                .setRole(settings.getLogstashRole())
-                .setCheckpoint(true)
-                .setFailoverTimeout(settings.getFailoverTimeout());
+        Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
+            .setName(configuration.getFrameworkName())
+            .setUser(configuration.getLogStashUser())
+            .setRole(configuration.getLogStashRole())
+            .setCheckpoint(true)
+            .setFailoverTimeout(configuration.getFailoverTimeout());
 
-            try {
-                FrameworkID frameworkID = persistentState.getFrameworkID();
-                if (frameworkID != null) {
-                    LOGGER.info("Found previous framework id: {}", frameworkID);
-                    frameworkInfo.setId(frameworkID);
-                }
-            } catch (InterruptedException | ExecutionException | InvalidProtocolBufferException e) {
-                throw new SchedulerException("Error recovering framework id", e);
-            }
+        FrameworkID frameworkID = configuration.getFrameworkId();
+        if (!StringUtils.isEmpty(frameworkID.getValue())) {
+            LOGGER.info("Found previous framework id: {}", frameworkID);
+            frameworkBuilder.setId(frameworkID);
+        }
 
-            LOGGER.info("Starting Logstash Framework: \n{}", frameworkInfo);
+        LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
-            driver = new MesosSchedulerDriver(this, frameworkInfo.build(),
-                settings.getMesosMasterUri());
+        driver = new MesosSchedulerDriver(this, frameworkBuilder.build(),
+            configuration.getZookeeperUrl());
 
-            driver.start();
+        driver.start();
     }
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
         configManager.setOnConfigUpdate(null);
 
-//        if (!settings.getWebServerDebug()) {
-            // We are doing a graceful shutdown so we should
-            // remove our framework id, so we don't try to reconnect
-            // on startup.
-//            persistentState.removeFrameworkId();
-//            driver.stop(false);
-//        }
-          driver.stop(false); // TODO return true to enable failover -> look at system tests how to handle that
+        if (configuration.isDisableFailover()) {
+            driver.stop(false);
+            configuration.getFrameworkState().removeFrameworkId();
+        } else {
+          driver.stop(true);
+        }
     }
+
+
 
 
     // Used by tests
@@ -119,15 +118,15 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void registered(SchedulerDriver schedulerDriver, FrameworkID frameworkId,
         MasterInfo masterInfo) {
-        LOGGER.info("Framework registered as: {}", frameworkId);
-        try {
-            persistentState.setFrameworkId(frameworkId);
-        } catch (InterruptedException | ExecutionException e) {
-            // these are zk exceptions... we are unable to maintain state.
-            throw new SchedulerException("Error setting framework id in persistent state", e);
-            // FIXME: reconcileTasks(driver);
-        }
+        FrameworkState frameworkState = new FrameworkState(configuration.getState());
+        frameworkState.setFrameworkId(frameworkId);
+        configuration.setFrameworkState(frameworkState);
 
+        LOGGER.info("Framework registered as: {}", frameworkId);
+
+        ClusterState clusterState = new ClusterState(configuration.getState(), frameworkState);
+        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        statusUpdateWatchers.addObserver(clusterMonitor);
         List<Protos.Resource> resources = getResourcesList();
 
         Protos.Request request = Protos.Request.newBuilder()
@@ -136,6 +135,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         List<Protos.Request> requests = Collections.singletonList(request);
         schedulerDriver.requestResources(requests);
+
+//        schedulerDriver.reconcileTasks(Collections.<Protos.TaskStatus>emptyList());
+        registered = true;
     }
 
     @Override
@@ -149,6 +151,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
+        if (!registered) {
+            LOGGER.debug("Not registered, can't accept resource offers.");
+            return;
+        }
         offers.forEach(offer -> {
 
             // TODO: Debug log the offered resource,
@@ -160,16 +166,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                     offer.getId().getValue(),
                     offer.getSlaveId());
 
+                TaskInfo taskInfo = buildTask(offer);
+
                 schedulerDriver.launchTasks(
                     singletonList(offer.getId()),
-                    singletonList(buildTask(offer)));
+                    singletonList(taskInfo));
 
-                liveState.addStagingTaskOnSlave(offer.getSlaveId());
+                clusterMonitor.monitorTask(taskInfo); // Add task to cluster monitor
 
             } else {
-                LOGGER.debug("Declining Offer. offerId={}, slaveId={}",
-                    offer.getId().getValue(),
-                    offer.getSlaveId());
+
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
@@ -183,6 +189,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             status.getState(),
             status.getMessage());
 
+        statusUpdateWatchers.notifyObservers(status);
+
         if (isRunningState(status)) {
             // Send the executor the newest configuration.
 
@@ -192,12 +200,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                     .setType(NEW_CONFIG)
                     .addAllConfigs(configManager.getLatestConfig())
                     .build();
-
+                // TODO refactor into own statusUpdateWatcher
                 sendMessage(status.getExecutorId(), status.getSlaveId(), message);
 
-                // We need to prevent tasks receiving old configs because of race condition.
-                liveState.addRunningTask(
-                    new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
             } else {
                 LOGGER.info("NO executor id passed: {}", status);
                 TaskStatus taskStatus = TaskStatus.newBuilder().setTaskId(status.getTaskId()).setState(status.getState()).build();
@@ -205,10 +210,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 statuses.add(taskStatus);
                 driver.reconcileTasks(statuses);
             }
-        } else if (isTerminalState(status)) {
-            liveState.removeTask(status.getSlaveId());
-        } else {
-            LOGGER.debug("No action required after status update. state={}", status.getState());
         }
     }
 
@@ -220,8 +221,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         LOGGER.debug("Sending new config to all executors.");
 
-        liveState.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutorID(), e.getSlaveID(), message));
+        clusterMonitor.getRunningTasks().forEach(e ->
+            sendMessage(e.getExecutorId(), e.getSlaveId(), message));
     }
 
     private void sendMessage(ExecutorID executorId, SlaveID slaveId, SchedulerMessage schedulerMessage) {
@@ -265,7 +266,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setType(Type.DOCKER)
             .setDocker(dockerExecutor.build());
 
-        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(settings);
+        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(configuration);
 
         ExecutorInfo executorInfo = ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
@@ -294,14 +295,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private List<Resource> getResourcesList() {
 
-        int memNeeded = settings.getExecutorHeapSize() + settings.getLogstashHeapSize();
+        int memNeeded = configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize();
 
         return Arrays.asList(
             Resource.newBuilder()
                 .setName("cpus")
                 .setType(Value.Type.SCALAR)
                 .setScalar(Value.Scalar.newBuilder()
-                    .setValue(settings.getExecutorCpus()).build())
+                    .setValue(configuration.getExecutorCpus()).build())
                 .build(),
             Resource.newBuilder()
                 .setName("mem")
@@ -314,22 +315,24 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private boolean shouldAcceptOffer(Offer offer) {
 
-        boolean enoughCPU = hasEnoughOfResourceType(offer, "cpus", settings.getExecutorCpus());
-        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem", settings.getExecutorHeapSize());
-
-        if (!enoughCPU || !enoughMEM) {
+        if (isHostAlreadyRunningTask(offer)){
+            LOGGER.debug("Declined offer: Host " + offer.getHostname()
+                + " is already running an Logstash task");
             return false;
         }
 
-        // Don't run the same framework multiple times on the same host
-        if (liveState.isAlreadyStaging(offer.getSlaveId())){
+        boolean enoughCPU = hasEnoughOfResourceType(offer, "cpus", configuration.getExecutorCpus());
+        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem", configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize());
+
+        if (!enoughCPU) {
+            LOGGER.debug("Declined offer: Not enough CPU resources");
+            return false;
+        } else if (!enoughMEM) {
+            LOGGER.debug("Declined offer: Not enough MEM resources");
             return false;
         }
 
-        boolean slaveHasTask = liveState.getRunningTasks().stream().anyMatch(e ->
-            e.getSlaveID().equals(offer.getSlaveId()));
-
-        return !slaveHasTask;
+        return true;
     }
 
     private boolean hasEnoughOfResourceType(Offer offer, String resourceName, double minSize) {
@@ -349,8 +352,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
             .build();
 
-        liveState.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutorID(), e.getSlaveID(), message));
+        clusterMonitor.getRunningTasks().forEach(e ->
+            sendMessage(e.getExecutorId(), e.getSlaveId(), message));
     }
 
     @Override
@@ -389,5 +392,28 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private boolean isRunningState(TaskStatus taskStatus) {
         return taskStatus.getState().equals(TaskState.TASK_RUNNING);
+    }
+
+
+    private boolean isHostAlreadyRunningTask(Protos.Offer offer) {
+        Boolean result = false;
+        List<Protos.TaskInfo> stateList = clusterMonitor.getClusterState().getTaskList();
+        for (Protos.TaskInfo t : stateList) {
+            if (t.getSlaveId().equals(offer.getSlaveId())) {
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Implementation of Observable to fix the setChanged problem.
+     */
+    private static class StatusUpdateObservable extends Observable {
+        @Override
+        public void notifyObservers(Object arg) {
+            this.setChanged(); // This is ridiculous.
+            super.notifyObservers(arg);
+        }
     }
 }

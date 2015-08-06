@@ -1,11 +1,10 @@
 package org.apache.mesos.logstash.config;
 
-import org.springframework.stereotype.Component;
+import org.apache.mesos.logstash.state.SerializableState;
 
 import java.util.Properties;
 
-@Component
-public class LogstashSettings {
+public class LogstashSystemProperties {
 
     private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 512;
     private static final int DEFAULT_EXECUTOR_HEAP_SIZE = 256;
@@ -19,6 +18,7 @@ public class LogstashSettings {
     private static final int DEFAULT_WEB_SERVER_PORT = 9092;
 
     private final Properties props;
+    private SerializableState state;
 
     private int getInt(String key, int defaultValue) {
         String value = props.getProperty(key);
@@ -40,7 +40,7 @@ public class LogstashSettings {
         return (value != null) ? Long.valueOf(value) :defaultValue;
     }
 
-    public LogstashSettings() {
+    public LogstashSystemProperties() {
         this.props = System.getProperties();
     }
 
@@ -60,8 +60,11 @@ public class LogstashSettings {
         return getInt("mesos.logstash.logstash.heap.size", DEFAULT_LOGSTASH_HEAP_SIZE);
     }
 
-    public String getMesosMasterUri() {
-        return props.getProperty("mesos.master.uri", "zk://localhost:2181/mesos");
+    /**
+     * @return the setting for the zk servers. Note: it's not validated whether this is a valid zk URI
+     */
+    public String getZookeeperServerProperty() {
+        return props.getProperty("mesos.zk", null);
     }
 
     public String getFrameworkName() {
@@ -88,11 +91,17 @@ public class LogstashSettings {
         return props.getProperty("mesos.logstash.role", "*");
     }
 
-    public String getStateZkServers() {
-        return props.getProperty("mesos.logstash.state.zk", "localhost:2181");
+    public int getZkTimeout() {
+        return getInt("mesos.zk.timeout.ms", DEFAULT_ZK_TIME_MS);
     }
 
-    public int getStateZkTimeout() {
-        return getInt("mesos.logstash.state.zk.timeout.ms", DEFAULT_ZK_TIME_MS);
+    public SerializableState getState() {
+        return state;
     }
+
+    public void setState(SerializableState state) {
+        this.state = state;
+    }
+
+
 }

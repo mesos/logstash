@@ -1,9 +1,9 @@
 package org.apache.mesos.logstash.ui;
 
-import org.apache.mesos.logstash.common.LogType;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.LogstashSettings;
+import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.LogstashSystemProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +23,9 @@ public class HomeController {
 
     public static final String HOST_FILE_NAME = "ui";
     private final ConfigManager configManager;
-    private final LogstashSettings settings;
+    private final Configuration settings;
 
-    @Autowired HomeController(ConfigManager configManager, LogstashSettings settings) {
+    @Autowired HomeController(ConfigManager configManager, Configuration settings) {
         this.configManager = configManager;
         this.settings = settings;
     }
@@ -100,7 +100,7 @@ public class HomeController {
 
     @RequestMapping(method = RequestMethod.GET, value = "/app/settings")
     @ResponseBody
-    public LogstashSettings getSettings() {
+    public Configuration getSettings() {
         return settings;
     }
 

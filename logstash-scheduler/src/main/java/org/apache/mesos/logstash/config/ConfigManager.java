@@ -2,7 +2,7 @@ package org.apache.mesos.logstash.config;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.state.PersistentState;
+import org.apache.mesos.logstash.state.FrameworkState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,18 +17,18 @@ import java.util.function.Consumer;
 @Component
 public class ConfigManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
-    private final PersistentState persistentState;
 
     private final Map<String, LogstashProtos.LogstashConfig> configCache;
+    private FrameworkState frameworkState;
 
     private boolean isRunning;
 
     private Consumer<List<LogstashProtos.LogstashConfig>> onConfigUpdate;
 
     @Autowired
-    public ConfigManager(PersistentState persistentState) {
+    public ConfigManager(Configuration configuration) {
+        this.frameworkState = configuration.getFrameworkState();
         this.isRunning = false;
-        this.persistentState = persistentState;
         configCache = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -36,7 +36,8 @@ public class ConfigManager {
     public void start()
         throws ExecutionException, InterruptedException, InvalidProtocolBufferException {
 
-        LogstashProtos.SchedulerMessage persistedConfig = persistentState.getLatestConfig();
+        LogstashProtos.SchedulerMessage persistedConfig = frameworkState
+            .getLatestConfig();
 
         LOGGER.info("Fetched latest config: {}", persistedConfig);
 
@@ -57,7 +58,7 @@ public class ConfigManager {
     public void save(LogstashProtos.LogstashConfig config)
         throws IOException, ExecutionException, InterruptedException {
         configCache.put(config.getFrameworkName(), config);
-        persistentState.setLatestConfig(getLatestConfig());
+        frameworkState.setLatestConfig(getLatestConfig());
         notifyScheduler();
     }
 
@@ -76,7 +77,7 @@ public class ConfigManager {
 
     public void delete(String name) throws ExecutionException, InterruptedException {
         configCache.remove(name);
-        persistentState.setLatestConfig(getLatestConfig());
+        frameworkState.setLatestConfig(getLatestConfig());
         notifyScheduler();
     }
 }
