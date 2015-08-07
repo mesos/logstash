@@ -50,6 +50,7 @@ public class Application {
         conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
         conf.setExecutorCpus(logstashSystemProperties.getExecutorCpus());
         conf.setExecutorHeapSize(logstashSystemProperties.getExecutorHeapSize());
+        conf.setLogstashHeapSize(logstashSystemProperties.getLogstashHeapSize());
         conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
         conf.setFrameworkName(logstashSystemProperties.getFrameworkName());
         conf.setLogStashRole(logstashSystemProperties.getLogstashRole());
