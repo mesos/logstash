@@ -8,6 +8,7 @@ import org.apache.mesos.Protos.ContainerInfo.DockerInfo;
 import org.apache.mesos.Protos.ContainerInfo.Type;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
+import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
@@ -17,6 +18,7 @@ import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
+import org.apache.mesos.logstash.state.LSTaskStatus;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.util.Clock;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import javax.annotation.PreDestroy;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -49,6 +52,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private boolean registered;
     private ClusterMonitor clusterMonitor = null;
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
+
 
     @Autowired
     public LogstashScheduler(
@@ -97,12 +101,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             driver.stop(false);
             configuration.getFrameworkState().removeFrameworkId();
         } else {
-          driver.stop(true);
+            driver.stop(true);
         }
     }
-
-
-
 
     // Used by tests
     @SuppressWarnings("unused")
@@ -136,17 +137,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         List<Protos.Request> requests = Collections.singletonList(request);
         schedulerDriver.requestResources(requests);
 
-//        schedulerDriver.reconcileTasks(Collections.<Protos.TaskStatus>emptyList());
+        reconcileTasks();
         registered = true;
     }
 
     @Override
     public void reregistered(SchedulerDriver schedulerDriver, MasterInfo masterInfo) {
-        // TODO: reconcileTasks from persistent state
-        // LOGGER.info("Re-registered framework: starting task reconciliation");
-        // e.g. reconcileTasks(driver);
-
         LOGGER.info("Re-registered with master. ip={}", masterInfo.getId());
+        reconcileTasks();
     }
 
     @Override
@@ -155,6 +153,12 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             LOGGER.debug("Not registered, can't accept resource offers.");
             return;
         }
+
+        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS) {
+            LOGGER.debug("Still in the reconciliation phase, can't accept resource offers.");
+            return;
+        }
+
         offers.forEach(offer -> {
 
             // TODO: Debug log the offered resource,
@@ -194,26 +198,25 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         if (isRunningState(status)) {
             // Send the executor the newest configuration.
 
-            if (status.hasExecutorId()) {
+            LSTaskStatus lsTaskStatus = clusterMonitor
+                .getClusterState().getStatus(status.getTaskId());
 
                 SchedulerMessage message = SchedulerMessage.newBuilder()
                     .setType(NEW_CONFIG)
                     .addAllConfigs(configManager.getLatestConfig())
                     .build();
                 // TODO refactor into own statusUpdateWatcher
-                sendMessage(status.getExecutorId(), status.getSlaveId(), message);
+                sendMessage(lsTaskStatus.getTaskInfo().getExecutor().getExecutorId(), lsTaskStatus.getTaskInfo().getSlaveId(), message);
 
-            } else {
-                LOGGER.info("NO executor id passed: {}", status);
-                TaskStatus taskStatus = TaskStatus.newBuilder().setTaskId(status.getTaskId()).setState(status.getState()).build();
-                ArrayList<TaskStatus> statuses = new ArrayList<>();
-                statuses.add(taskStatus);
-                driver.reconcileTasks(statuses);
-            }
         }
     }
 
     public void updateExecutorConfig(List<LogstashProtos.LogstashConfig> configs) {
+
+        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
+            return; // we will update the config as soon as we get a status update
+        }
+
         SchedulerMessage message = SchedulerMessage.newBuilder()
             .addAllConfigs(configs)
             .setType(NEW_CONFIG)
@@ -222,10 +225,11 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         LOGGER.debug("Sending new config to all executors.");
 
         clusterMonitor.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutorId(), e.getSlaveId(), message));
+            sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message));
     }
 
-    private void sendMessage(ExecutorID executorId, SlaveID slaveId, SchedulerMessage schedulerMessage) {
+    private void sendMessage(ExecutorID executorId, SlaveID slaveId,
+        SchedulerMessage schedulerMessage) {
 
         LOGGER.debug("Sending message to executor {}", schedulerMessage);
         driver.sendFrameworkMessage(executorId, slaveId, schedulerMessage.toByteArray());
@@ -266,7 +270,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setType(Type.DOCKER)
             .setDocker(dockerExecutor.build());
 
-        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(configuration);
+        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
+            configuration);
 
         ExecutorInfo executorInfo = ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
@@ -295,7 +300,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private List<Resource> getResourcesList() {
 
-        int memNeeded = configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize();
+        int memNeeded = configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize() + configuration.getExecutorOverheadMem();
 
         return Arrays.asList(
             Resource.newBuilder()
@@ -315,14 +320,13 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private boolean shouldAcceptOffer(Offer offer) {
 
-        if (isHostAlreadyRunningTask(offer)){
-            LOGGER.debug("Declined offer: Host " + offer.getHostname()
-                + " is already running an Logstash task");
+        if (isHostAlreadyRunningTask(offer)) {
             return false;
         }
 
         boolean enoughCPU = hasEnoughOfResourceType(offer, "cpus", configuration.getExecutorCpus());
-        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem", configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize());
+        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem",
+            configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize() + configuration.getExecutorOverheadMem());
 
         if (!enoughCPU) {
             LOGGER.debug("Declined offer: Not enough CPU resources");
@@ -348,12 +352,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     public void requestExecutorStats() {
 
+        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
+            return;
+        }
+
         SchedulerMessage message = SchedulerMessage.newBuilder()
             .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
             .build();
 
         clusterMonitor.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutorId(), e.getSlaveId(), message));
+            sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message));
     }
 
     @Override
@@ -382,18 +390,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         // This is handled in statusUpdate.
     }
 
-    private boolean isTerminalState(TaskStatus taskStatus) {
-        return taskStatus.getState().equals(TaskState.TASK_FAILED)
-            || taskStatus.getState().equals(TaskState.TASK_FINISHED)
-            || taskStatus.getState().equals(TaskState.TASK_KILLED)
-            || taskStatus.getState().equals(TaskState.TASK_LOST)
-            || taskStatus.getState().equals(TaskState.TASK_ERROR);
-    }
 
     private boolean isRunningState(TaskStatus taskStatus) {
         return taskStatus.getState().equals(TaskState.TASK_RUNNING);
     }
-
 
     private boolean isHostAlreadyRunningTask(Protos.Offer offer) {
         Boolean result = false;
@@ -404,6 +404,65 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             }
         }
         return result;
+    }
+
+    private void reconcileTasks() {
+        new ReconcileStateTask(configuration.getReconcilationTimeoutSek() * 1000).start();
+    }
+
+    private class ReconcileStateTask extends TimerTask {
+        final int maxRetry = 10; // TODO make configurable?
+        final int count;
+        final long timeout;
+
+        private ReconcileStateTask(long timeout) {
+            this.count = 1;
+            this.timeout = timeout;
+        }
+        private ReconcileStateTask(int count, long timeout) {
+            this.count = count;
+            this.timeout = timeout;
+        }
+
+        public void start() {
+            clusterMonitor.setExecutionPhase(ExecutionPhase.RECONCILING_TASKS);
+
+            driver.reconcileTasks(Collections.<Protos.TaskStatus>emptyList());
+            Timer timer = new Timer();
+            timer.schedule(this, timeout);
+        }
+
+        @Override
+        public void run() {
+            if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RUNNING) {
+                return;
+            }
+            LOGGER.info(
+                "Reconciliation phase has timed out. Waiting for {} tasks. Trigger new...");
+
+            if (count < maxRetry){
+                int newCount = count + 1;
+                long newTimeout = this.timeout + 60 * 1000 * newCount;
+
+                new ReconcileStateTask(newCount, newTimeout).start();
+
+            } else  {
+                LOGGER.info("Max retries to reconcile tasks exceeded. Removing all tasks to which we haven't received a status update.");
+
+                List<TaskInfo> taskInfos = clusterMonitor.getClusterState().getTaskList();
+                Set<String> runningTaskIds = liveState.getNonTerminalTasks().stream().map(
+                    t -> t.getTaskId().getValue()).collect(Collectors.toSet());
+
+                taskInfos.stream()
+                    .filter(task -> task != null && !runningTaskIds.contains(task.getTaskId().getValue()))
+                    .forEach(task -> {
+                        LOGGER.info("Removing task id: {}", task);
+                        clusterMonitor.getClusterState().removeTask(task);
+                    });
+
+                clusterMonitor.setExecutionPhase(ExecutionPhase.RUNNING);
+            }
+        }
     }
 
     /**

@@ -18,6 +18,17 @@ public class Configuration {
     private String logStashRole = "";
     private FrameworkState frameworkState;
     private boolean disableFailover = false;
+    private int reconcilationTimeoutSek = 60 * 1;
+    private int executorOverheadMem = 50;
+
+    public int getReconcilationTimeoutSek() {
+        return reconcilationTimeoutSek;
+    }
+
+    public void setReconcilationTimeoutSek(int reconcilationTimeoutSek) {
+        this.reconcilationTimeoutSek = reconcilationTimeoutSek;
+    }
+
 
     public boolean isDisableFailover() {
         return disableFailover;
@@ -121,5 +132,9 @@ public class Configuration {
 
     public void setZkTimout(int zkTimout) {
         this.zkTimout = zkTimout;
+    }
+
+    public int getExecutorOverheadMem() {
+        return executorOverheadMem;
     }
 }

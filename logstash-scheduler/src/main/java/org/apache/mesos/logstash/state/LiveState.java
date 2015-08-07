@@ -12,6 +12,9 @@ import java.util.Set;
 
 import static java.util.stream.Collectors.toSet;
 
+/**
+ * Is used to show live data in the UI.
+ */
 public class LiveState {
 
     private final Map<SlaveID, Task> tasks;
@@ -20,21 +23,22 @@ public class LiveState {
         tasks = Collections.synchronizedMap(new HashMap<>());
     }
 
-    public Set<Task> getRunningTasks() {
+    public Set<Task> getNonTerminalTasks() {
         return tasks.entrySet()
             .stream()
             .map(Map.Entry::getValue)
             .collect(toSet());
     }
 
-
     public void removeTask(SlaveID slaveId) {
         tasks.remove(slaveId);
     }
 
-    public void updateTaskStatus(Protos.TaskStatus status) {
-        if (status.getState().equals(Protos.TaskState.TASK_RUNNING)){
-            tasks.put(status.getSlaveId(), new Task(status.getTaskId(), status.getSlaveId(), status.getExecutorId()));
+    public void updateTaskStatus(Protos.TaskStatus status, Protos.TaskInfo taskInfo) {
+        if (!StateUtil.isTerminalState(status.getState())) {
+
+            tasks.put(status.getSlaveId(), new Task(status.getTaskId(), taskInfo.getSlaveId(),
+                taskInfo.getExecutor().getExecutorId()));
         } else {
             removeTask(status.getSlaveId());
         }
@@ -42,7 +46,8 @@ public class LiveState {
     }
 
     public void updateStats(SlaveID slaveID, ExecutorMessage messages) {
-        tasks.put(slaveID, new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus()));
+        tasks.put(slaveID,
+            new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus()));
     }
-
 }
+

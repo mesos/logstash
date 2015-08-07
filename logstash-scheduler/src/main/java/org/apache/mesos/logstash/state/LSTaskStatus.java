@@ -86,9 +86,10 @@ public class LSTaskStatus {
         return  TaskState.TASK_RUNNING.equals(state);
     }
 
-    public boolean taskInError() {
+
+    public boolean taskInTerminalState() {
         TaskState state = getStatus().getState();
-        return state.equals(TaskState.TASK_ERROR) || state.equals(TaskState.TASK_FAILED) || state.equals(TaskState.TASK_LOST);
+        return StateUtil.isTerminalState(state);
     }
 
     public void destroy() {
