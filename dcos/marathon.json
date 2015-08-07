@@ -13,7 +13,7 @@
     }
   },
   "env": {
-    "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_test1 -Dmesos.logstash.state.zk=173.39.208.245:2181 -Dmesos.master.uri=zk://173.39.208.245:2181/mesos"
+    "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_01 -Dmesos.zk=zk://173.39.208.245:2181/mesos"
   }
 
 }
