@@ -11,6 +11,7 @@ import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.scheduler.Application;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
+import org.apache.mesos.logstash.scheduler.MesosSchedulerDriverFactory;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.container.AbstractContainer;
@@ -107,9 +108,10 @@ public abstract class AbstractLogstashFrameworkTest {
 
         configManager = new ConfigManager(configuration);
 
+        MesosSchedulerDriverFactory driverFactory = new MesosSchedulerDriverFactory();
         configManager.start();
 
-        scheduler = new LogstashScheduler(liveState, configuration, configManager);
+        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory);
         scheduler.start();
 
         System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
