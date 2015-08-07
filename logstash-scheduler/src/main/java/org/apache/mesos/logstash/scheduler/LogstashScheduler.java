@@ -28,6 +28,8 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -68,9 +70,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         this.clock = new Clock();
     }
 
+
+
+
     @PostConstruct
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
+
+        String webUiURL = createWebuiUrl(configuration.getWebServerPort());
 
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(configuration.getFrameworkName())
@@ -78,6 +85,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setRole(configuration.getLogStashRole())
             .setCheckpoint(true)
             .setFailoverTimeout(configuration.getFailoverTimeout());
+
+        if (webUiURL != null) {
+            frameworkBuilder.setWebuiUrl(createWebuiUrl(configuration.getWebServerPort()));
+        }
 
         FrameworkID frameworkID = configuration.getFrameworkId();
         if (!StringUtils.isEmpty(frameworkID.getValue())) {
@@ -390,10 +401,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         // This is handled in statusUpdate.
     }
 
-
     private boolean isRunningState(TaskStatus taskStatus) {
         return taskStatus.getState().equals(TaskState.TASK_RUNNING);
     }
+
 
     private boolean isHostAlreadyRunningTask(Protos.Offer offer) {
         Boolean result = false;
@@ -411,19 +422,19 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     private class ReconcileStateTask extends TimerTask {
+
         final int maxRetry = 10; // TODO make configurable?
         final int count;
         final long timeout;
-
         private ReconcileStateTask(long timeout) {
             this.count = 1;
             this.timeout = timeout;
         }
+
         private ReconcileStateTask(int count, long timeout) {
             this.count = count;
             this.timeout = timeout;
         }
-
         public void start() {
             clusterMonitor.setExecutionPhase(ExecutionPhase.RECONCILING_TASKS);
 
@@ -463,6 +474,18 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 clusterMonitor.setExecutionPhase(ExecutionPhase.RUNNING);
             }
         }
+
+    }
+    private String createWebuiUrl(int webServerPort) {
+        String webUiUrl = null;
+        try {
+            String hostName = InetAddress.getLocalHost().getHostName();
+            webUiUrl = "http:\\/\\/" + hostName + ":" + webServerPort;
+        } catch (UnknownHostException e) {
+            LOGGER.warn("Can not determine host name", e);
+        }
+        LOGGER.debug("Setting webuiUrl to " + webUiUrl);
+        return webUiUrl;
     }
 
     /**

@@ -20,6 +20,7 @@ public class Configuration {
     private boolean disableFailover = false;
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
+    private int webServerPort = 9092;
 
     public int getReconcilationTimeoutSek() {
         return reconcilationTimeoutSek;
@@ -136,5 +137,13 @@ public class Configuration {
 
     public int getExecutorOverheadMem() {
         return executorOverheadMem;
+    }
+
+    public int getWebServerPort() {
+        return webServerPort;
+    }
+
+    public void setWebServerPort(int webServerPort) {
+        this.webServerPort = webServerPort;
     }
 }

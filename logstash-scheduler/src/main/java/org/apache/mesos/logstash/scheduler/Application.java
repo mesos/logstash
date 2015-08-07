@@ -55,6 +55,7 @@ public class Application {
         conf.setLogStashRole(logstashSystemProperties.getLogstashRole());
         conf.setLogStashUser(logstashSystemProperties.getLogstashUser());
         conf.setZkTimout(logstashSystemProperties.getZkTimeout());
+        conf.setWebServerPort(logstashSystemProperties.getWebServerPort());
 
         return conf;
     }
