@@ -22,7 +22,7 @@ public class FileLogSteamWriter implements LogStreamWriter {
     @Override
     public void write(String name, LogStream logStream) throws IOException {
 
-        Path path = Paths.get(name);
+        Path path = Paths.get(name); // TODO what happens if name contains invalid characters?
 
         FileUtils.touch(path.toFile());
 
