@@ -75,7 +75,6 @@ public class ClusterMonitor implements Observer {
         return taskStatus;
     }
 
-
     public synchronized List<Protos.TaskInfo> getRunningTasks(){
         ArrayList<Protos.TaskInfo> runningTasks = new ArrayList<>();
         List<Protos.TaskInfo> taskInfoList = getClusterState().getTaskList();
