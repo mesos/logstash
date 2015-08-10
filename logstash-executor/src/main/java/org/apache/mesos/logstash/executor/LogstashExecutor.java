@@ -52,6 +52,8 @@ public class LogstashExecutor implements Executor {
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setTaskId(taskId)
             .setState(Protos.TaskState.TASK_KILLED).build());
+
+        driver.stop();
     }
 
     @Override
