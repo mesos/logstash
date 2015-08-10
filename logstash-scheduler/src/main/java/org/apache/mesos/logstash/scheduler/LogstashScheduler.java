@@ -379,7 +379,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         }
         public void start() {
             clusterMonitor.setExecutionPhase(ExecutionPhase.RECONCILING_TASKS);
-
+            liveState.reset();
             driver.reconcileTasks(Collections.<Protos.TaskStatus>emptyList());
             Timer timer = new Timer();
             timer.schedule(this, timeout);

@@ -49,5 +49,9 @@ public class LiveState {
         tasks.put(slaveID,
             new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus()));
     }
+
+    public void reset() {
+        tasks.clear();
+    }
 }
 
