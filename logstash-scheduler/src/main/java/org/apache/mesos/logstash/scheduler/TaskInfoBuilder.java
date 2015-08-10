@@ -5,10 +5,12 @@ import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.util.Clock;
 
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TaskInfoBuilder {
 
@@ -29,6 +31,7 @@ public class TaskInfoBuilder {
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
             .setType(Protos.ContainerInfo.Type.DOCKER)
+            .addAllVolumes(getVolumes())
             .setDocker(dockerExecutor.build());
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
@@ -57,6 +60,20 @@ public class TaskInfoBuilder {
                 // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
             .build();
+    }
+
+    private List<Protos.Volume> getVolumes() {
+        return configuration.getVolumes().stream().map(s ->
+                        Protos.Volume.newBuilder()
+                                .setHostPath(s)
+                                .setContainerPath(generateVolumeContainerPath(s))
+                                .setMode(Protos.Volume.Mode.RO)
+                                .build()
+        ).collect(Collectors.toList());
+    }
+
+    private static String generateVolumeContainerPath(String hostPath) {
+        return Paths.get("/tmp/volumes/", hostPath).toString();
     }
 
 

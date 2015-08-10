@@ -103,5 +103,7 @@ public class LogstashSystemProperties {
         this.state = state;
     }
 
+    public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }
+
 
 }

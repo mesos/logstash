@@ -46,6 +46,7 @@ public class Application {
 
         Configuration conf = new Configuration();
 
+        conf.setVolumeString(logstashSystemProperties.getVolumes());
         conf.setState(getState(logstashSystemProperties));
         conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
         conf.setExecutorCpus(logstashSystemProperties.getExecutorCpus());

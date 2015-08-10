@@ -4,6 +4,10 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.SerializableState;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 public class Configuration {
 
     private String zookeeperUrl = null;
@@ -22,6 +26,12 @@ public class Configuration {
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
 
+    public void setVolumeString(String volumeString) {
+        this.volumeString = volumeString;
+    }
+
+    private String volumeString = "";
+
     public int getReconcilationTimeoutMillis() {
         return reconcilationTimeoutSek * 1000;
     }
@@ -30,10 +40,19 @@ public class Configuration {
         this.reconcilationTimeoutSek = reconcilationTimeoutSek;
     }
 
+    public List<String> getVolumes() {
+        return splitVolumes(volumeString);
+    }
+
+    private static List<String> splitVolumes(String volumeString) {
+        return Arrays.asList(volumeString.split(","));
+    }
+
     // Generate a fingerprint that can be used to compare configurations quickly
     public String getFingerprint() {
         String fingerprint = "EXECUTOR HEAPSIZE " + executorHeapSize + " EXECUTOR CPUS " + executorCpus + "LS HEAP SIZE" + logstashHeapSize;
         fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
+        fingerprint = fingerprint + " VOLUMES " + this.volumeString;
 
         return fingerprint;
     }
