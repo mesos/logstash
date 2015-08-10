@@ -218,13 +218,18 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             LSTaskStatus lsTaskStatus = clusterMonitor
                 .getClusterState().getStatus(status.getTaskId());
 
-            SchedulerMessage message = SchedulerMessage.newBuilder()
-                .setType(NEW_CONFIG)
-                .addAllConfigs(configManager.getLatestConfig())
-                .build();
-            // TODO refactor into own statusUpdateWatcher
-            sendMessage(lsTaskStatus.getTaskInfo().getExecutor().getExecutorId(), lsTaskStatus.getTaskInfo().getSlaveId(), message);
+            if(lsTaskStatus.getConfigurationFingerprint().equals(configuration.getFingerprint())) {
+                SchedulerMessage message = SchedulerMessage.newBuilder()
+                        .setType(NEW_CONFIG)
+                        .addAllConfigs(configManager.getLatestConfig())
+                        .build();
+                // TODO refactor into own statusUpdateWatcher
+                sendMessage(lsTaskStatus.getTaskInfo().getExecutor().getExecutorId(), lsTaskStatus.getTaskInfo().getSlaveId(), message);
 
+            }
+            else {
+                driver.killTask(status.getTaskId());
+            }
         }
     }
 
