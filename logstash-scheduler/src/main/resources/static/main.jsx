@@ -341,7 +341,7 @@ let NodePage = React.createClass({
         };
 
         let healthText = function (status) {
-            if (status === "RECONCILIATION_DONE") {
+            if (status === "RUNNING") {
                 return <div className="status status--healthy">Healthy</div>
             }
             else if (status === "ERROR") {
