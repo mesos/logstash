@@ -114,7 +114,7 @@ public abstract class AbstractLogstashFrameworkTest {
         scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory);
         scheduler.start();
 
-        System.out.println("**************** RUNNING CONTAINERS ON TEST START *******************");
+        System.out.println("**************** RECONCILIATION_DONE CONTAINERS ON TEST START *******************");
         printRunningContainers();
         System.out.println("*********************************************************************");
 

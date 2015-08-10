@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.log4j.Logger;
+import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskInfo;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.apache.mesos.Protos.TaskID;
 
@@ -135,5 +137,9 @@ public class ClusterState {
 
     private String getKey() throws NotSerializableException {
         return frameworkState.getFrameworkID().getValue() + "/" + STATE_LIST;
+    }
+
+    public List<TaskID> getTaskIdList() {
+        return getTaskList().stream().map(TaskInfo::getTaskId).collect(Collectors.toList());
     }
 }

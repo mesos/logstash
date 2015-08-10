@@ -363,64 +363,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
     private void reconcileTasks() {
-        new ReconcileStateTask(configuration.getReconcilationTimeoutSek() * 1000).start();
+        clusterMonitor.startReconciling(driver);
     }
 
-    private class ReconcileStateTask extends TimerTask {
 
-        final int maxRetry = 10; // TODO make configurable?
-        final int count;
-        final long timeout;
-        private ReconcileStateTask(long timeout) {
-            this.count = 1;
-            this.timeout = timeout;
-        }
-
-        private ReconcileStateTask(int count, long timeout) {
-            this.count = count;
-            this.timeout = timeout;
-        }
-        public void start() {
-            clusterMonitor.setExecutionPhase(ExecutionPhase.RECONCILING_TASKS);
-            liveState.reset();
-            driver.reconcileTasks(Collections.<Protos.TaskStatus>emptyList());
-            Timer timer = new Timer();
-            timer.schedule(this, timeout);
-        }
-
-        @Override
-        public void run() {
-            if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RUNNING) {
-                return;
-            }
-            LOGGER.info(
-                "Reconciliation phase has timed out. Waiting for {} tasks. Trigger new...");
-
-            if (count < maxRetry){
-                int newCount = count + 1;
-                long newTimeout = this.timeout + 60 * 1000 * newCount;
-
-                new ReconcileStateTask(newCount, newTimeout).start();
-
-            } else  {
-                LOGGER.info("Max retries to reconcile tasks exceeded. Removing all tasks to which we haven't received a status update.");
-
-                List<TaskInfo> taskInfos = clusterMonitor.getClusterState().getTaskList();
-                Set<String> runningTaskIds = liveState.getNonTerminalTasks().stream().map(
-                    t -> t.getTaskId().getValue()).collect(Collectors.toSet());
-
-                taskInfos.stream()
-                    .filter(task -> task != null && !runningTaskIds.contains(task.getTaskId().getValue()))
-                    .forEach(task -> {
-                        LOGGER.info("Removing task id: {}", task);
-                        clusterMonitor.getClusterState().removeTask(task);
-                    });
-
-                clusterMonitor.setExecutionPhase(ExecutionPhase.RUNNING);
-            }
-        }
-
-    }
     private String createWebuiUrl(int webServerPort) {
         String webUiUrl = null;
         try {

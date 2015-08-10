@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.cluster;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.LSTaskStatus;
@@ -9,10 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Contains all cluster information. Monitors state of cluster elements.
@@ -39,22 +38,6 @@ public class ClusterMonitor implements Observer {
 
     public synchronized ExecutionPhase getExecutionPhase() {
         return executionPhase;
-    }
-
-
-    public synchronized void setExecutionPhase(
-        ExecutionPhase executionPhase) {
-
-        if (ExecutionPhase.RUNNING == executionPhase){
-            this.reconciliationMonitor = null;
-            this.executionPhase = executionPhase;
-        } else if (ExecutionPhase.RECONCILING_TASKS == executionPhase){
-            createNewReconciliationMonitor(); // will set the execution phase on its own
-        }
-    }
-
-    public void createNewReconciliationMonitor( ) {
-        this.reconciliationMonitor = new ReconciliationMonitor(this);
     }
 
     /**
@@ -107,8 +90,15 @@ public class ClusterMonitor implements Observer {
 
                 liveState.updateTaskStatus(status, executorState.getTaskInfo());
 
-                if (this.reconciliationMonitor != null) {
+                if (isReconciling()) {
                     reconciliationMonitor.updateTask(status);
+
+                    if(reconciliationMonitor.hasReconciledAllTasks()) {
+                        stopReconciling();
+                    }
+                    else {
+                        reconciliationMonitor.logRemainingTasks();
+                    }
                 }
 
             } else {
@@ -128,6 +118,30 @@ public class ClusterMonitor implements Observer {
         }
     }
 
+    public void startReconciling(SchedulerDriver driver) {
+        List<Protos.TaskID> taskIds = clusterState.getTaskIdList();
+        if (!taskIds.isEmpty()) {
+            executionPhase = ExecutionPhase.RECONCILING_TASKS;
+            this.reconciliationMonitor = new ReconciliationMonitor(clusterState.getTaskIdList());
+
+            new ReconcileStateTask(driver).start();
+        } else {
+            // There is nothing to reconcile so just go ahead and mark the reconciliation as done.
+            executionPhase = ExecutionPhase.RECONCILIATION_DONE;
+        }
+    }
+
+    public void stopReconciling() {
+        executionPhase = ExecutionPhase.RECONCILIATION_DONE;
+        reconciliationMonitor = null;
+
+        LOGGER.info("Finishing reconciliation phase");
+    }
+
+    public boolean isReconciling() {
+        return reconciliationMonitor != null;
+    }
+
     public enum ExecutionPhase {
 
         /**
@@ -138,6 +152,81 @@ public class ClusterMonitor implements Observer {
         /**
          * Everything is reconciled
          */
-        RUNNING
+        RECONCILIATION_DONE
+    }
+
+    private class ReconcileStateTask extends TimerTask {
+
+        final int maxRetry = 10; // TODO make configurable?
+        final int count;
+        private SchedulerDriver driver;
+
+        private ReconcileStateTask(SchedulerDriver driver) {
+            this.count = 0;
+            this.driver = driver;
+        }
+
+        private ReconcileStateTask(SchedulerDriver driver, int count) {
+            this.count = count;
+            this.driver = driver;
+        }
+
+        public int getTimeout() {
+            return configuration.getReconcilationTimeoutMillis() * (1 + count);
+        }
+
+        public void start() {
+            List<Protos.TaskID> taskIds = clusterState.getTaskIdList();
+            if (taskIds.isEmpty()) {
+                stopReconciling();
+            }
+            else {
+                executionPhase = ExecutionPhase.RECONCILING_TASKS;
+                reconciliationMonitor = new ReconciliationMonitor(taskIds);
+
+
+                liveState.reset();
+                driver.reconcileTasks(getRemainingTasksToReconcile());
+
+                Timer timer = new Timer();
+                timer.schedule(this, getTimeout());
+
+            }
+        }
+
+        @Override
+        public void run() {
+            if (!isReconciling()) {
+                return;
+            }
+            LOGGER.info(
+                    "Reconciliation phase has timed out. Waiting for {} tasks. Trigger new...");
+
+            if (count < maxRetry){
+
+                new ReconcileStateTask(driver, count + 1).start();
+
+            } else  {
+                LOGGER.info("Max retries to reconcile tasks exceeded. Removing all tasks to which we haven't received a status update.");
+
+                List<Protos.TaskInfo> taskInfos = getClusterState().getTaskList();
+                Set<String> runningTaskIds = liveState.getNonTerminalTasks().stream().map(
+                        t -> t.getTaskId().getValue()).collect(Collectors.toSet());
+
+                taskInfos.stream()
+                        .filter(task -> task != null && !runningTaskIds.contains(task.getTaskId().getValue()))
+                        .forEach(task -> {
+                            LOGGER.info("Removing task id: {}", task);
+                            getClusterState().removeTask(task);
+                        });
+
+                stopReconciling();
+            }
+        }
+
+        private List<Protos.TaskStatus> getRemainingTasksToReconcile(){
+            return clusterState.getTaskIdList().stream().map(t -> clusterState.getStatus(t).getStatus()).collect(Collectors.toList());
+        }
+
     }
 }

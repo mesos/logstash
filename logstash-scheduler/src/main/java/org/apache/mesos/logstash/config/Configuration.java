@@ -22,8 +22,8 @@ public class Configuration {
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
 
-    public int getReconcilationTimeoutSek() {
-        return reconcilationTimeoutSek;
+    public int getReconcilationTimeoutMillis() {
+        return reconcilationTimeoutSek * 1000;
     }
 
     public void setReconcilationTimeoutSek(int reconcilationTimeoutSek) {
