@@ -30,6 +30,13 @@ public class Configuration {
         this.reconcilationTimeoutSek = reconcilationTimeoutSek;
     }
 
+    // Generate a fingerprint that can be used to compare configurations quickly
+    public String getFingerprint() {
+        String fingerprint = "EXECUTOR HEAPSIZE " + executorHeapSize + " EXECUTOR CPUS " + executorCpus + "LS HEAP SIZE" + logstashHeapSize;
+        fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
+
+        return fingerprint;
+    }
 
     public boolean isDisableFailover() {
         return disableFailover;
