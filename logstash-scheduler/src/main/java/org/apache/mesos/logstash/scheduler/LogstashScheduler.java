@@ -26,7 +26,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -45,7 +44,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private TaskInfoBuilder taskInfoBuilder;
 
     private SchedulerDriver driver;
-    private boolean registered;
     private ClusterMonitor clusterMonitor = null;
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
     private MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
@@ -152,7 +150,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         schedulerDriver.requestResources(requests);
 
         reconcileTasks();
-        registered = true;
     }
 
     @Override
@@ -163,13 +160,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
-        if (!registered) {
-            LOGGER.debug("Not registered, can't accept resource offers.");
-            return;
-        }
-
-        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS) {
+        if(clusterMonitor.isReconciling()) {
             LOGGER.debug("Still in the reconciliation phase, can't accept resource offers.");
+            offers.forEach(offer -> driver.declineOffer(offer.getId()));
             return;
         }
 
@@ -181,19 +174,20 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             if (shouldAcceptOffer(offer)) {
 
                 LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
-                        offer.getId().getValue(),
-                        offer.getSlaveId());
+                    offer.getId().getValue(),
+                    offer.getSlaveId());
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
                 schedulerDriver.launchTasks(
-                        singletonList(offer.getId()),
-                        singletonList(taskInfo));
+                    singletonList(offer.getId()),
+                    singletonList(taskInfo));
 
                 clusterMonitor.monitorTask(taskInfo); // Add task to cluster monitor
 
                 // Store a fingerprint so we can figure out when the configuration has changed
-                clusterMonitor.getClusterState().getStatus(taskInfo.getTaskId()).setConfigurationFingerprint(configuration.getFingerprint());
+                clusterMonitor.getClusterState().getStatus(taskInfo.getTaskId())
+                    .setConfigurationFingerprint(configuration.getFingerprint());
 
             } else {
 
@@ -206,9 +200,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
 
         LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
-                status.getTaskId().getValue(),
-                status.getState(),
-                status.getMessage());
+            status.getTaskId().getValue(),
+            status.getState(),
+            status.getMessage());
 
         statusUpdateWatchers.notifyObservers(status);
 
@@ -231,6 +225,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 driver.killTask(status.getTaskId());
             }
         }
+
+        schedulerDriver.reviveOffers();
     }
 
     public void updateExecutorConfig(List<LogstashProtos.LogstashConfig> configs) {
@@ -282,6 +278,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private boolean shouldAcceptOffer(Offer offer) {
 
         if (isHostAlreadyRunningTask(offer)) {
+            LOGGER.debug("Declining offer from slave " + offer.getSlaveId() + " because that slave already runs an executor");
             return false;
         }
 
@@ -313,16 +310,30 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     public void requestExecutorStats() {
 
-        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
+        if (clusterMonitor == null || clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
+            LOGGER.debug("Supress requesting executor stats, because we're still setting up...");
             return;
+
         }
 
         SchedulerMessage message = SchedulerMessage.newBuilder()
             .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
             .build();
 
-        clusterMonitor.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message));
+        List<TaskInfo> runningTasks = clusterMonitor.getRunningTasks();
+
+        if(runningTasks.isEmpty()) {
+            LOGGER.warn("No tasks to request stats from");
+        }
+        else {
+            runningTasks.forEach(e -> {
+                try {
+                    sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message);
+                } catch (Exception ex) {
+                    LOGGER.error("Can not send message: {}", ex);
+                }
+            });
+        }
     }
 
     @Override
@@ -349,6 +360,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void executorLost(SchedulerDriver schedulerDriver, ExecutorID executorID,
         SlaveID slaveID, int exitStatus) {
         // This is handled in statusUpdate.
+
+        schedulerDriver.reviveOffers();
     }
 
     private boolean isRunningState(TaskStatus taskStatus) {
