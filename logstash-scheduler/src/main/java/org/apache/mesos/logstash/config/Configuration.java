@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.config;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.SerializableState;
 
@@ -45,6 +46,9 @@ public class Configuration {
     }
 
     private static List<String> splitVolumes(String volumeString) {
+        if (volumeString.isEmpty()){
+            return Collections.emptyList();
+        }
         return Arrays.asList(volumeString.split(","));
     }
 
@@ -52,7 +56,7 @@ public class Configuration {
     public String getFingerprint() {
         String fingerprint = "EXECUTOR HEAPSIZE " + executorHeapSize + " EXECUTOR CPUS " + executorCpus + "LS HEAP SIZE" + logstashHeapSize;
         fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
-        fingerprint = fingerprint + " VOLUMES " + this.volumeString;
+        fingerprint = fingerprint + " VOLUMES " + this.volumeString + "EXECUTOR_VERSION " + LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
 
         return fingerprint;
     }
