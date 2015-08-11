@@ -21,6 +21,7 @@ public class ClusterMonitor implements Observer {
     private final Configuration configuration;
     private final ClusterState clusterState;
     private final LiveState liveState;
+    ReconcileSchedule reconcileSchedule = new ReconcileSchedule();
     private ExecutionPhase executionPhase = ExecutionPhase.RECONCILING_TASKS; // default
 
     private ReconciliationMonitor reconciliationMonitor = null;
@@ -71,7 +72,7 @@ public class ClusterMonitor implements Observer {
     }
 
 
-    public void updateTask(Protos.TaskStatus status) {
+    private void updateTask(Protos.TaskStatus status) {
         try {
             // Update cluster state, if necessary
             if (getClusterState().exists(status.getTaskId())) {
@@ -155,6 +156,15 @@ public class ClusterMonitor implements Observer {
         RECONCILIATION_DONE
     }
 
+    static class ReconcileSchedule {
+        public void schedule(ReconcileStateTask task, int startInSek){
+
+            Timer timer = new Timer();
+            timer.schedule(task, startInSek);
+
+        }
+    }
+
     private class ReconcileStateTask extends TimerTask {
 
         final int maxRetry = 10; // TODO make configurable?
@@ -188,9 +198,7 @@ public class ClusterMonitor implements Observer {
                 liveState.reset();
                 driver.reconcileTasks(getRemainingTasksToReconcile());
 
-                Timer timer = new Timer();
-                timer.schedule(this, getTimeout());
-
+                reconcileSchedule.schedule(this, getTimeout());
             }
         }
 
