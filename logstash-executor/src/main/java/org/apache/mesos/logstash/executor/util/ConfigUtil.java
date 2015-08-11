@@ -42,6 +42,6 @@ public final class ConfigUtil {
     }
 
     static String updateHostPaths(String configuration) {
-        return configuration.replaceAll("host-path\\s*=>\\s*\"([^}\\s]+)\"", "path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"");
+        return configuration.replaceAll("\"?host-path\"?\\s*=>\\s*\"([^}\\s]+)\"", "\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"");
     }
 }

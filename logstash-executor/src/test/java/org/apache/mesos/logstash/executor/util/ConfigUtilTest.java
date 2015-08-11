@@ -75,11 +75,15 @@ public class ConfigUtilTest {
     @Test
     public void testUpdateHostPaths() throws Exception {
 
-        Assert.assertEquals("path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "/var/log\"",
+        Assert.assertEquals("\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "/var/log\"",
                 ConfigUtil.updateHostPaths("host-path    => \"/var/log\""));
 
-        Assert.assertEquals("path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "var/log\"",
+        Assert.assertEquals("\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "var/log\"",
                 ConfigUtil.updateHostPaths("host-path    => \"var/log\""));
+
+
+        Assert.assertEquals("\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "var/log\"",
+                ConfigUtil.updateHostPaths("\"host-path\"    => \"var/log\""));
 
         Assert.assertEquals("docker-path    => \"var/log\"",
                 ConfigUtil.updateHostPaths("docker-path    => \"var/log\""));
