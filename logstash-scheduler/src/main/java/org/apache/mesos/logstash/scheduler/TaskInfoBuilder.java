@@ -73,7 +73,7 @@ public class TaskInfoBuilder {
     }
 
     private static String generateVolumeContainerPath(String hostPath) {
-        return Paths.get("/tmp/volumes/", hostPath).toString();
+        return Paths.get(LogstashConstants.VOLUME_MOUNT_DIR, hostPath).toString();
     }
 
 

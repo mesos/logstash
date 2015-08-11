@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.executor.util;
 
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
@@ -34,9 +35,13 @@ public final class ConfigUtil {
         });
 
         hostInfo.forEach(config -> {
-            text.append(String.format("# %s\n%s\n", config.getFrameworkName(), config.getConfig()));
+            text.append(String.format("# %s\n%s\n", config.getFrameworkName(), updateHostPaths(config.getConfig())));
         });
 
         return text.toString();
+    }
+
+    static String updateHostPaths(String configuration) {
+        return configuration.replaceAll("host-path\\s*=>\\s*\"([^}\\s]+)\"", "path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"");
     }
 }

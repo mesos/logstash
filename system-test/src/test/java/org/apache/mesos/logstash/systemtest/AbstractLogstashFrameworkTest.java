@@ -104,7 +104,7 @@ public abstract class AbstractLogstashFrameworkTest {
         LiveState liveState = new LiveState();
         Configuration configuration = new Application().getLogstashConfiguration();
         configuration.setDisableFailover(true); // we remove our framework completely
-
+        configuration.setVolumeString("/tmp");
 
         configManager = new ConfigManager(configuration);
 

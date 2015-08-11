@@ -79,13 +79,11 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
      "type": "DOCKER",
      "docker": {
        "image": "mesos/logstash-scheduler:0.0.2",
-       "network": "HOST",
-       "forcePullImage": true,
-       "portMappings": []
+       "network": "HOST"
      }
    },
    "env": {
-     "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_framework -Dmesos.logstash.state.zk=<zkserver:port> -Dmesos.master.uri=zk://<zkserver:port>,<zkserver:port>/mesos"
+     "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_framework -Dmesos.zk=zk://<zkserver:port>,<zkserver:port>/mesos"
    }
  }
 
@@ -93,53 +91,7 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
  
 
 ## <a name="configuration"></a> Configuration
-
-To configure logstash-mesos, you put logstash configuration files into the Scheduler's `config`-directory.
-
-There are two different types of configuration files.
-
-Wildcard filename matching for docker logstash configurations.
-
-### Docker Image Configuration Files
-
-Files under `config/docker` contain logstash configurations for docker images.
-
-A docker logstash configuration will be included once for every docker container 
-with an image name matching the configuration filename.
-
-That is, the file `config/docker/nginx.conf` is included once
-for every nginx-container found running on a slave.
-
-Later on, we will also support wildcard configuration names,
-so that e.g. `ng_.conf` might match `nginx` also.
-
-Logstash-mesos will treat these configuration files as standard logstash configuration
-files but for *one* difference.
-Input-sections using the `File`-plugin must look like this:
-
-```ruby
-input {
-  File {
-    docker-path => '/var/lib/mylog.log' # note we use 'docker-path' instead of 'path' here
-  }
-}
-```
-
-Logstash-mesos will search for the string "docker-path", parse out the log path, and setup
- cross-container streaming from the source container (e.g `nginx`) to logstash.
-
-Typically, the docker configurations just contain the `input`-sections. The rest of
- the logstash configuration goes into the host configuration instead.
-
-### Host Configuration Files
-
-Files under `config/host` are for host logstash configurations.
-They will *always* be read by the logstash process, so it makes sense to put common
-`filter` and `output`-sections here.
-
-These files are provided directly to the logstash process so they should use
-the standard logstash configuration format.
-[Documentation](https://www.elastic.co/guide/en/logstash/current/configuration.html).
+[TODO]
 
 ## GUI
 

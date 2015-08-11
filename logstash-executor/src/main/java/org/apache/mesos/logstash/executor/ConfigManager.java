@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 
 /**
- * Class responsible for connecting each discovered framework to logstash
+ * Class responsible for updating configurations and corresponding docker streams
  */
 public class ConfigManager {
 

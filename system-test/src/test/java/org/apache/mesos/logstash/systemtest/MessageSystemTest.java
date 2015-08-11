@@ -79,16 +79,29 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     }
 
     @Test
+    public void logstashHostLogging() throws Exception {
+        final String logString = "Hello Test";
+
+        setConfigFor(HOST, "host", getFile("host.full.conf"));
+
+        new HostUtil(cluster.getMesosContainer().getContainerId(), clusterConfig.dockerClient)
+                .createFileWithContent("/tmp/testhost.log", logString);
+
+        verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
+    }
+
+    @Test
     public void logstashSetsUpLoggingForFrameworksStartedAfterConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
 
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
-        setConfigFor(HOST, "host", getFile("host.conf"));
+        setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
         startContainer(dummyFramework);
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
+        verifyExecutorReportsOneStreamingContainer();
     }
 
     @Test
@@ -99,9 +112,10 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
-        setConfigFor(HOST, "host", getFile("host.conf"));
+        setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
+        verifyExecutorReportsOneStreamingContainer();
     }
 
     @Test
@@ -111,7 +125,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
         final String logStringForLogfile2 = "Good to see you";
 
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
-        setConfigFor(HOST, "host", getFile("host.conf"));
+        setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
         startContainer(dummyFramework);
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logStringForLogfile1);
@@ -135,7 +149,7 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
     public void logstashLoggingForFrameworksWhichIsStartedAndRestartedExterally() throws Exception {
         final String logString = "Hello Test";
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
-        setConfigFor(HOST, "host", getFile("host.conf"));
+        setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
         try {
             dummyFramework.start();
@@ -147,22 +161,27 @@ public class MessageSystemTest extends AbstractLogstashFrameworkTest {
 
         waitForNumberOfObservingFrameworks(1);
 
-        startContainer(dummyFramework); // we start the framework again - this time safely so it's removed autmoatically
+        startContainer(dummyFramework); // we start the framework again - this time safely so it's removed automatically
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
+        verifyExecutorReportsOneStreamingContainer();        ;
+
     }
 
 
     private void verifyLogstashProcessesLogEvents(String path, String logString) {
         waitForLogstashToProcessLogEvents(path, logString);
 
+    }
+
+    private void verifyExecutorReportsOneStreamingContainer() {
         List<ExecutorMessage> executorMessages = requestInternalStatusAndWaitForResponse();
         assertEquals(1, executorMessages.size());
         assertEquals(STATS, executorMessages.get(0).getType());
 
         List<ContainerState> containers = executorMessages.get(0).getContainersList();
-                assertEquals(2, containers.size());
+        assertEquals(2, containers.size());
 
         Set<ContainerState.LoggingStateType> stateTypes = containers.stream()
             .map(ContainerState::getType).collect(

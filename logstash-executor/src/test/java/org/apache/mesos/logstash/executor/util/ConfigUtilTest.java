@@ -1,4 +1,6 @@
 package org.apache.mesos.logstash.executor.util;
+import jdk.nashorn.internal.runtime.regexp.joni.Config;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
@@ -68,6 +70,19 @@ public class ConfigUtilTest {
         FrameworkDescription... frameworkDescriptions){
         return Arrays.asList(frameworkDescriptions).stream().map(FrameworkDescription::getFrameworkInfo).collect(
             Collectors.toList());
+    }
+
+    @Test
+    public void testUpdateHostPaths() throws Exception {
+
+        Assert.assertEquals("path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "/var/log\"",
+                ConfigUtil.updateHostPaths("host-path    => \"/var/log\""));
+
+        Assert.assertEquals("path => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "var/log\"",
+                ConfigUtil.updateHostPaths("host-path    => \"var/log\""));
+
+        Assert.assertEquals("docker-path    => \"var/log\"",
+                ConfigUtil.updateHostPaths("docker-path    => \"var/log\""));
     }
 
 
