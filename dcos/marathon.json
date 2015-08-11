@@ -6,14 +6,12 @@
   "container": {
     "type": "DOCKER",
     "docker": {
-      "image": "mesos/logstash-scheduler:0.0.2",
-      "network": "HOST",
-      "forcePullImage": true,
-      "portMappings": []
+      "image": "mesos/logstash-scheduler:0.0.5",
+      "network": "HOST"
     }
   },
   "env": {
-    "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_01 -Dmesos.zk=zk://173.39.208.245:2181/mesos"
+    "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_test10 -Dmesos.zk=zk://173.39.208.245:2181,173.39.208.247:2181,173.39.208.226:2181/mesos -Dmesos.logstash.volumes=/var/log/mesos"
   }
 
 }
