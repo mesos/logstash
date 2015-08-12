@@ -1,0 +1,8 @@
+{
+	"logstash": {
+		"framework-name": "logstashtest12",
+		"executor" : {
+			"volumes" : "/var/log/mesos"
+		}
+	}
+}
