@@ -46,7 +46,7 @@ public class LiveState {
                 getRunningContainers().stream().map(c -> LogstashProtos.ContainerState.newBuilder()
                         .setType(getContainerStatus(c))
                         .setContainerId(c)
-                        .setImageName("Container") // TODO: Get the image name here.
+                        .setImageName(dockerClient.getImageNameOfContainer(c))
                         .build()
                 ).collect(Collectors.toList()))
             .build();
