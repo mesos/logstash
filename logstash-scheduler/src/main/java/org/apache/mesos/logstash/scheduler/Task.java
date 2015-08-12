@@ -21,21 +21,21 @@ public class Task {
     private Protos.TaskState state = null;
     private String hostName;
 
-    public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID, String hostName) {
+    public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID) {
         this.taskId = taskId;
         this.slaveID = slaveID;
         this.executorID = executorID;
         this.containers = Collections.emptyList();
         this.status = ExecutorStatus.INITIALIZING;
-        this.hostName = hostName;
+        this.hostName = "unknown";
     }
 
-    public Task(Task other, List<ContainerState> containers, ExecutorStatus status) {
+    public Task(Task other, List<ContainerState> containers, ExecutorStatus status, String hostName) {
         this.containers = containers;
         this.taskId = other.taskId;
         this.slaveID = other.slaveID;
         this.executorID = other.executorID;
-        this.hostName = other.getHostName();
+        this.hostName = hostName;
         this.status = status;
     }
 

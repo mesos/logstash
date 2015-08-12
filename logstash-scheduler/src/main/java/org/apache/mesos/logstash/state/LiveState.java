@@ -42,20 +42,16 @@ public class LiveState {
         if (!StateUtil.isTerminalState(status.getState())) {
 
             tasks.put(status.getSlaveId(), new Task(status.getTaskId(), taskInfo.getSlaveId(),
-                taskInfo.getExecutor().getExecutorId(), hostNames.get(status.getSlaveId())));
+                taskInfo.getExecutor().getExecutorId()));
         } else {
             removeTask(status.getSlaveId());
         }
 
     }
 
-    public void setSlaveHostName(SlaveID slaveID, String hostName) {
-        hostNames.put(slaveID, hostName);
-    }
-
     public void updateStats(SlaveID slaveID, ExecutorMessage messages) {
         tasks.put(slaveID,
-            new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus()));
+            new Task(tasks.get(slaveID), messages.getContainersList(), messages.getStatus(), messages.getHostName()));
     }
 
     public void reset() {

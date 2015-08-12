@@ -327,8 +327,8 @@ let NodePage = React.createClass({
         };
 
         let formatName = function (c) {
-            let text = c.imageName + " (" + c.containerId.substr(0, 8) + ")";
-            return text.substr(0, 40);
+            let text = c.imageName + " (" + c.containerId.substr(0, 8) + ") ";
+            return text;
         };
 
         let statusIcon = function (status) {
@@ -356,7 +356,7 @@ let NodePage = React.createClass({
             return (
               <div className="box box--list">
                   <div className="box__header">
-                      <div>{t.executorId.substr(0, 24)}...</div>
+                      <div>{t.hostName}</div>
                       <div className="status status--healthy">{healthText(t.status)}</div>
                   </div>
                   <div className="box__body">
@@ -364,6 +364,8 @@ let NodePage = React.createClass({
                           {renderItem("Task ID", t.taskId)}
                           {renderItem("Slave ID", t.slaveId)}
                           {renderItem("Executor ID", t.executorId)}
+                          {renderItem("", "")}
+                          {renderItem("Discovered Docker Containers", "("+t.containers.length+")")}
                           {renderItem("", "")}
                           {t.containers.map(function(c) {
                               return renderItem(formatName(c), statusIcon(c.status));
@@ -436,19 +438,59 @@ let ConfigPage = React.createClass({
           <div className="page">
               <h1>Configurations</h1>
 
-              <h2>Host Configuration</h2>
+              <h2>Slave Configuration</h2>
+              <div>Slave configurations will be propagated to all running logstash-instances. They are a good place to put output-blocks and to specify slave log-files to be monitored.</div>
+              <div>
+                  You can use the special key 'host-path' to configure file-plugins inside logstash input-blocks to indicate that a file should be logged from the slave itself (instead of the executor's docker container).
+                  <div>
+                      Example:
+                      <pre>
+                          input &#123;
+                          file &#123;
+                          "host-path" =&gt; "/var/log/hello.log"
+                          &#125;
+                          &#125;
+                       </pre>
+                  </div>
+                  This will configure logstash to monitor the file <code>/var/log/hello.log</code> on all slaves. Note: this requires that the logstash framework is configured to use <code>/var/log</code> as a volume.
+              </div>
+              <br />
               {self.state.hostConfig === null ? "Loading..." :
                 <form action="/api/host-config" method="POST">
                     <input type="hidden" name="_method" value="PUT"/>
                     <input type="hidden" className="configForm__name" name="name" value="ui"/>
                         <textarea className="configForm__input" name="input"
-                                  placeholder="Logstash Config"
+                                  placeholder="Slave Config"
                                   defaultValue={self.state.hostConfig}></textarea>
                     <br />
                     <button type="submit">Update</button>
                 </form>
               }
-              <h2>Docker Configurations</h2>
+              <h2>Docker Container Configurations</h2>
+              <div>
+                  <div>
+                      Docker configurations will be propagated to slaves running docker containers with image names matching the docker configuration. Note that tags are usually included in docker image names.
+                  </div>
+                  <div>
+                      Example: a slave running a docker container with the <code>nginx:latest</code> docker image will be provided a docker configuration with 'applicable image name' set to <code>nginx:latest</code>, if it exists.
+                  </div>
+              </div>
+              <div>
+                  <div>
+                      You can use the special key 'docker-path' to configure file-plugins inside logstash input-blocks to indicate that a file should be logged from within the docker container itself.
+                  </div>
+                  <div>
+                      Example:
+                      <pre>
+                          input &#123;
+                          file &#123;
+                          "docker-path" =&gt; "/var/log/hello.log"
+                          &#125;
+                          &#125;
+                       </pre>
+                      This will configure logstash to monitor the file <code>/var/log/hello.log</code> <emph>inside</emph> all applicable docker containers.
+                  </div>
+              </div>
               {configs === null ? "Loading..." : (
                 <ul className="configList">
                     {configs.map(function(c) { return <Config config={c} onDeleted={self.onDeleted} /> })}
@@ -546,10 +588,10 @@ let Config = React.createClass({
 
         let renderNew = function() {
             return (
-              <div><input className="configForm__name" ref="name" name="name" placeholder="docker image name"/>
+              <div><input className="configForm__name" ref="name" name="name" placeholder="applicable to docker containers with image name (tag included). E.g: nginx:latest"/>
                   <br />
                   <textarea className="configForm__input" ref="config" name="input"
-                            placeholder="Logstash Config (Input And Filter Only)"></textarea>
+                            placeholder='Logstash Config (Input And Filter Only). E.g, input { file { "docker-path" => "/var/log/hello.log" } }'></textarea>
                   <br />
                   <button type="button" onClick={self.create}>Create</button>
               </div>);
@@ -620,15 +662,15 @@ let DashboardPage = React.createClass({
 
         return (
           <div className="page">
-              <Box title="Number of Nodes" subtitle="Last 60 seconds">
-                  <BigNumber value={nodes.tasks.length} title="Foo Bar Baz Quux"
-                             color="#8038E5"/>
-                  <Chart value={nodes.tasks.length} color="#8038E5"/>
+              <Box title="Running Logstash Executors" subtitle="Last 60 seconds">
+                  <BigNumber value={nodes.tasks.length} title="Number of Nodes"
+                             color="#E0ECF8"/>
+                  <Chart value={nodes.tasks.length} color="#E0ECF8"/>
               </Box>
 
-              <Box title="Logged Instances" subtitle="Last 60 seconds">
-                  <BigNumber value={streamTotal} title="Quux Foo Baz Barr" color="#AF1034"/>
-                  <Chart value={streamTotal} color="#AF1034"/>
+              <Box title="Observing Docker Containers" subtitle="Last 60 seconds">
+                  <BigNumber value={streamTotal} title="Container File Logging" color="#E0ECF8"/>
+                  <Chart value={streamTotal} color="#E0ECF8"/>
               </Box>
           </div>
         )
