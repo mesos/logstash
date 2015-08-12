@@ -14,6 +14,7 @@ public class LiveState {
     private final LogstashService logstash;
     private final DockerClient dockerClient;
     private final DockerLogStreamManager streamManager;
+    private String hostName = "unknown hostname";
 
     public LiveState(LogstashService logstash, DockerClient dockerClient,
         DockerLogStreamManager streamManager) {
@@ -42,13 +43,18 @@ public class LiveState {
         return ExecutorMessage.newBuilder()
             .setType(ExecutorMessage.ExecutorMessageType.STATS)
             .setStatus(logstash.status())
+            .setHostName(hostName)
             .addAllContainers(
-                getRunningContainers().stream().map(c -> LogstashProtos.ContainerState.newBuilder()
-                        .setType(getContainerStatus(c))
-                        .setContainerId(c)
-                        .setImageName(dockerClient.getImageNameOfContainer(c))
-                        .build()
-                ).collect(Collectors.toList()))
+                    getRunningContainers().stream().map(c -> LogstashProtos.ContainerState.newBuilder()
+                                    .setType(getContainerStatus(c))
+                                    .setContainerId(c)
+                                    .setImageName(dockerClient.getImageNameOfContainer(c))
+                                    .build()
+                    ).collect(Collectors.toList()))
             .build();
+    }
+
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
     }
 }

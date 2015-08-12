@@ -108,6 +108,7 @@ public class LogstashExecutor implements Executor {
         Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
         LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
 
+        liveState.setHostName(slaveInfo.getHostname());
         dockerClient.startupComplete(slaveInfo.getHostname());
     }
 

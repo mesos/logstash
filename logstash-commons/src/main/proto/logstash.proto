@@ -50,5 +50,6 @@ message ExecutorMessage {
     RUNNING = 4;
   }
   optional ExecutorStatus status = 2;
-  repeated ContainerState containers = 3;
+  required string hostName = 3;
+  repeated ContainerState containers = 4;
 }

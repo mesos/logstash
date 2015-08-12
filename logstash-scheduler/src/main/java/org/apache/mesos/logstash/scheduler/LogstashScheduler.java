@@ -174,20 +174,20 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             if (shouldAcceptOffer(offer)) {
 
                 LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
-                    offer.getId().getValue(),
-                    offer.getSlaveId());
+                        offer.getId().getValue(),
+                        offer.getSlaveId());
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
                 schedulerDriver.launchTasks(
-                    singletonList(offer.getId()),
-                    singletonList(taskInfo));
+                        singletonList(offer.getId()),
+                        singletonList(taskInfo));
 
                 clusterMonitor.monitorTask(taskInfo); // Add task to cluster monitor
 
                 // Store a fingerprint so we can figure out when the configuration has changed
                 clusterMonitor.getClusterState().getStatus(taskInfo.getTaskId())
-                    .setConfigurationFingerprint(configuration.getFingerprint());
+                        .setConfigurationFingerprint(configuration.getFingerprint());
 
             } else {
 
@@ -263,6 +263,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             LOGGER.debug("Received Stats from Executor. executorId={}", executorID.getValue());
             message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
 
+            liveState.setSlaveHostName(slaveID, message.getHostName());
             liveState.updateStats(slaveID, message);
 
             listeners.forEach(l -> l.frameworkMessage(this, executorID, slaveID, message));
