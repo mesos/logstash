@@ -18,6 +18,7 @@ public class TaskListPacket {
         public long activeStreamCount;
         public List<Container> containers;
         public String status;
+        public String hostName;
 
         public static Task fromTask(org.apache.mesos.logstash.scheduler.Task task) {
             Task other = new Task();
@@ -28,6 +29,7 @@ public class TaskListPacket {
                 .map(Container::fromConatainerState).collect(toList());
             other.activeStreamCount = task.getActiveStreamCount();
             other.status = task.getExecutorStatus().toString();
+            other.hostName = task.getHostName();
             return other;
         }
     }

@@ -19,13 +19,15 @@ public class Task {
     private final ExecutorStatus status;
 
     private Protos.TaskState state = null;
+    private String hostName;
 
-    public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID) {
+    public Task(Protos.TaskID taskId, Protos.SlaveID slaveID, Protos.ExecutorID executorID, String hostName) {
         this.taskId = taskId;
         this.slaveID = slaveID;
         this.executorID = executorID;
         this.containers = Collections.emptyList();
         this.status = ExecutorStatus.INITIALIZING;
+        this.hostName = hostName;
     }
 
     public Task(Task other, List<ContainerState> containers, ExecutorStatus status) {
@@ -33,6 +35,7 @@ public class Task {
         this.taskId = other.taskId;
         this.slaveID = other.slaveID;
         this.executorID = other.executorID;
+        this.hostName = other.getHostName();
         this.status = status;
     }
 
@@ -87,5 +90,9 @@ public class Task {
 
     public List<ContainerState> getContainers() {
         return Collections.unmodifiableList(containers);
+    }
+
+    public String getHostName() {
+        return hostName;
     }
 }
