@@ -119,7 +119,7 @@ public class LSTaskStatus {
     private void safeDeleteKey(String key) {
         try {
             state.delete(getKey(key));
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.error("Could not destroy Task in ZK.", e);
         }
     }
