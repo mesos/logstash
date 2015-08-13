@@ -162,11 +162,11 @@ are translated to system properties.
 
 ## <a name="gui"></a> GUI
 
-The scheduler will by default start with a GUI enabled. You can disable this by setting the system
-property `mesos.logstash.noUI=true`.
-
 The GUI allows you to monitor the health of the cluster, see what is currently streaming and which
 nodes have executors deployed.
+
+The GUI is available whenever the scheduler is running. It can be accessed using HTTP through port `9092` on the
+mesos slave where the scheduler is running.
 
 ## REST API
 
@@ -176,20 +176,20 @@ GUI.
 The available endpoints are:
 
 ```
-GET api/configs
+GET /api/configs
 ```
 
 Returns an array of configurations. (See format below)
 The new framework will be available at `api/configs/{name}`.
 
 ```
-POST /configs
+POST /api/configs
 ```
 
 Creates a new configuration for a framework. (See format below)
 
 ```
-PUT /configs/{framework-name}
+PUT /api/configs/{framework-name}
 ```
 
 Updates an existing framework config. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
@@ -206,7 +206,7 @@ __Expected Format__
 ```
 
 ```
-DELETE /configs/{framework-name}
+DELETE /api/configs/{framework-name}
 ```
 
 Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
