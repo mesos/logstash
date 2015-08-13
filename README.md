@@ -17,9 +17,9 @@ directly to the schedulers configuration directory.
 
 # Roadmap
 
-## Version 1 - July 24st
+## Version 1 - July 24th
 
-- ☑ Automatic discovery of running frameworks, streaming logs from containers.
+- ☑ Automatic discovery of running frameworks, streaming logs from files inside the containers.
 - ☑ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
 - ☑ External LogStash Configuration (config files propagated from Master to Slaves)
 - ☑ Support for outputting to Elastic Search
@@ -29,18 +29,19 @@ directly to the schedulers configuration directory.
 - ☑ Configuration GUI
 - ☑ REST API for managing Configurations
 
-## Version 2 - Aug 7th
+## Version 2 - Aug 14th
 
 - ☑ Basic Failover Handling with Zookeeper
 - ☑ Allow reconfiguring running frameworks
-- ☐ Basic DCOS compliance (Alpha stage)
+- ☑ Basic DCOS compliance (Alpha stage)
 
 ## Version 3 - ?
 
 - ☐ DCOS certification
 - ☐ Loss-less logging. Thoroughly ensure that no log messages are lost. (e.g. when a container has rolling log files)
 - ☐ Enhanced Error and Failover Handling
-- ☐ Support for Logstash Plugins
+- ☐ Support for streaming output from `docker log`
+- ☐ Support for arbitrary Logstash Plugins
 - ☐ Service Discovery (allow frameworks to discover the log service automatically, and configure themselves)
 
 
@@ -78,7 +79,7 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
    "container": {
      "type": "DOCKER",
      "docker": {
-       "image": "mesos/logstash-scheduler:0.0.2",
+       "image": "mesos/logstash-scheduler:0.0.6",
        "network": "HOST"
      }
    },
@@ -86,14 +87,80 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
      "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_framework -Dmesos.zk=zk://<zkserver:port>,<zkserver:port>/mesos"
    }
  }
-
  ```
+ 
+ Note: See <a href="#fw_configuration">Framework options</a> for all available options.
+
+## Running as DCOS app
+
+To run the logstash framework as a DCOS app:
+
+Add our logstash repository to DCOS:
+```
+dcos config append package.sources "https://github.com/triforkse/universe/archive/version-1.x.zip"
+```
+
+update DCOS:
+```
+dcos package update
+```
+
+and install the package
+```
+dcos package install --options=logstash-options.json logstash
+```
+
+the `logstash-options.json`-file in the above example is where you can configure
+logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/dcos/logstash-options.json">here</a>.
+See <a href="#fw_configuration">Framework options</a> for an explanation of the available configuration parameters.
+ 
+## Updating to a newer version (or reinstalling the app)
+
+When reinstalling, you must manually go into your zookeeper ui and remove the path `/logstash/frameworkId`.
+This is so that the reinstalled app will be able to register without losing the logstash configurations.
  
 
 ## <a name="configuration"></a> Configuration
-[TODO]
 
-## GUI
+There are two different types of configurations that can be supplied to logstash-mesos.
+They are both based on the [same configuration language](https://www.elastic.co/guide/en/logstash/current/configuration.html) as logstash,
+ but adds some custom behaviour because of the fact that it is running inside a mesos executor.
+ 
+The [scheduler's web UI](#gui) will provide a helpful interface for configuring logstash-mesos the way you want.
+
+### Slave Configuration
+Slave (or "Host") configurations will be propagated to all running logstash-instances. They are a good place to put output-blocks and to specify slave log-files to be monitored.
+You can use the special key 'host-path' to configure file-plugins inside logstash input-blocks to indicate that a file should be logged from the slave itself (instead of the executor's docker container).
+Example:
+```
+input { file { "host-path" => "/var/log/hello.log" } }
+```
+This will configure logstash to monitor the file `/var/log/hello.log` on all slaves. Note: this requires that the logstash framework is configured to use `/var/log` as a volume.
+
+### Docker Configuration
+Docker configurations will be propagated to slaves running docker containers with image names matching the docker configuration. Note that tags are usually included in docker image names.
+
+Example: a slave running a docker container with the nginx:latest docker image will be provided a docker configuration with 'applicable image name' set to nginx:latest, if it exists.
+
+You can use the special key 'docker-path' to configure file-plugins inside logstash input-blocks to indicate that a file should be logged from within the docker container itself.
+
+Example:
+```
+input { file { "docker-path" => "/var/log/hello.log" } }
+```
+
+This will configure logstash to monitor the file `/var/log/hello.log` inside all applicable docker containers.
+
+## <a name="fw_configuration"></a> Framework options
+
+The available DCOS configuration options are documented in JSON [here](https://github.com/triforkse/universe/blob/version-1.x/repo/packages/L/logstash/0/config.json).
+
+When running the scheduler directly (i.e from the command line or as a marathon app) you can use the corresponding java system properties.
+You can refer to [marathon.json](https://github.com/triforkse/universe/blob/version-1.x/repo/packages/L/logstash/0/config.json) to see how the DCOS parameters
+are translated to system properties.
+
+
+## <a name="gui"></a> GUI
 
 The scheduler will by default start with a GUI enabled. You can disable this by setting the system
 property `mesos.logstash.noUI=true`.
