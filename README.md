@@ -111,7 +111,7 @@ dcos package install --options=logstash-options.json logstash
 ```
 
 the `logstash-options.json`-file in the above example is where you can configure
-logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/dcos/logstash-options.json">here</a>.
+logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/tree/master/dcos/logstash-options.json">here</a>.
 See <a href="#fw_configuration">Framework options</a> for an explanation of the available configuration parameters.
  
 ## Updating to a newer version (or reinstalling the app)
