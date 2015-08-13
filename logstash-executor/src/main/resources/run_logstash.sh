@@ -13,4 +13,4 @@ set -e
 
 # Run
 
-/opt/logstash/bin/logstash -l /var/log/logstash.log -f /tmp/logstash/
+HOME=/root /opt/logstash/bin/logstash -l /var/log/logstash.log -f /tmp/logstash/

@@ -14,11 +14,10 @@ public class DockerLogPath {
 
     public DockerLogPath(String containerId, String frameworkName, String containerFilePath) {
         this.containerId = containerId;
-        String sanitizedFrameworkName = sanitize(frameworkName);
         this.frameworkName = frameworkName;
         this.containerFilePath = containerFilePath;
         this.executorLogPath = Paths
-            .get("/tmp", containerId, sanitizedFrameworkName, containerFilePath).toString();
+            .get("/tmp", containerId,  containerFilePath).toString();
     }
 
     public String getContainerLogPath() {
@@ -27,10 +26,6 @@ public class DockerLogPath {
 
     public String getExecutorLogPath() {
         return executorLogPath;
-    }
-
-    private static String sanitize(String frameworkName) {
-        return frameworkName.replaceFirst(".*/", "").replaceFirst(":\\w+", "");
     }
 
     public String getContainerId() {

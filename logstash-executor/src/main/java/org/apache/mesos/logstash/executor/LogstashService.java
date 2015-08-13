@@ -83,7 +83,7 @@ public class LogstashService {
                 process.waitFor(5, TimeUnit.MINUTES);
             }
 
-            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh");
+            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh", new String[]{"LS_HEAP_SIZE="+ System.getProperty("mesos.logstash.logstash.heap.size")});
         } catch (Exception e) {
             status = ExecutorStatus.ERROR;
             LOGGER.error("Failed to start logstash process.", e);

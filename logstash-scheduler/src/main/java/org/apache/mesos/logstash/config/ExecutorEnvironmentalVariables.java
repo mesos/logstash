@@ -35,7 +35,8 @@ public class ExecutorEnvironmentalVariables {
      */
     private void populateEnvMap(Configuration configuration) {
         addToList(native_mesos_library_key, native_mesos_library_path);
-        addToList(JAVA_OPTS, getHeapSpaceString(configuration));
+        addToList(JAVA_OPTS, getExecutorHeap(configuration) + " " + getLogstashHeap(
+            configuration));
     }
 
     private void addToList(String key, String value) {
@@ -52,7 +53,14 @@ public class ExecutorEnvironmentalVariables {
      * @param configuration The mesos cluster configuration
      * @return A string representing the java heap space.
      */
-    private String getHeapSpaceString(Configuration configuration) {
+    private String getExecutorHeap(Configuration configuration) {
         return "-Xmx" + configuration.getExecutorHeapSize() + "m";
+    }
+    /**
+     * @param configuration The mesos cluster configuration
+     * @return A string representing the java heap space.
+     */
+    private String getLogstashHeap(Configuration configuration) {
+        return "-Dmesos.logstash.logstash.heap.size=" + configuration.getLogstashHeapSize() + "m";
     }
 }
