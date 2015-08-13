@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class MesosZKFormatter extends AbstractZKFormatter {
 
-    public static final String MESOS_PATH = "/mesos";
+    public static final String DEFAULT_MESOS_PATH = "/mesos";
 
     public MesosZKFormatter(ZKAddressParser parser) {
         super(parser);
@@ -30,9 +30,18 @@ public class MesosZKFormatter extends AbstractZKFormatter {
     public String format(String zkUrl) {
         List<ZKAddress> addressList = parser.validateZkUrl(zkUrl);
         StringBuilder builder = new StringBuilder();
-        addressList.forEach(add -> builder.append(",").append(add.getAddress()).append(":").append(add.getPort()));
+        addressList.forEach(
+            add -> builder.append(",").append(add.getAddress()).append(":").append(add.getPort()));
         builder.deleteCharAt(0); // Delete first ','
-        builder.append(MESOS_PATH); // Append "/mesos"
+
+        String lastPath = addressList.get(addressList.size() - 1).getZkNode();
+
+        if (null == lastPath || lastPath.equals("") || lastPath.equals("/")) {
+            lastPath = DEFAULT_MESOS_PATH;
+        }
+
+        builder.append(lastPath);
+
         builder.insert(0, ZKAddress.ZK_PREFIX); // Prepend "zk://"
         return builder.toString();
     }

@@ -18,13 +18,13 @@ public class MesosZKFormatterTest {
     @Test
     public void shouldReturnSameAddressIfValidated() {
         ZKAddressParser mock = Mockito.mock(ZKAddressParser.class);
-        String add = "192.168.0.1:2182";
+        String add = "192.168.0.1:2182/foo/bar";
         List<ZKAddress> dummyReturn = new ArrayList<>(1);
         dummyReturn.add(new ZKAddress(add));
         Mockito.when(mock.validateZkUrl(anyString())).thenReturn(dummyReturn);
         ZKFormatter formatter = new MesosZKFormatter(mock);
         String address = formatter.format(""); // Doesn't matter. We're returning a dummy.
-        assertEquals(ZKAddress.ZK_PREFIX + add + MesosZKFormatter.MESOS_PATH, address);
+        assertEquals(ZKAddress.ZK_PREFIX + add , address);
     }
 
     @Test
@@ -39,7 +39,7 @@ public class MesosZKFormatterTest {
         Mockito.when(mock.validateZkUrl(anyString())).thenReturn(dummyReturn);
         ZKFormatter formatter = new MesosZKFormatter(mock);
         String address = formatter.format(""); // Doesn't matter. We're returning a dummy.
-        assertEquals(ZKAddress.ZK_PREFIX + concat + MesosZKFormatter.MESOS_PATH, address);
+        assertEquals(ZKAddress.ZK_PREFIX + concat + MesosZKFormatter.DEFAULT_MESOS_PATH, address);
     }
 
     @Test
@@ -54,6 +54,6 @@ public class MesosZKFormatterTest {
         Mockito.when(mock.validateZkUrl(anyString())).thenReturn(dummyReturn);
         ZKFormatter formatter = new MesosZKFormatter(mock);
         String address = formatter.format(""); // Doesn't matter. We're returning a dummy.
-        assertEquals(ZKAddress.ZK_PREFIX + concat + MesosZKFormatter.MESOS_PATH, address);
+        assertEquals(ZKAddress.ZK_PREFIX + concat + MesosZKFormatter.DEFAULT_MESOS_PATH, address);
     }
 }

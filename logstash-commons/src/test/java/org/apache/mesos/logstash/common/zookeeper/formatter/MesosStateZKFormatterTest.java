@@ -28,6 +28,19 @@ public class MesosStateZKFormatterTest {
     }
 
     @Test
+    public void shouldIgnorePaths() {
+        ZKAddressParser mock = Mockito.mock(ZKAddressParser.class);
+        String path = "/mesos/whatever";
+        String add = "192.168.0.1:2182" ;
+        List<ZKAddress> dummyReturn = new ArrayList<>(1);
+        dummyReturn.add(new ZKAddress(add + path));
+        Mockito.when(mock.validateZkUrl(anyString())).thenReturn(dummyReturn);
+        ZKFormatter formatter = new MesosStateZKFormatter(mock);
+        String address = formatter.format(""); // Doesn't matter. We're returning a dummy.
+        assertEquals(add, address);
+    }
+
+    @Test
     public void shouldReturnMultiAddress() {
         ZKAddressParser mock = Mockito.mock(ZKAddressParser.class);
         String add1 = "192.168.0.1:2182";
