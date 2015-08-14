@@ -127,6 +127,48 @@ When reinstalling, you must manually go into your zookeeper ui and remove the pa
 This is so that the reinstalled app will be able to register without losing the logstash docker and slave configurations.
  
 
+## <a name="gui"></a> GUI
+
+The GUI allows you to monitor the health of the cluster, see what is currently streaming and which
+nodes have executors deployed.
+
+The GUI is available whenever the scheduler is running. It can be accessed using HTTP through port `9092` on the
+mesos slave where the scheduler is running.
+
+### Dashboard
+
+![Dashboard](https://github.com/mesos/logstash/docs/screenshot_dashboard.png)
+
+The `Running Logstash Executors` shows the number of slaves where the framework (executors) is running on.
+Usually that should match your number of slaves.
+
+The `Observing Docker Containers` shows the number of docker containers logstash is actually observing log files from.
+E.g. you've configured a docker configuration for two frameworks. And these framework are running let's say 4 and 5 docker containers 
+somewhere in the cluster then 4+5=9 observing docker containers should be displayed.
+ 
+### Nodes
+
+![Nodes](https://github.com/mesos/logstash/docs/screenshot_nodes.png)
+
+Here you see some detailed information about the slaves where the logstash framework is running on.
+Slaves hostnames and some Mesos specfic information like TaskID and ExecutorID are shown.
+
+Further you see all docker running containers discovered by the logstash framework and their image names.
+That doesn't mean that logstash is currently observing log files from each docker container shown. 
+Whether the logstash framework is observing log files from within these containers is indicated by a 
+green bubble (see at the screenshot above). A gray bubble means that no files are monitored from within the container.
+
+The status at the top right corner gives you a hint whether your logstash configuration could be successfully applied. 
+If it's not `healthy` you should test your logstash configuration. 
+
+Note: Currently there is no indication whether you monitoring file from the slave itself.     
+    
+### Config
+
+![Config](https://github.com/mesos/logstash/docs/screenshot_config.png)
+
+Here you can actually configure the slave and docker container configuration. See next section.
+
 ## <a name="configuration"></a> Configuration
 
 There are two different types of configurations that can be supplied to logstash-mesos.
@@ -166,14 +208,6 @@ When running the scheduler directly (i.e from the command line or as a marathon 
 You can refer to [marathon.json](https://github.com/triforkse/universe/blob/version-1.x/repo/packages/L/logstash/0/config.json) to see how the DCOS parameters
 are translated to system properties.
 
-
-## <a name="gui"></a> GUI
-
-The GUI allows you to monitor the health of the cluster, see what is currently streaming and which
-nodes have executors deployed.
-
-The GUI is available whenever the scheduler is running. It can be accessed using HTTP through port `9092` on the
-mesos slave where the scheduler is running.
 
 ## REST API
 
