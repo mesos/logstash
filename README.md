@@ -137,7 +137,7 @@ mesos slave where the scheduler is running.
 
 ### Dashboard
 
-![Dashboard](https://github.com/mesos/logstash/tree/master/docs/screenshot_dashboard.png)
+![Dashboard](docs/screenshot_dashboard.png)
 
 The `Running Logstash Executors` shows the number of slaves where the framework (executors) is running on.
 Usually that should match your number of slaves.
