@@ -4,7 +4,7 @@
   "mem": 256.0,
   "instances": 1,
   "constraints": [["hostname", "UNIQUE"]],
-  "cmd": "echo 10 >> /var/log/test.log; sleep 10; echo 30 >> /var/log/test.log; sleep 30; echo 180 >> /var/log/test.log; sleep 180; echo 7200 >> /var/log/test.log; sleep 7200",
+  "cmd": "echo 10 >> /var/log/test.log; sleep 10; echo 30 >> /var/log/test.log; sleep 30; echo 180 >> /var/log/test.log; sleep 180; echo 7200 >> /var/log/test.log; sleep 7200; echo DONE >> /var/log/test.log",
   "container": {
     "type": "DOCKER",
     "docker": {

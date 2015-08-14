@@ -90,6 +90,11 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
  ```
  
  Note: See <a href="#fw_configuration">Framework options</a> for all available options.
+ 
+ Please keep in mind that if you start the Logstash app as a Marathon app that this will start a 
+ scheduler on one arbitrary slave. The scheduler itself will try to start one (only one) executor 
+ on each node. To scale the application from within marathon makes no sense because only one scheduler
+ per framework is allowed to run and the framework scales itself to all slaves.  
 
 ## Running as DCOS app
 
@@ -114,10 +119,12 @@ the `logstash-options.json`-file in the above example is where you can configure
 logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/tree/master/dcos/logstash-options.json">here</a>.
 See <a href="#fw_configuration">Framework options</a> for an explanation of the available configuration parameters.
  
-## Updating to a newer version (or reinstalling the app)
+Note: **Uninstalling the logstash DCOS package will shutdown the framework! See [Updating to new version](#newversion) how to preserve the your logstash slave and docker configuations.** 
+
+## <a name="newversion"></a>Updating to a newer version (or reinstalling the app)
 
 When reinstalling, you must manually go into your zookeeper ui and remove the path `/logstash/frameworkId`.
-This is so that the reinstalled app will be able to register without losing the logstash configurations.
+This is so that the reinstalled app will be able to register without losing the logstash docker and slave configurations.
  
 
 ## <a name="configuration"></a> Configuration
@@ -215,7 +222,7 @@ Removes the configuration for this framework. Please make sure that framework-na
 
 The mesos-logstash framework is written in Java (Version 8).
 
-## How we extract the logs
+## How we extract the container logs
 
 Currently we only support monitoring log files within a running docker container. See configuration section how to
 specify the log file location. 
