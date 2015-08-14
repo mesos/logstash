@@ -160,11 +160,11 @@ let Menu = React.createClass({
               </div>
               <div className="menu__footer">
                   <a className="menu__footer-item"
-                     href="http://github.com/triforkse/logstash-mesos">
+                     href="http://github.com/mesos/logstash">
                       GitHub
                   </a>
                   <a className="menu__footer-item"
-                     href="http://github.com/triforkse/logstash-mesos">
+                     href="http://github.com/mesos/logstash">
                       Documentation
                   </a>
               </div>
