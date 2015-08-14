@@ -31,7 +31,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-public class MessageSystemTest extends AbstractLogstashFrameworkTest {
+public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
 
     public static final String SOME_LOGSTASH_OUTPUT_FILE = "/tmp/logstash.out";
     public static final String SOME_LOG_FILE = "/tmp/systemtest.log";
