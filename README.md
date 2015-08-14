@@ -137,7 +137,7 @@ mesos slave where the scheduler is running.
 
 ### Dashboard
 
-![Dashboard](https://github.com/mesos/logstash/docs/screenshot_dashboard.png)
+![Dashboard](https://github.com/mesos/logstash/tree/master/docs/screenshot_dashboard.png)
 
 The `Running Logstash Executors` shows the number of slaves where the framework (executors) is running on.
 Usually that should match your number of slaves.
@@ -148,7 +148,7 @@ somewhere in the cluster then 4+5=9 observing docker containers should be displa
  
 ### Nodes
 
-![Nodes](https://github.com/mesos/logstash/docs/screenshot_nodes.png)
+![Nodes](https://github.com/mesos/logstash/tree/master/docs/screenshot_nodes.png)
 
 Here you see some detailed information about the slaves where the logstash framework is running on.
 Slaves hostnames and some Mesos specfic information like TaskID and ExecutorID are shown.
@@ -165,7 +165,7 @@ Note: Currently there is no indication whether you monitoring file from the slav
     
 ### Config
 
-![Config](https://github.com/mesos/logstash/docs/screenshot_config.png)
+![Config](https://github.com/mesos/logstash/tree/master/docs/screenshot_config.png)
 
 Here you can actually configure the slave and docker container configuration. See next section.
 
