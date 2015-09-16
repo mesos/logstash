@@ -19,3 +19,10 @@ idea {
         sourceDirs  += file('build/generated/source/proto')
     }
 }
+
+protobuf {
+
+    protoc {
+        artifact = 'com.google.protobuf:protoc:2.6.1'
+    }
+}
