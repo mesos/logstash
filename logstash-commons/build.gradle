@@ -25,4 +25,5 @@ protobuf {
     protoc {
         artifact = 'com.google.protobuf:protoc:2.6.1'
     }
+
 }

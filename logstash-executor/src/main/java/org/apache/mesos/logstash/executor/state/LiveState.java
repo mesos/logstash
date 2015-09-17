@@ -10,6 +10,9 @@ import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * State for the executor.
+ */
 public class LiveState {
     private final LogstashService logstash;
     private final DockerClient dockerClient;

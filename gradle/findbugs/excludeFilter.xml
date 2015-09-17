@@ -1,6 +1,6 @@
 <FindBugsFilter>
     <Match>
-        <Package name="~org\.apache\.mesos\.mini\..*"/>
+        <Package name="org.apache.mesos.logstash.common"/>
     </Match>
 
     <Match>

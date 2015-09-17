@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
+/**
+ * Streams Docker logs.
+ */
 public class DockerStreamer {
 
     private static final String BASH_START_LOGSTASH_COMMAND = "touch %s; tail -F %s & echo %s$!";
@@ -44,9 +47,9 @@ public class DockerStreamer {
     }
 
     private LogStream createContainerLogStream(String containerId, String logLocation) {
-        String MONITOR_CMD = getMonitorCmd(logLocation);
-        LOGGER.info("Running: " + MONITOR_CMD);
-        return client.exec(containerId, "sh", "-c", MONITOR_CMD);
+        String monitorCommand = getMonitorCmd(logLocation);
+        LOGGER.info("Running: " + monitorCommand);
+        return client.exec(containerId, "sh", "-c", monitorCommand);
     }
 
     String getMonitorCmd(String logLocation) {
@@ -67,7 +70,7 @@ public class DockerStreamer {
         LOGGER.debug("Killing logstash process in container {} - logstash pid {}", containerId,
             logstashPid);
 
-        // TODO ask config manage whether the container is running and only if so stop docker exec...
+        // TODO (Florian) ask config manage whether the container is running and only if so stop docker exec...
 
 
         if (client.getRunningContainers().contains(containerId)) {

@@ -10,6 +10,9 @@ import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * Logstreamwriter implementation for Files.
+ */
 public class FileLogSteamWriter implements LogStreamWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FileLogSteamWriter.class);
@@ -22,7 +25,7 @@ public class FileLogSteamWriter implements LogStreamWriter {
     @Override
     public void write(String name, LogStream logStream) throws IOException {
 
-        Path path = Paths.get(name); // TODO what happens if name contains invalid characters?
+        Path path = Paths.get(name); // TODO (Florian): what happens if name contains invalid characters?
 
         FileUtils.touch(path.toFile());
 
@@ -32,7 +35,7 @@ public class FileLogSteamWriter implements LogStreamWriter {
 
         executorService.execute(() -> {
 
-            // TODO: We could add more info about the stream.
+            // TODO (Thomas): We could add more info about the stream.
             LOGGER.info("Reading stream...");
 
             try {

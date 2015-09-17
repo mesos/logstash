@@ -10,6 +10,9 @@ import java.util.Map;
 
 import static java.util.stream.Collectors.toMap;
 
+/**
+ * Utility for configuring Logstash per containers.
+ */
 public final class ConfigUtil {
 
     protected ConfigUtil() {
@@ -42,6 +45,7 @@ public final class ConfigUtil {
     }
 
     static String updateHostPaths(String configuration) {
-        return configuration.replaceAll("\"?host-path\"?\\s*=>\\s*\"([^}\\s]+)\"", "\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"");
+        return configuration.replaceAll("\"?host-path\"?\\s*=>\\s*\"([^}\\s]+)\"", "\"path\" => \"" +
+                                        LogstashConstants.VOLUME_MOUNT_DIR + "$1\"");
     }
 }

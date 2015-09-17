@@ -1,5 +1,8 @@
 package org.apache.mesos.logstash.common;
 
+/**
+ * Framework constants.
+ */
 public interface LogstashConstants {
     String FRAMEWORK_NAME = "logstash";
     int FAILOVER_TIMEOUT = 300000;

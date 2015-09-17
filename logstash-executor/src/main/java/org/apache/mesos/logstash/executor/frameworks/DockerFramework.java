@@ -9,6 +9,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+/**
+ * Docker configuration for the framework.
+ */
 public class DockerFramework implements Framework {
 
     private final ContainerId containerId;
@@ -27,7 +30,7 @@ public class DockerFramework implements Framework {
     }
 
     /**
-     * Produces a valid logstash configuration from a (very similar looking) Framework configuration
+     * Produces a valid logstash configuration from a (very similar looking) Framework configuration.
      */
     @Override
     public String getConfiguration() {
@@ -57,6 +60,9 @@ public class DockerFramework implements Framework {
         return locations;
     }
 
+    /**
+     * Id of a container.
+     */
     public static class ContainerId {
         String id;
 

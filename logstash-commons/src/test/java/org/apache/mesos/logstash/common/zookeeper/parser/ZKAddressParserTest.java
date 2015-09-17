@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.common.zookeeper.parser;
 
 import org.apache.mesos.logstash.common.zookeeper.exception.ZKAddressException;
 import org.apache.mesos.logstash.common.zookeeper.model.ZKAddress;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.List;

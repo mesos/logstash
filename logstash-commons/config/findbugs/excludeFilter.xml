@@ -1,0 +1,7 @@
+<!-- Do not scan generated protobuf code !-->
+<FindBugsFilter>
+    <Match>
+        <Package name="org.apache.mesos.logstash.common.protos"/>
+    </Match>
+
+</FindBugsFilter>

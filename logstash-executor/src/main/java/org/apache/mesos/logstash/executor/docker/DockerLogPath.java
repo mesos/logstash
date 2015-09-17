@@ -50,6 +50,9 @@ public class DockerLogPath {
     }
 
     @Override public String toString() {
-        return String.format("DockerLogPath: Framework %s (ContainerID %s) - path: %s", frameworkName, containerId, containerFilePath);
+        return String.format("DockerLogPath: Framework %s (ContainerID %s) - path: %s",
+                            frameworkName,
+                            containerId,
+                            containerFilePath);
     }
 }
