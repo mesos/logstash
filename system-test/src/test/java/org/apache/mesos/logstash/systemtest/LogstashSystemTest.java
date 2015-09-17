@@ -84,7 +84,7 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
 
         setConfigFor(HOST, "host", getFile("host.full.conf"));
 
-        new HostUtil(cluster.getMesosContainer().getContainerId(), clusterConfig.dockerClient)
+        new HostUtil(cluster.getMesosContainer().getContainerId(), cluster.getConfig().dockerClient)
                 .createFileWithContent("/tmp/testhost.log", logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);

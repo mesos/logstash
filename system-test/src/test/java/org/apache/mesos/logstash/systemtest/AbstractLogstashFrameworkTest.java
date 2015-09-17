@@ -33,15 +33,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public abstract class AbstractLogstashFrameworkTest {
 
-    public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
-        .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
-        .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-        .build();
-
     private static final String DOCKER_PORT = "2376";
 
     @ClassRule
-    public static MesosCluster cluster = new MesosCluster(clusterConfig);
+    public static MesosCluster cluster = MesosCluster.builder().numberOfSlaves(1).privateRegistryPort(3333)
+            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
+            .build();
 
     public static LogstashScheduler scheduler;
 
@@ -126,7 +123,7 @@ public abstract class AbstractLogstashFrameworkTest {
 
 
     private void printRunningContainers() {
-        DockerClient dockerClient = clusterConfig.dockerClient;
+        DockerClient dockerClient = cluster.getConfig().dockerClient;
 
         List<Container> containers = dockerClient.listContainersCmd().exec();
         for (Container container : containers) {
@@ -160,7 +157,7 @@ public abstract class AbstractLogstashFrameworkTest {
         Predicate<List<ExecutorMessage>> predicate) {
 
         int seconds = 10;
-        int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
+        int numberOfExpectedMessages = cluster.getConfig().numberOfSlaves;
 
         executorMessageListener.clearAllMessages();
         scheduler.requestExecutorStats();
