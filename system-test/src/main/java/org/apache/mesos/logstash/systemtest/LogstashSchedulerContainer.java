@@ -3,9 +3,13 @@ package org.apache.mesos.logstash.systemtest;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import org.apache.mesos.mini.container.AbstractContainer;
+import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.stream.IntStream;
+
+import static java.util.Arrays.asList;
 
 /**
  * Container for the Logstash scheduler
@@ -16,11 +20,22 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     public static final String SCHEDULER_NAME = "logstash-scheduler";
 
+    private List<String> javaOpts;
+
     private String ipAddress;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String ipAddress) {
         super(dockerClient);
         this.ipAddress = ipAddress;
+        this.javaOpts = asList(
+                "-Xmx256m",
+                "-Dmesos.logstash.web.port=9092",
+                "-Dmesos.logstash.framework.name=logstash",
+                "-Dmesos.logstash.logstash.heap.size=512",
+                "-Dmesos.logstash.executor.heap.size=256",
+                "-Dmesos.logstash.volumes=/var/log/mesos",
+                "-Dmesos.zk=zk://" + ipAddress + ":2181/mesos"
+        );
     }
 
     @Override
@@ -33,7 +48,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
-                .withEnv("JAVA_OPTS=-Xmx256m -Dmesos.zk=zk://" + ipAddress + ":2181/mesos -Dmesos.logstash.framework.name=logstash")
+                .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(javaOpts, " "))
                 .withExtraHosts(IntStream.rangeClosed(1, 3).mapToObj(value -> "slave" + value + ":" + ipAddress).toArray(String[]::new));
     }
 }
