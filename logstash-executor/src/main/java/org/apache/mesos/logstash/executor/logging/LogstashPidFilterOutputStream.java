@@ -41,7 +41,7 @@ public class LogstashPidFilterOutputStream extends FilterOutputStream {
         }
     }
 
-    @Override public void close() throws IOException {
-        super.close();
+    public String getPid() {
+        return pid;
     }
 }

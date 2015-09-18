@@ -67,8 +67,9 @@ public class DockerStreamerTest {
             assertEquals(testLogStream, logStream);
             assertEquals("Hello\n", writer.getStdOutContent());
         } finally {
-            if (logStream != null)
+            if (logStream != null) {
                 logStream.close();
+            }
         }
     }
 

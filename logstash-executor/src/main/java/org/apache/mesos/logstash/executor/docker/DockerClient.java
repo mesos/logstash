@@ -20,6 +20,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 /**
  * Docker client wrapper.
  */
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class DockerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();

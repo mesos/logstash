@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Main app to run Mesos Logstash with Mini Mesos.
  */
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class Main {
 
 

@@ -81,7 +81,7 @@ public class HomeController {
     @ResponseBody
     public Config getHostConfig() throws IOException {
         List<Config> output = getConfigsOfType(HOST);
-        return (output.size() > 0) ? output.get(0) : new Config(HOST_FILE_NAME, "");
+        return output.size() > 0 ? output.get(0) : new Config(HOST_FILE_NAME, "");
     }
 
     @RequestMapping(method = RequestMethod.PUT, value = "/api/host-config")

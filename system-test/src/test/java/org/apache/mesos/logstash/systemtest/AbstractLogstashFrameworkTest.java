@@ -31,6 +31,7 @@ import java.util.concurrent.ExecutionException;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public abstract class AbstractLogstashFrameworkTest {
 
     private static final String DOCKER_PORT = "2376";
@@ -78,10 +79,7 @@ public abstract class AbstractLogstashFrameworkTest {
         }
 
         for (AbstractContainer container : containersToBeStopped) {
-            try {
-                container.remove();
-            } catch (Exception ignore) {
-            }
+            container.remove();
         }
     }
 

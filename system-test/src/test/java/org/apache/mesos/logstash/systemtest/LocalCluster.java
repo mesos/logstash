@@ -9,6 +9,7 @@ import org.apache.mesos.mini.mesos.MesosClusterConfig;
 
 import java.util.List;
 
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class LocalCluster {
 
     private static final String DOCKER_PORT = "2376";

@@ -1,9 +1,5 @@
 <FindBugsFilter>
     <Match>
-        <Package name="org.apache.mesos.logstash.common"/>
-    </Match>
-
-    <Match>
-        <Bug code="SnVI"/>
+        <Package name="~.*\.logstash.*"/>
     </Match>
 </FindBugsFilter>

@@ -165,7 +165,7 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
         dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
-        verifyExecutorReportsOneStreamingContainer();        ;
+        verifyExecutorReportsOneStreamingContainer();
 
     }
 

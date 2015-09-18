@@ -46,7 +46,8 @@ public class DockerLogPath {
     }
 
     @Override public int hashCode() {
-        return (containerId + executorLogPath + containerFilePath).hashCode();
+        String path = containerId + executorLogPath + containerFilePath;
+        return path.hashCode();
     }
 
     @Override public String toString() {

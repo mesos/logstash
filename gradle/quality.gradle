@@ -12,14 +12,15 @@ checkstyle {
   sourceSets = [sourceSets.main]  // disable style checks on tests
 }
 
+checkstyleMain.exclude '**/logstash/**'
+
 pmd {
   toolVersion = "5.1.3"
   ruleSets = [
     'java-basic',
     'java-braces',
     'java-clone',
-    'java-finalizers',
-    'java-imports'
+    'java-finalizers'
   ]
 }
 
