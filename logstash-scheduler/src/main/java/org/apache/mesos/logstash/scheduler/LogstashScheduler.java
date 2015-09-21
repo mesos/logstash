@@ -15,8 +15,7 @@ import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LSTaskStatus;
 import org.apache.mesos.logstash.state.LiveState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +33,7 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
 
 @Component
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
+    private static final Logger LOGGER = Logger.getLogger(LogstashScheduler.class.toString());
 
     private final ConfigManager configManager;
     private final Collection<FrameworkMessageListener> listeners;
@@ -89,11 +88,11 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         FrameworkID frameworkID = configuration.getFrameworkId();
         if (!StringUtils.isEmpty(frameworkID.getValue())) {
-            LOGGER.info("Found previous framework id: {}", frameworkID);
+            LOGGER.info(String.format("Found previous framework id: %s", frameworkID));
             frameworkBuilder.setId(frameworkID);
         }
 
-        LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
+        LOGGER.info(String.format("Starting Logstash Framework: \n%s", frameworkBuilder));
 
         driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
             configuration.getZookeeperUrl());
@@ -134,7 +133,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         frameworkState.setFrameworkId(frameworkId);
         configuration.setFrameworkState(frameworkState);
 
-        LOGGER.info("Framework registered as: {}", frameworkId);
+        LOGGER.info(String.format("Framework registered as: %s", frameworkId));
 
         ClusterState clusterState = new ClusterState(configuration.getState(), frameworkState);
 
@@ -154,7 +153,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Override
     public void reregistered(SchedulerDriver schedulerDriver, MasterInfo masterInfo) {
-        LOGGER.info("Re-registered with master. ip={}", masterInfo.getId());
+        LOGGER.info(String.format("Re-registered with master. ip=%s", masterInfo.getId()));
         reconcileTasks();
     }
 
@@ -173,9 +172,9 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
             if (shouldAcceptOffer(offer)) {
 
-                LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
+                LOGGER.info(String.format("Accepting Offer. offerId=%s, slaveId=%s",
                         offer.getId().getValue(),
-                        offer.getSlaveId());
+			     offer.getSlaveId()));
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
@@ -199,10 +198,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
 
-        LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
+        LOGGER.info(String.format("Received Status Update. taskId=%s, state=%s, message=%s",
             status.getTaskId().getValue(),
             status.getState(),
-            status.getMessage());
+				  status.getMessage()));
 
         statusUpdateWatchers.notifyObservers(status);
 
@@ -249,7 +248,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private void sendMessage(ExecutorID executorId, SlaveID slaveId,
         SchedulerMessage schedulerMessage) {
 
-        LOGGER.debug("Sending message to executor {}", schedulerMessage);
+        LOGGER.debug(String.format("Sending message to executor %s", schedulerMessage));
         driver.sendFrameworkMessage(executorId, slaveId, schedulerMessage.toByteArray());
     }
 
@@ -260,7 +259,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         try {
             ExecutorMessage message = ExecutorMessage.parseFrom(bytes);
 
-            LOGGER.debug("Received Stats from Executor. executorId={}", executorID.getValue());
+            LOGGER.debug(String.format("Received Stats from Executor. executorId=%s", executorID.getValue()));
             message.getContainersList().forEach(container -> LOGGER.debug(container.toString()));
 
             liveState.updateStats(slaveID, message);
@@ -268,8 +267,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             listeners.forEach(l -> l.frameworkMessage(this, executorID, slaveID, message));
 
         } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Failed to parse framework message. executorId={}, slaveId={}", executorID,
-                slaveID, e);
+            LOGGER.error(String.format("Failed to parse framework message. executorId=%s, slaveId=%s", executorID,
+			  slaveID));
         }
     }
 
@@ -330,7 +329,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                 try {
                     sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message);
                 } catch (Exception ex) {
-                    LOGGER.error("Can not send message: {}", ex);
+                    LOGGER.error(String.format("Can not send message: %s"));
                 }
             });
         }
@@ -343,17 +342,17 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Override
     public void error(SchedulerDriver schedulerDriver, String errorMessage) {
-        LOGGER.error("Scheduler driver error. message={}", errorMessage);
+        LOGGER.error(String.format("Scheduler driver error. message=%s", errorMessage));
     }
 
     @Override
     public void offerRescinded(SchedulerDriver schedulerDriver, OfferID offerID) {
-        LOGGER.info("Offer Rescinded. offerId={}", offerID.getValue());
+        LOGGER.info(String.format("Offer Rescinded. offerId=%s", offerID.getValue()));
     }
 
     @Override
     public void slaveLost(SchedulerDriver schedulerDriver, SlaveID slaveID) {
-        LOGGER.info("Slave Lost. slaveId={}", slaveID.getValue());
+        LOGGER.info(String.format("Slave Lost. slaveId=%s", slaveID.getValue()));
     }
 
     @Override
