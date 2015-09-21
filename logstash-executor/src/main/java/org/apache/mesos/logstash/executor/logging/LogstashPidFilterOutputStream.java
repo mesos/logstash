@@ -27,7 +27,7 @@ public class LogstashPidFilterOutputStream extends FilterOutputStream {
             if (b == '\n') {
                 ignoring = false;
                 pid = pidStringBuilder.toString();
-                ConfigManager.LOGGER.debug("Extracted logstash pid: {}", pid);
+                ConfigManager.LOGGER.debug(String.format("Extracted logstash pid: %s", pid));
             }
 
             pidStringBuilder.append((char) b);

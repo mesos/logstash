@@ -4,8 +4,7 @@ import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +22,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class ConfigManager {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
+    public static final Logger LOGGER = Logger.getLogger(ConfigManager.class.toString());
 
     private final LogstashService logstash;
     private DockerClient containerizerClient;
@@ -42,7 +41,7 @@ public class ConfigManager {
 
     public void onNewConfigsFromScheduler(List<LogstashConfig> hostInfo,
         List<LogstashConfig> dockerInfo) {
-        LOGGER.info("onNewConfigsFromScheduler, {}\n-------\n{}", dockerInfo, hostInfo);
+        LOGGER.info(String.format("onNewConfigsFromScheduler, %s\n-------\n%s", dockerInfo, hostInfo));
         this.dockerInfo = dockerInfo;
         this.hostInfo = hostInfo;
         LOGGER.info("New configuration received. Reconfiguring...");

@@ -3,9 +3,7 @@ package org.apache.mesos.logstash.executor.docker;
 import org.apache.mesos.logstash.executor.ConfigManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.apache.mesos.logstash.executor.logging.LogStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -14,7 +12,7 @@ import java.util.stream.Collectors;
  */
 public class DockerLogStreamManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
+    private static final Logger LOGGER = Logger.getLogger(ConfigManager.class.toString());
 
     final Map<String, Set<ProcessedDockerLogPath>> processedContainers;
 

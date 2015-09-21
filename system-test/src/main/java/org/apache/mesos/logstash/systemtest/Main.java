@@ -4,8 +4,6 @@ import org.apache.log4j.Logger;
 import org.apache.mesos.mini.MesosCluster;
 import org.apache.mesos.mini.mesos.MesosClusterConfig;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
  * Main app to run Mesos Logstash with Mini Mesos.
  */

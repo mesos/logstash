@@ -6,9 +6,7 @@ import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.state.LiveState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.log4j.Logger;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +21,7 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
  */
 public class LogstashExecutor implements Executor {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class.toString());
+    public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
 
     private final ConfigManager configManager;
     private final LiveState liveState;
@@ -49,7 +47,7 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void killTask(ExecutorDriver driver, Protos.TaskID taskId) {
-        LOGGER.info("Kill task. taskId={}", taskId.getValue());
+        LOGGER.info(String.format("Kill task. taskId=%s", taskId.getValue()));
 
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setTaskId(taskId)
@@ -64,7 +62,7 @@ public class LogstashExecutor implements Executor {
         try {
             SchedulerMessage message = SchedulerMessage.parseFrom(data);
 
-            LOGGER.info("SchedulerMessage. message={}", message);
+            LOGGER.info(String.format("SchedulerMessage. message=%s", message));
 
             if (message.getType().equals(REQUEST_STATS)) {
                 sendStatsToScheduler(driver);
@@ -102,13 +100,13 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void error(ExecutorDriver driver, String message) {
-        LOGGER.info("Error in executor: message={}", message);
+        LOGGER.info(String.format("Error in executor: message=%s", message));
     }
 
     @Override
     public void registered(ExecutorDriver driver, Protos.ExecutorInfo executorInfo,
         Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
-        LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
+        LOGGER.info(String.format("LogstashExecutor Logstash registered. slaveId=%s", slaveInfo.getId()));
 
         liveState.setHostName(slaveInfo.getHostname());
         dockerClient.startupComplete(slaveInfo.getHostname());
@@ -116,7 +114,7 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void reregistered(ExecutorDriver driver, Protos.SlaveInfo slaveInfo) {
-        LOGGER.info("LogstashExecutor Logstash re-registered. slaveId={}", slaveInfo.getId());
+        LOGGER.info(String.format("LogstashExecutor Logstash re-registered. slaveId=%s", slaveInfo.getId()));
     }
 
     @Override

@@ -5,9 +5,7 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.util.ConfigUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import org.apache.log4j.Logger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class LogstashService {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
+    public static final Logger LOGGER = Logger.getLogger(LogstashService.class);
     private final DockerClient client;
 
     private ExecutorStatus status;
@@ -51,9 +49,9 @@ public class LogstashService {
     public void update(List<LogstashProtos.LogstashConfig> dockerInfo, List<LogstashProtos.LogstashConfig> hostInfo) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
-        LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
+        LOGGER.info(String.format("LogstashService.update, %s\n-------\n%s", dockerInfo, hostInfo));
         String config = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
-        LOGGER.debug("Writing new configuration:\n{}", config);
+        LOGGER.debug(String.format("Writing new configuration:\n%s", config));
         setLatestConfig(config);
     }
 

@@ -5,8 +5,7 @@ import com.spotify.docker.client.DockerException;
 import com.spotify.docker.client.messages.Container;
 import org.apache.mesos.logstash.common.ConcurrentUtils;
 import org.apache.mesos.logstash.executor.logging.LogStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.net.URI;
 import java.util.*;
@@ -24,7 +23,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
 public class DockerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class);
+    private static final Logger LOGGER = Logger.getLogger(DockerClient.class.toString());
 
     private com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
