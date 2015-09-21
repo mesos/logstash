@@ -23,6 +23,7 @@ public class Application implements Runnable {
     }
 
     public void run() {
+        LOGGER.info("Starting the executor..");
         DockerClient dockerClient = new DockerClient();
 
         FileLogSteamWriter writer = new FileLogSteamWriter(MAX_LOG_SIZE);
