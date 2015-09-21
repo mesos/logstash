@@ -1,10 +1,9 @@
 package org.apache.mesos.logstash.ui;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.ui.packets.TaskListPacket;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class StatService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatService.class);
+    private static final Logger LOGGER = Logger.getLogger(StatService.class);
 
     private final ScheduledExecutorService executorService;
     private final SimpMessagingTemplate template;
