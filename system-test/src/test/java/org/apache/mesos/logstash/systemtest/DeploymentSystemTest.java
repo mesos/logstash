@@ -7,10 +7,13 @@ import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.mesos.mini.MesosCluster;
+import org.apache.mesos.mini.mesos.MesosClusterConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
@@ -21,9 +24,11 @@ import static com.jayway.awaitility.Awaitility.*;
  */
 public class DeploymentSystemTest {
 
-    public MesosCluster cluster = MesosCluster.builder().numberOfSlaves(1).privateRegistryPort(3333)
+    private MesosClusterConfig config = MesosClusterConfig.builder().numberOfSlaves(1).privateRegistryPort(3333)
             .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
             .build();
+
+    public MesosCluster cluster = new MesosCluster(config);
 
     @Before
     public void before() {
@@ -37,8 +42,6 @@ public class DeploymentSystemTest {
 
     @Test
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
-        cluster.injectImage("mesos/logstash-executor");
-
         DockerClientConfig.DockerClientConfigBuilder builder = DockerClientConfig.createDefaultConfigBuilder();
         builder.withUri("unix:///var/run/docker.sock");
         DockerClientConfig config = builder.build();
@@ -52,8 +55,8 @@ public class DeploymentSystemTest {
             @Override
             public Boolean call() throws Exception {
                 return
-                    cluster.getStateInfo().getFramework("logstash") != null &&
-                    cluster.getStateInfo().getFramework("logstash").getTasks().get(0).getState().equals("TASK_RUNNING");
+                        cluster.getStateInfo().getFramework("logstash") != null &&
+                                cluster.getStateInfo().getFramework("logstash").getTasks().get(0).getState().equals("TASK_RUNNING");
             }
         });
     }

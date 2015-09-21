@@ -36,10 +36,12 @@ public abstract class AbstractLogstashFrameworkTest {
 
     private static final String DOCKER_PORT = "2376";
 
+    private static final MesosClusterConfig config = MesosClusterConfig.builder().numberOfSlaves(1).privateRegistryPort(3333)
+                .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
+                .build();
+
     @ClassRule
-    public static MesosCluster cluster = MesosCluster.builder().numberOfSlaves(1).privateRegistryPort(3333)
-            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-            .build();
+    public static MesosCluster cluster = new MesosCluster(config);
 
     public static DockerClient clusterDockerClient;
 
@@ -49,8 +51,6 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
-        cluster.injectImage(LogstashConstants.EXECUTOR_IMAGE_NAME, LogstashConstants.EXECUTOR_IMAGE_TAG);
-
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
                 .createDefaultConfigBuilder()
                 .withUri("http://" + cluster.getMesosContainer().getIpAddress() + ":" + DOCKER_PORT);
