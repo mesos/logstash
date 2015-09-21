@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.executor;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
@@ -8,7 +9,6 @@ import org.apache.mesos.logstash.executor.docker.DockerStreamer;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
 import org.apache.mesos.logstash.executor.state.LiveState;
 
-import java.util.logging.Logger;
 
 /**
  * Main application to start the Logstash executor.

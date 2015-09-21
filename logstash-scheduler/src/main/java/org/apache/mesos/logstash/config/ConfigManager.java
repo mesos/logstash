@@ -3,8 +3,7 @@ package org.apache.mesos.logstash.config;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.state.FrameworkState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,7 @@ import java.util.function.Consumer;
 
 @Component
 public class ConfigManager {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
+    private static final Logger LOGGER = Logger.getLogger(ConfigManager.class.toString());
 
     private final Map<String, LogstashProtos.LogstashConfig> configCache;
     private FrameworkState frameworkState;
@@ -39,7 +38,7 @@ public class ConfigManager {
         LogstashProtos.SchedulerMessage persistedConfig = frameworkState
             .getLatestConfig();
 
-        LOGGER.info("Fetched latest config: {}", persistedConfig);
+        LOGGER.info(String.format("Fetched latest config: %s", persistedConfig));
 
         List<LogstashProtos.LogstashConfig> configs = (persistedConfig != null) ? persistedConfig.getConfigsList() : new ArrayList<>();
         configs.stream().forEach(c -> configCache.put(c.getFrameworkName(), c));
