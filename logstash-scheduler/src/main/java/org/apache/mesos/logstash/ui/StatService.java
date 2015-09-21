@@ -1,9 +1,9 @@
 package org.apache.mesos.logstash.ui;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.scheduler.LogstashScheduler;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.ui.packets.TaskListPacket;
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;

@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.cluster;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskID;
 import org.apache.log4j.Logger;
