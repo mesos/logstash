@@ -42,7 +42,9 @@ public class LogstashService {
     }
 
     public void stop() {
-        if (process != null) process.destroy();
+        if (process != null) {
+            process.destroy();
+        }
         ConcurrentUtils.stop(executorService);
     }
 
@@ -58,14 +60,16 @@ public class LogstashService {
     private void run() {
 
         if (process != null) {
-            status = (process.isAlive()) ? ExecutorStatus.RUNNING : ExecutorStatus.ERROR;
+            status = process.isAlive() ? ExecutorStatus.RUNNING : ExecutorStatus.ERROR;
         }
 
         // Consumer: Read the latest config. If any, write it to disk and restart
         // the logstash process.
         String newConfig = getLatestConfig();
 
-        if (newConfig == null) return;
+        if (newConfig == null) {
+            return;
+        }
 
         LOGGER.info("Restarting the Logstash Process.");
         status = ExecutorStatus.RESTARTING;
@@ -83,7 +87,9 @@ public class LogstashService {
                 process.waitFor(5, TimeUnit.MINUTES);
             }
 
-            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh", new String[]{"LS_HEAP_SIZE="+ System.getProperty("mesos.logstash.logstash.heap.size")});
+            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh",
+                    new String[]{"LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size")}
+            );
         } catch (Exception e) {
             status = ExecutorStatus.ERROR;
             LOGGER.error("Failed to start logstash process.", e);

@@ -9,17 +9,15 @@ import org.apache.mesos.mini.mesos.MesosClusterConfig;
 
 import java.util.List;
 
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class LocalCluster {
 
     private static final String DOCKER_PORT = "2376";
-    public final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
+    public final MesosCluster cluster = MesosClusterConfig.builder()
         .numberOfSlaves(1)
         .privateRegistryPort(3333)
-        .proxyPort(12345)
         .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
         .build();
-
-    private LocalMesosCluster cluster = new LocalMesosCluster(clusterConfig);
 
     public static void main(String[] args) throws Exception {
         new LocalCluster().run();
@@ -59,22 +57,11 @@ public class LocalCluster {
     }
 
     private void printRunningContainers() {
-        DockerClient dockerClient = clusterConfig.dockerClient;
+        DockerClient dockerClient = cluster.getConfig().dockerClient;
 
         List<Container> containers = dockerClient.listContainersCmd().exec();
         for (Container container : containers) {
             System.out.println(container.getImage());
-        }
-    }
-
-    class LocalMesosCluster extends MesosCluster {
-
-        public LocalMesosCluster(MesosClusterConfig config) {
-            super(config);
-        }
-
-        public void stop() {
-            this.after();
         }
     }
 

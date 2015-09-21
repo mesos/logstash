@@ -61,7 +61,7 @@ public class DockerLogStream implements LogStream {
     }
 
     @Override public String getLogstashPid() {
-        return logstashPidFilterOutputStream.pid;
+        return logstashPidFilterOutputStream.getPid();
     }
 
 }

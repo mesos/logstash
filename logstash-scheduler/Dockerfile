@@ -9,8 +9,7 @@ RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true 
   rm -rf /var/lib/apt/lists/* && \
   rm -rf /var/cache/oracle-jdk8-installer
 
-ADD ./build/libs/logstash-scheduler.jar /tmp/logstash-scheduler.jar
-ADD ./build/libs/logstash-scheduler-deps.jar /tmp/logstash-scheduler-deps.jar
+ADD ./build/docker/logstash-mesos-scheduler.jar /tmp/logstash-mesos-scheduler.jar
 ADD start-scheduler.sh /tmp/start-scheduler.sh
 
 ENTRYPOINT ["/tmp/start-scheduler.sh"]

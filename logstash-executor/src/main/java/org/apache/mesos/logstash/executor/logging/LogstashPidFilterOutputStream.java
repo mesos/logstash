@@ -6,6 +6,9 @@ import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+/**
+ * Outputstream for Logstash pid.
+ */
 public class LogstashPidFilterOutputStream extends FilterOutputStream {
 
     public static final char MAGIC_CHARACTER = '\u0002';
@@ -38,7 +41,7 @@ public class LogstashPidFilterOutputStream extends FilterOutputStream {
         }
     }
 
-    @Override public void close() throws IOException {
-        super.close();
+    public String getPid() {
+        return pid;
     }
 }

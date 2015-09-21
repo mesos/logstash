@@ -31,23 +31,17 @@ import java.util.concurrent.ExecutionException;
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public abstract class AbstractLogstashFrameworkTest {
-
-    public static final MesosClusterConfig clusterConfig = MesosClusterConfig.builder()
-        .numberOfSlaves(1).privateRegistryPort(3333).proxyPort(12345)
-        .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-        .build();
 
     private static final String DOCKER_PORT = "2376";
 
     @ClassRule
-    public static MesosCluster cluster = new MesosCluster(clusterConfig);
-
-    public static LogstashScheduler scheduler;
+    public static MesosCluster cluster = MesosCluster.builder().numberOfSlaves(1).privateRegistryPort(3333)
+            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
+            .build();
 
     public static DockerClient clusterDockerClient;
-
-    protected List<AbstractContainer> containersToBeStopped = new ArrayList<>();
 
     ExecutorMessageListenerTestImpl executorMessageListener;
     protected ConfigManager configManager;
@@ -55,64 +49,28 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
-
         cluster.injectImage(LogstashConstants.EXECUTOR_IMAGE_NAME, LogstashConstants.EXECUTOR_IMAGE_TAG);
-    }
 
-    public void startContainer(AbstractContainer container) {
-        container.start();
-        containersToBeStopped.add(container);
-    }
-
-    @BeforeClass
-    public static void getMesosClusterDockerClient() {
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
-            .createDefaultConfigBuilder()
-            .withUri("http://" + cluster.getMesosContainer().getIpAddress() + ":" + DOCKER_PORT);
+                .createDefaultConfigBuilder()
+                .withUri("http://" + cluster.getMesosContainer().getIpAddress() + ":" + DOCKER_PORT);
         clusterDockerClient = DockerClientBuilder.getInstance(dockerConfigBuilder.build()).build();
-    }
 
-    @After
-    public void stopContainers() {
-        try {
-            scheduler.stop();
-        } catch (ExecutionException | InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        for (AbstractContainer container : containersToBeStopped) {
-            try {
-                container.remove();
-            } catch (Exception ignore) {
-            }
-        }
+        LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(clusterDockerClient, cluster.getMesosContainer().getIpAddress());
+        schedulerContainer.start();
     }
 
     @Before
-    public void startLogstashFramework()
-        throws IOException, ExecutionException, InterruptedException {
+    public void startLogstashFramework() throws IOException, ExecutionException, InterruptedException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
-
-        System.setProperty("mesos.zk", "zk://" + zkAddress + "/mesos");
-        System.setProperty("mesos.logstash.logstash.heap.size", "128");
-        System.setProperty("mesos.logstash.executor.heap.size", "128");
-
-
-        LiveState liveState = new LiveState();
         Configuration configuration = new Application().getLogstashConfiguration();
         configuration.setDisableFailover(true); // we remove our framework completely
         configuration.setVolumeString("/tmp");
 
         configManager = new ConfigManager(configuration);
-
-        MesosSchedulerDriverFactory driverFactory = new MesosSchedulerDriverFactory();
         configManager.start();
-
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory);
-        scheduler.start();
 
         System.out.println("**************** RECONCILIATION_DONE CONTAINERS ON TEST START *******************");
         printRunningContainers();
@@ -124,22 +82,19 @@ public abstract class AbstractLogstashFrameworkTest {
         executorContainer = new LogstashExecutorContainer(clusterDockerClient);
     }
 
-
     private void printRunningContainers() {
-        DockerClient dockerClient = clusterConfig.dockerClient;
+        DockerClient dockerClient = cluster.getConfig().dockerClient;
 
         List<Container> containers = dockerClient.listContainersCmd().exec();
         for (Container container : containers) {
             System.out.println(container.getImage());
         }
     }
-    
-    
+
     private static void waitForLogstashFramework() {
         // wait for our framework
         cluster.waitForState(state -> state.getFramework("logstash") != null);
     }
-
 
     private static void waitForExcutorTaskIsRunning() {
         // wait for our executor
@@ -160,10 +115,9 @@ public abstract class AbstractLogstashFrameworkTest {
         Predicate<List<ExecutorMessage>> predicate) {
 
         int seconds = 10;
-        int numberOfExpectedMessages = clusterConfig.numberOfSlaves;
+        int numberOfExpectedMessages = cluster.getConfig().numberOfSlaves;
 
         executorMessageListener.clearAllMessages();
-        scheduler.requestExecutorStats();
 
         String message = String
             .format("Waiting for %d internal status report messages from executor",
@@ -177,7 +131,6 @@ public abstract class AbstractLogstashFrameworkTest {
                         return true;
                     } else {
                         executorMessageListener.clearAllMessages();
-                        scheduler.requestExecutorStats();
                         return false;
                     }
                 }

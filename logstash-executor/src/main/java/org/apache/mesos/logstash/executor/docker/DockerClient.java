@@ -17,10 +17,14 @@ import java.util.function.Consumer;
 
 import static java.util.concurrent.TimeUnit.HOURS;
 
+/**
+ * Docker client wrapper.
+ */
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class DockerClient {
 
     private Map<String, String> runningContainers = new HashMap<>();
-    private final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerClient.class);
 
     private com.spotify.docker.client.DockerClient dockerClient;
     private Consumer<List<String>> frameworkDiscoveryListener;
@@ -63,7 +67,8 @@ public class DockerClient {
         return this.runningContainers.keySet();
     }
 
-    // TODO this method does not just return an image name -> only if we tracked the container as running too -> refactor
+    // TODO (Florian) this method does not just return an image name
+    // only if we tracked the container as running too -> refactor
     public String getImageNameOfContainer(String containerId) {
         return this.runningContainers.get(containerId);
     }

@@ -8,6 +8,7 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.mini.state.State;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -31,16 +32,12 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
+@Ignore("Take out individual tests and put them in compact, separate tests. See DeploymentSystemTest.")
 public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
 
     public static final String SOME_LOGSTASH_OUTPUT_FILE = "/tmp/logstash.out";
     public static final String SOME_LOG_FILE = "/tmp/systemtest.log";
     public static final String SOME_OTHER_LOG_FILE = "/tmp/systemtest2.log";
-
-    DummyFrameworkContainer dummyFramework = new DummyFrameworkContainer(clusterDockerClient,
-        "dummy-framework1");
-    DummyFrameworkContainer otherDummyFramework = new DummyFrameworkContainer(clusterDockerClient,
-        "dummy-framework2");
 
     @Before
     public void addExecutorMessageListener() {
@@ -50,29 +47,14 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
             e.printStackTrace();
         }
         executorMessageListener = new ExecutorMessageListenerTestImpl();
-        scheduler.registerListener(executorMessageListener);
-    }
-
-    @Test
-    public void logstashTaskIsRunning() throws Exception {
-        startContainer(dummyFramework);
-
-        State state = cluster.getStateInfo();
-
-        assertEquals("logstash framework should run 1 task", 1,
-            state.getFramework("logstash").getTasks().size());
-        assertEquals("logstash.task", state.getFramework("logstash").getTasks().get(0).getName());
-        assertEquals("TASK_RUNNING", state.getFramework("logstash").getTasks().get(0).getState());
     }
 
     @Test
     public void logstashDiscoversOtherRunningContainers() throws Exception {
-        startContainer(dummyFramework);
         requestInternalStatusAndWaitForResponse(
-            executorMessages -> 1 == executorMessages.size()
-                && 2 == executorMessages.get(0).getContainersCount());
+                executorMessages -> 1 == executorMessages.size()
+                        && 2 == executorMessages.get(0).getContainersCount());
 
-        startContainer(otherDummyFramework);
         requestInternalStatusAndWaitForResponse(
             executorMessages -> 1 == executorMessages.size()
                 && 3 == executorMessages.get(0).getContainersCount());
@@ -84,7 +66,7 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
 
         setConfigFor(HOST, "host", getFile("host.full.conf"));
 
-        new HostUtil(cluster.getMesosContainer().getContainerId(), clusterConfig.dockerClient)
+        new HostUtil(cluster.getMesosContainer().getContainerId(), cluster.getConfig().dockerClient)
                 .createFileWithContent("/tmp/testhost.log", logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
@@ -97,9 +79,6 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
         setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
-        startContainer(dummyFramework);
-        dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
-
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
         verifyExecutorReportsOneStreamingContainer();
     }
@@ -107,9 +86,6 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
     @Test
     public void logstashSetsUpLoggingForFrameworksStartedBeforeConfigIsWritten() throws Exception {
         final String logString = "Hello Test";
-
-        startContainer(dummyFramework);
-        dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
         setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
@@ -127,52 +103,49 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
         setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
 
-        startContainer(dummyFramework);
-        dummyFramework.createFileWithContent(SOME_LOG_FILE, logStringForLogfile1);
-        dummyFramework.createFileWithContent(SOME_OTHER_LOG_FILE, logStringForLogfile2);
+//        startContainer(dummyFramework);
+//        dummyFramework.createFileWithContent(SOME_LOG_FILE, logStringForLogfile1);
+//        dummyFramework.createFileWithContent(SOME_OTHER_LOG_FILE, logStringForLogfile2);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logStringForLogfile1);
-        waitForPsAux(dummyFramework, new String[]{"tail -F " + SOME_LOG_FILE},
-            new String[]{"tail -F " + SOME_OTHER_LOG_FILE});
+//        waitForPsAux(dummyFramework, new String[]{"tail -F " + SOME_LOG_FILE},
+//            new String[]{"tail -F " + SOME_OTHER_LOG_FILE});
 
         // ------- now reconfigure ----------
 
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_OTHER_LOG_FILE));
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logStringForLogfile2);
-        waitForPsAux(dummyFramework, new String[]{"tail -F " + SOME_OTHER_LOG_FILE},
-            new String[]{"tail -F " + SOME_LOG_FILE});
+//        waitForPsAux(dummyFramework, new String[]{"tail -F " + SOME_OTHER_LOG_FILE},
+//            new String[]{"tail -F " + SOME_LOG_FILE});
     }
-
 
     @Test
     public void logstashLoggingForFrameworksWhichIsStartedAndRestartedExterally() throws Exception {
         final String logString = "Hello Test";
         setConfigFor(DOCKER, "busybox:latest", getBusyboxConfigFor(SOME_LOG_FILE));
         setConfigFor(HOST, "host", getFile("host.outputonly.conf"));
-
-        try {
-            dummyFramework.start();
-            waitForNumberOfObservingFrameworks(2); // the executor itself is running in a container too
-
-        } finally {
-            dummyFramework.remove(); // we simulate an external removal of the framework by e.g. marathon scale down
-        }
+//
+//        try {
+//            dummyFramework.start();
+//            waitForNumberOfObservingFrameworks(2); // the executor itself is running in a container too
+//
+//        } finally {
+//            dummyFramework.remove(); // we simulate an external removal of the framework by e.g. marathon scale down
+//        }
 
         waitForNumberOfObservingFrameworks(1);
 
-        startContainer(dummyFramework); // we start the framework again - this time safely so it's removed automatically
-        dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
+//        startContainer(dummyFramework); // we start the framework again - this time safely so it's removed automatically
+//        dummyFramework.createFileWithContent(SOME_LOG_FILE, logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);
-        verifyExecutorReportsOneStreamingContainer();        ;
+        verifyExecutorReportsOneStreamingContainer();
 
     }
 
-
     private void verifyLogstashProcessesLogEvents(String path, String logString) {
         waitForLogstashToProcessLogEvents(path, logString);
-
     }
 
     private void verifyExecutorReportsOneStreamingContainer() {
@@ -216,6 +189,7 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
             throw e;
         }
     }
+
     private void waitForNumberOfObservingFrameworks(int count) {
             await().atMost(90, TimeUnit.SECONDS).until(() -> {
                 try {
@@ -284,11 +258,9 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
         return new String(Files.readAllBytes(conf));
     }
 
-
     private String getBusyboxConfigFor(String file) throws IOException, URISyntaxException {
         return getFile("busybox.conf").replace("{{FILENAME}}", file);
     }
-
 
     private void setConfigFor(LogstashConfigType type, String name, String configText) {
         try {

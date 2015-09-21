@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toMap;
 
 /**
- * Class responsible for updating configurations and corresponding docker streams
+ * Class responsible for updating configurations and corresponding docker streams.
  */
 public class ConfigManager {
 
@@ -67,7 +67,8 @@ public class ConfigManager {
         Predicate<String> hasKnownConfig = c -> lookupConfig.apply(c) != null;
         Predicate<String> hasUnknownConfigOrIsNotRunningAnymore = c -> lookupConfig.apply(c) == null;
 
-        Function<String, DockerFramework> createFramework = c -> new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c));
+        Function<String, DockerFramework> createFramework = c ->
+                new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c));
 
         Stream<DockerFramework> frameworks = containerizerClient
             .getRunningContainers()

@@ -10,6 +10,9 @@ import org.apache.mesos.logstash.executor.state.LiveState;
 
 import java.util.logging.Logger;
 
+/**
+ * Main application to start the Logstash executor.
+ */
 public class Application implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(Application.class.toString());

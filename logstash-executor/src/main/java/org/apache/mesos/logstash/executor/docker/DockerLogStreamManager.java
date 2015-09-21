@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Processes the logs stream for Docker containers.
+ */
 public class DockerLogStreamManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
@@ -71,8 +74,10 @@ public class DockerLogStreamManager {
             Set<ProcessedDockerLogPath> processedDockerLogPaths = processedContainers
                 .get(framework.getContainerId());
 
-            Set<DockerLogPath> currentDockerLogPaths = processedDockerLogPaths.stream().map(ProcessedDockerLogPath::getDockerLogPath).collect(
-                Collectors.toSet());
+            Set<DockerLogPath> currentDockerLogPaths = processedDockerLogPaths
+                                                                .stream()
+                                                                .map(ProcessedDockerLogPath::getDockerLogPath)
+                                                                .collect(Collectors.toSet());
 
             if (!currentDockerLogPaths.contains(dockerLogPath)){
                 LOGGER.info("Start streaming: " + dockerLogPath);

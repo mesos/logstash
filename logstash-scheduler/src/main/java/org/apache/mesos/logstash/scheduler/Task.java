@@ -56,10 +56,12 @@ public class Task {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof Task))
+        if (!(obj instanceof Task)) {
             return false;
-        if (obj == this)
+        }
+        if (obj == this) {
             return true;
+        }
 
         Task rhs = (Task) obj;
         return new EqualsBuilder().
