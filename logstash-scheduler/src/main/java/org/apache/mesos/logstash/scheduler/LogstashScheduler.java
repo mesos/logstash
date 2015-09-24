@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutionException;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
+import com.google.protobuf.ByteString;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.NEW_CONFIG;
 
 @Component
@@ -96,10 +97,24 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             frameworkBuilder.setId(frameworkID);
         }
 
-        LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
+        if (configuration.getMesosPrincipal() != null) {
+            Protos.Credential.Builder credentialBuilder = Protos.Credential.newBuilder();
+            frameworkBuilder.setPrincipal(configuration.getMesosPrincipal());
+            credentialBuilder.setPrincipal(configuration.getMesosPrincipal());
+            credentialBuilder.setSecret(ByteString.copyFromUtf8(configuration.getMesosSecret()));
+            LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
-        driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
-            configuration.getZookeeperUrl());
+            driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
+                        credentialBuilder.build(), configuration.getZookeeperUrl());
+        }
+        else 
+        {
+            LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
+
+            driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
+                        configuration.getZookeeperUrl());
+        }
+
 
         driver.start();
     }

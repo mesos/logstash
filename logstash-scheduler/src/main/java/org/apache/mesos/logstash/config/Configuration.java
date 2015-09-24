@@ -28,6 +28,8 @@ public class Configuration {
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
     private Optional<String> elasticsearchDomainAndPort = Optional.empty();
+    private String mesosPrincipal = null;
+    private String mesosSecret = null;
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -166,6 +168,23 @@ public class Configuration {
     public void setZkTimout(int zkTimout) {
         this.zkTimout = zkTimout;
     }
+
+    public void setMesosPrincipal(String mesosPrincipal) {
+        this.mesosPrincipal = mesosPrincipal;
+    }
+
+    public String getMesosPrincipal() {
+        return mesosPrincipal;
+    }
+
+    public void setMesosSecret(String mesosSecret) {
+        this.mesosSecret = mesosSecret;
+    }
+
+    public String getMesosSecret() {
+        return mesosSecret;
+    }
+
 
     public int getExecutorOverheadMem() {
         return executorOverheadMem;
