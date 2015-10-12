@@ -1,23 +1,16 @@
 package org.apache.mesos.logstash.systemtest;
 
+import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.mesos.MesosClusterConfig;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.scheduler.Application;
-import org.apache.mesos.logstash.scheduler.LogstashScheduler;
-import org.apache.mesos.logstash.scheduler.MesosSchedulerDriverFactory;
-import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.mini.MesosCluster;
-import org.apache.mesos.mini.container.AbstractContainer;
-import org.apache.mesos.mini.mesos.MesosClusterConfig;
-import org.apache.mesos.mini.util.Predicate;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -27,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -37,9 +31,10 @@ public abstract class AbstractLogstashFrameworkTest {
     private static final String DOCKER_PORT = "2376";
 
     @ClassRule
-    public static MesosCluster cluster = MesosCluster.builder().numberOfSlaves(1).privateRegistryPort(3333)
-            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-            .build();
+    protected static final MesosCluster cluster = new MesosCluster(MesosClusterConfig.builder()
+                            .numberOfSlaves(1)
+                            .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
+                            .build());
 
     public static DockerClient clusterDockerClient;
 
@@ -49,14 +44,12 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
-        cluster.injectImage(LogstashConstants.EXECUTOR_IMAGE_NAME, LogstashConstants.EXECUTOR_IMAGE_TAG);
-
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
                 .createDefaultConfigBuilder()
-                .withUri("http://" + cluster.getMesosContainer().getIpAddress() + ":" + DOCKER_PORT);
+                .withUri("http://" + cluster.getMesosMasterContainer().getIpAddress() + ":" + DOCKER_PORT);
         clusterDockerClient = DockerClientBuilder.getInstance(dockerConfigBuilder.build()).build();
 
-        LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(clusterDockerClient, cluster.getMesosContainer().getIpAddress());
+        LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(clusterDockerClient, cluster.getMesosMasterContainer().getIpAddress());
         schedulerContainer.start();
     }
 

@@ -1,8 +1,7 @@
 package org.apache.mesos.logstash.executor.logging;
 
 import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -15,7 +14,7 @@ import java.util.concurrent.Executors;
  */
 public class FileLogSteamWriter implements LogStreamWriter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FileLogSteamWriter.class);
+    private static final Logger LOGGER = Logger.getLogger(FileLogSteamWriter.class);
     private final long maxLogSize;
 
     public FileLogSteamWriter(long maxLogSize) {

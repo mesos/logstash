@@ -2,8 +2,7 @@ package org.apache.mesos.logstash.executor.docker;
 
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.apache.mesos.logstash.executor.logging.LogstashPidFilterOutputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +13,7 @@ import java.io.OutputStream;
  *  TODO: remove this class put the logic to whom who uses attach
  */
 public class DockerLogStream implements LogStream {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
+    private static final Logger LOGGER = Logger.getLogger(DockerStreamer.class.toString());
     private final com.spotify.docker.client.LogStream innerLogStream;
 
     private LogstashPidFilterOutputStream logstashPidFilterOutputStream;

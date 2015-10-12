@@ -1,8 +1,9 @@
 package org.apache.mesos.logstash.cluster;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskID;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,8 +14,7 @@ import java.util.Set;
  * Contains all reconciliation information. Monitors updated tasks to determine when we're finished.
  */
 public class ReconciliationMonitor {
-    private static final org.slf4j.Logger LOGGER = LoggerFactory
-        .getLogger(ReconciliationMonitor.class);
+    private static final Logger LOGGER = Logger.getLogger(ReconciliationMonitor.class.toString());
 
     private final Set<TaskID> tasks = new HashSet<>();
 
@@ -28,7 +28,7 @@ public class ReconciliationMonitor {
             // Update cluster state, if necessary
             tasks.remove(status.getTaskId());
         } catch (IllegalStateException e) {
-            LOGGER.error("Unable to write executor state to zookeeper", e);
+            LOGGER.error("Unable to write executor state to zookeeper");
         }
     }
 
@@ -47,9 +47,9 @@ public class ReconciliationMonitor {
     public void logRemainingTasks() {
         LOGGER.info("Reconciliation phase still ongoing:");
         for (TaskID taskID : tasks) {
-            LOGGER.info(
-                "  Waiting for status update for task-id: {}",
-                taskID);
+            LOGGER.info(String.format(
+                "  Waiting for status update for task-id: %s",
+                taskID));
         }
     }
 }

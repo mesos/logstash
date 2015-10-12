@@ -1,18 +1,16 @@
 package org.apache.mesos.logstash.executor.docker;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.executor.logging.LogStream;
 import org.apache.mesos.logstash.executor.logging.LogStreamWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.Executors;
 
 public class ByteBufferLogSteamWriter implements LogStreamWriter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ByteBufferLogSteamWriter.class);
+    private static final Logger LOGGER = Logger.getLogger(ByteBufferLogSteamWriter.class);
 
     private ByteArrayOutputStream stdout = new ByteArrayOutputStream();
     private ByteArrayOutputStream stderr = new ByteArrayOutputStream();

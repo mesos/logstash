@@ -1,5 +1,6 @@
 package org.apache.mesos.logstash.cluster;
 
+import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskInfo;
 import org.apache.mesos.Protos.TaskStatus;
@@ -8,8 +9,6 @@ import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.LSTaskStatus;
 import org.apache.mesos.logstash.state.LiveState;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.security.InvalidParameterException;
 import java.util.*;
@@ -20,7 +19,7 @@ import java.util.stream.Collectors;
  * task reconciliation.
  */
 public class ClusterMonitor implements Observer {
-    private static final Logger LOGGER =  LoggerFactory.getLogger(ClusterMonitor.class);
+    private static final Logger LOGGER =  Logger.getLogger(ClusterMonitor.class.toString());
     private final Configuration configuration;
     private final ClusterState clusterState;
     private final LiveState liveState;
@@ -84,14 +83,14 @@ public class ClusterMonitor implements Observer {
             if (getClusterState().exists(status.getTaskId())) {
 
 
-                LOGGER.debug("Updating task status for {} ", status);
-                LSTaskStatus executorState = getClusterState().getStatus(status.getTaskId());
+		LOGGER.debug("Updating task status for " + status);
+		LSTaskStatus executorState = getClusterState().getStatus(status.getTaskId());
                 // Update state of Executor
                 executorState.setStatus(status);
 
-                if (executorState.taskInTerminalState()) {
-                    LOGGER.error("Task in terminal state. Removing from zookeeper: {} ", executorState);
-                    clusterState.removeTask(executorState.getTaskInfo()); // Remove task from cluster state.
+                if (executorState.taskInTerminalState()) {                    
+                    LOGGER.error("Task in terminal state. Removing from zookeeper: " + executorState);
+		    clusterState.removeTask(executorState.getTaskInfo()); // Remove task from cluster state.
                     executorState.destroy(); // Destroy task in ZK.
                 }
 
@@ -223,8 +222,8 @@ public class ClusterMonitor implements Observer {
                 taskInfos.stream()
                         .filter(task -> task != null && !runningTaskIds.contains(task.getTaskId().getValue()))
                         .forEach(task -> {
-                            LOGGER.info("Removing task id: {}", task);
-                            getClusterState().removeTask(task);
+				LOGGER.info("Removing task id: " + task);
+				getClusterState().removeTask(task);
                         });
 
                 stopReconciling();

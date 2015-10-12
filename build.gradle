@@ -5,12 +5,10 @@ import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
 ext {
     imagePrefix = 'mesos'
     mesosVer = "0.22.1"
-    slf4jVer = "1.7.12"
     springBootVersion = "1.2.5.RELEASE"
     junitVer = "4.11"
     awaitilityVer = "1.6.3"
     mockitoVer = "1.9.5"
-    logbackVer = "1.1.3"
 }
 
 allprojects {
@@ -133,9 +131,7 @@ subprojects {
 
     dependencies {
         compile "org.apache.mesos:mesos:${mesosVer}"
-        compile "org.slf4j:log4j-over-slf4j:${slf4jVer}"
-
-        runtime "ch.qos.logback:logback-classic:${logbackVer}"
+        compile 'log4j:log4j:1.2.16'
 
         testCompile "org.hamcrest:hamcrest-core:1.3"
         testCompile "junit:junit-dep:${junitVer}"
