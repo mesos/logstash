@@ -6,7 +6,6 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
-import org.apache.mesos.mini.state.State;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
 
         setConfigFor(HOST, "host", getFile("host.full.conf"));
 
-        new HostUtil(cluster.getMesosContainer().getContainerId(), cluster.getConfig().dockerClient)
+        new HostUtil(cluster.getMesosMasterContainer().getContainerId(), cluster.getConfig().dockerClient)
                 .createFileWithContent("/tmp/testhost.log", logString);
 
         verifyLogstashProcessesLogEvents(SOME_LOGSTASH_OUTPUT_FILE, logString);

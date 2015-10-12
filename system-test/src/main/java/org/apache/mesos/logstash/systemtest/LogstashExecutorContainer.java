@@ -1,8 +1,8 @@
 package org.apache.mesos.logstash.systemtest;
+import com.containersol.minimesos.docker.ResponseCollector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Container;
-import org.apache.mesos.mini.docker.ResponseCollector;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -45,7 +45,7 @@ public class LogstashExecutorContainer {
         final ExecCreateCmdResponse finalExecCreateCmdResponse = execCreateCmdResponse;
 
         return ResponseCollector.collectResponse(dockerClient
-            .execStartCmd(finalExecCreateCmdResponse.getId()).exec());
+                .execStartCmd(finalExecCreateCmdResponse.getId()).exec());
     }
 
 

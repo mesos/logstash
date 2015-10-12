@@ -1,9 +1,7 @@
 package org.apache.mesos.logstash.systemtest;
+import com.containersol.minimesos.docker.ResponseCollector;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import org.apache.mesos.mini.container.AbstractContainer;
-import org.apache.mesos.mini.docker.ResponseCollector;
 
 import java.io.InputStream;
 

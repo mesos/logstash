@@ -1,13 +1,10 @@
 package org.apache.mesos.logstash.systemtest;
 
+import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.mesos.MesosClusterConfig;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.core.DockerClientBuilder;
-import com.github.dockerjava.core.DockerClientConfig;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import org.apache.mesos.mini.MesosCluster;
-import org.apache.mesos.mini.mesos.MesosClusterConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +21,7 @@ import static com.jayway.awaitility.Awaitility.*;
  */
 public class DeploymentSystemTest {
 
-    private MesosClusterConfig config = MesosClusterConfig.builder().numberOfSlaves(1).privateRegistryPort(3333)
+    private MesosClusterConfig config = MesosClusterConfig.builder().numberOfSlaves(1)
             .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
             .build();
 
@@ -42,7 +39,7 @@ public class DeploymentSystemTest {
 
     @Test
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
-        String mesosIpAddress = cluster.getMesosContainer().getIpAddress();
+        String mesosIpAddress = cluster.getMesosMasterContainer().getIpAddress();
         LogstashSchedulerContainer container = new LogstashSchedulerContainer(config.dockerClient, mesosIpAddress);
         cluster.addAndStartContainer(container);
 
