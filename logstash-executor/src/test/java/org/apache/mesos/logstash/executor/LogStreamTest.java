@@ -56,10 +56,10 @@ public class LogStreamTest {
     // Our log rotation works on byte level, so is completely oblivious to character encodings
     @Test
     public void cutsMultibyteUnicodeCharactersInHalf() throws IOException {
-        String testString = "        Flörüan";
+        String testString = "        Fl\u00f6r\u00fcan";
         testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
 
-        Assert.assertEquals("�rüan", FileUtils.readFileToString(testLogFile));
+        Assert.assertEquals("�r\u00fcan", FileUtils.readFileToString(testLogFile, "UTF-8"));
     }
 
     @Before
