@@ -275,6 +275,22 @@ This might cause loss of data but is in our opinion still acceptable (best effor
 The `tail -f` will steal some of the computing resources allocated to that container. But the
 resource-restrictions imposed by Mesos will still be respected. 
 
+## Build the framework
+
+Compilation
+
+```
+./gradlew --info clean compileJava
+```
+
+System test
+
+```
+echo "schedulerImageName=mesos/logstash-scheduler" > local.properties
+echo "executorImageName=mesos/logstash-executor" >> local.properties
+./gradlew -a --info clean build :system-test:test
+```
+
 ## Run the Tests
 
 To run the tests locally you need to fulfill the following requirements:

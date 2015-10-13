@@ -6,7 +6,9 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.mini.MesosCluster;
+import org.apache.mesos.mini.state.Framework;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,7 +42,12 @@ public class DeploymentSystemTest {
         cluster.injectImage("mesos/logstash-executor");
 
         DockerClientConfig.DockerClientConfigBuilder builder = DockerClientConfig.createDefaultConfigBuilder();
-        builder.withUri("unix:///var/run/docker.sock");
+
+        String dockerHost = System.getenv("DOCKER_HOST");
+        if(StringUtils.isBlank(dockerHost)) {
+            builder.withUri("unix:///var/run/docker.sock" );
+        }
+
         DockerClientConfig config = builder.build();
         DockerClient dockerClient = DockerClientBuilder.getInstance(config).build();
 
@@ -51,9 +58,10 @@ public class DeploymentSystemTest {
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
+                Framework framework = cluster.getStateInfo().getFramework("logstash");
                 return
-                    cluster.getStateInfo().getFramework("logstash") != null &&
-                    cluster.getStateInfo().getFramework("logstash").getTasks().get(0).getState().equals("TASK_RUNNING");
+                    framework != null && framework.getTasks().size() > 0 &&
+                    framework.getTasks().get(0).getState().equals("TASK_RUNNING");
             }
         });
     }
