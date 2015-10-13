@@ -58,8 +58,8 @@ public class LogStreamTest {
     public void cutsMultibyteUnicodeCharactersInHalf() throws IOException {
         String testString = "        Fl\u00f6r\u00fcan";
         testableLogStream.outputStream.write(testString.getBytes("UTF-8"));
-
-        Assert.assertEquals("�r\u00fcan", FileUtils.readFileToString(testLogFile, "UTF-8"));
+        String expected = "\ufffdr\u00fcan";
+        Assert.assertEquals(expected, FileUtils.readFileToString(testLogFile, "UTF-8"));
     }
 
     @Before
