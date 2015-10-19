@@ -4,7 +4,7 @@ import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
 
 ext {
     imagePrefix = 'mesos'
-    mesosVer = "0.22.1"
+    mesosVer = "0.25.0"
     springBootVersion = "1.2.5.RELEASE"
     junitVer = "4.11"
     awaitilityVer = "1.6.3"

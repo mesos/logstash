@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosStateZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
@@ -18,6 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
@@ -25,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 public class Application {
 
     private LogstashSystemProperties logstashSystemProperties = new LogstashSystemProperties();
+//    private Logger LOGGER = Logger.getLogger(Application.class.getCanonicalName());
 
     public static void main(String[] args) throws IOException {
         Application app = new Application();
@@ -42,12 +46,13 @@ public class Application {
     }
 
     @Bean
-    public Configuration getLogstashConfiguration() {
-
+    public Configuration getLogstashConfiguration() throws UnknownHostException {
+        SimpleFileServer fs = new SimpleFileServer();
+        fs.run();
         Configuration conf = new Configuration();
-
         conf.setVolumeString(logstashSystemProperties.getVolumes());
         conf.setState(getState(logstashSystemProperties));
+        conf.setSchedulerHttpEndpoint("http://" + fs.getAddress().getAddress().getHostAddress() + ":" + "9093");
         conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
         conf.setExecutorCpus(logstashSystemProperties.getExecutorCpus());
         conf.setExecutorHeapSize(logstashSystemProperties.getExecutorHeapSize());

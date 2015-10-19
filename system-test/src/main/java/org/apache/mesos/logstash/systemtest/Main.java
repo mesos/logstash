@@ -14,14 +14,13 @@ public class Main {
 
     public static void main(String[] args) throws InterruptedException {
         MesosCluster cluster = new MesosCluster(MesosClusterConfig.builder()
-                .numberOfSlaves(3)
                 .slaveResources(new String[]{"ports(*):[9200-9200,9300-9300]", "ports(*):[9201-9201,9301-9301]", "ports(*):[9202-9202,9302-9302]"})
                 .build());
         cluster.start();
 
         LOGGER.info("Starting scheduler");
         LogstashSchedulerContainer scheduler = new LogstashSchedulerContainer(cluster.getConfig().dockerClient, cluster.getZkContainer().getIpAddress());
-        scheduler.start();
+        cluster.addAndStartContainer(scheduler);
         LOGGER.info("Scheduler started at http://" + scheduler.getIpAddress() + ":9092");
 
         LOGGER.info("Type CTRL-C to quit");
@@ -29,5 +28,4 @@ public class Main {
             Thread.sleep(1000);
         }
     }
-
 }

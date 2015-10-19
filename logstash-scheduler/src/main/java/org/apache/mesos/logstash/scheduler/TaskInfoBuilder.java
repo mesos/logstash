@@ -23,32 +23,31 @@ public class TaskInfoBuilder {
     }
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
-
-        Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
-            .newBuilder()
-            .setForcePullImage(false)
-            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
-
-        Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
-            .setType(Protos.ContainerInfo.Type.DOCKER)
-            .addAllVolumes(getVolumes())
-            .setDocker(dockerExecutor.build());
+//
+//        Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
+//            .newBuilder()
+//            .setForcePullImage(false)
+//            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
+//
+//        Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
+//            .setType(Protos.ContainerInfo.Type.DOCKER)
+//            .addAllVolumes(getVolumes())
+//            ;
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
             configuration);
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-            .setName(LogstashConstants.NODE_NAME + " executor")
-            .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
-            .setContainer(container)
-            .setCommand(Protos.CommandInfo.newBuilder()
-                .addArguments("dummyArgument")
-                .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
-                .setEnvironment(Protos.Environment.newBuilder()
-                    .addAllVariables(executorEnvVars.getList()))
-                .setShell(false))
-            .build();
+                .setName(LogstashConstants.NODE_NAME + " executor")
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getExecutorUrl()))
+                        .setEnvironment(Protos.Environment.newBuilder()
+                                .addAllVariables(executorEnvVars.getList()))
+                        .setValue("/usr/bin/java -jar ./" + SimpleFileServer.LOGSTASH_EXECUTOR_JAR)
+                        .setShell(true))
+                .setSource("Java Test")
+                .build();
 
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)

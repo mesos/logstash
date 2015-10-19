@@ -1,7 +1,9 @@
 package org.apache.mesos.logstash.config;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.Scheduler;
 import org.apache.mesos.logstash.common.LogstashConstants;
+import org.apache.mesos.logstash.scheduler.SimpleFileServer;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.SerializableState;
 
@@ -26,6 +28,7 @@ public class Configuration {
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
+    private String httpEndpoint;
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -86,6 +89,14 @@ public class Configuration {
         return frameworkState;
     }
 
+    public void setSchedulerHttpEndpoint(String httpEndpoint) {
+        this.httpEndpoint = httpEndpoint;
+    }
+
+    public String getExecutorUrl() {
+        return this.httpEndpoint + "/get/" + SimpleFileServer.LOGSTASH_EXECUTOR_JAR;
+
+    }
 
     public void setZookeeperUrl(String zookeeperUrl) {
         this.zookeeperUrl = zookeeperUrl;

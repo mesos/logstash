@@ -56,9 +56,11 @@ public class DockerClient {
         // for the executor to register itself. This is called by the
         // executor itself.
 
+        String uri = (System.getenv("DOCKER_HOST").isEmpty() ? "http://" + hostName + ":2376" : System.getenv("DOCKER_HOST"));
+
         this.dockerClient = DefaultDockerClient.builder()
             .readTimeoutMillis(HOURS.toMillis(1))
-            .uri(URI.create("http://" + hostName + ":2376"))
+            .uri(URI.create(uri))
             .build();
     }
 

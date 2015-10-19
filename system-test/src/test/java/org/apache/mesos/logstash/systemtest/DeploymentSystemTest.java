@@ -21,7 +21,7 @@ import static com.jayway.awaitility.Awaitility.*;
  */
 public class DeploymentSystemTest {
 
-    private MesosClusterConfig config = MesosClusterConfig.builder().numberOfSlaves(1)
+    private MesosClusterConfig config = MesosClusterConfig.builder()
             .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
             .build();
 

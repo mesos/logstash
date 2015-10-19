@@ -32,7 +32,6 @@ public abstract class AbstractLogstashFrameworkTest {
 
     @ClassRule
     protected static final MesosCluster cluster = new MesosCluster(MesosClusterConfig.builder()
-                            .numberOfSlaves(1)
                             .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
                             .build());
 
@@ -108,7 +107,7 @@ public abstract class AbstractLogstashFrameworkTest {
         Predicate<List<ExecutorMessage>> predicate) {
 
         int seconds = 10;
-        int numberOfExpectedMessages = cluster.getConfig().numberOfSlaves;
+        int numberOfExpectedMessages = cluster.getConfig().slaveResources.length;
 
         executorMessageListener.clearAllMessages();
 
