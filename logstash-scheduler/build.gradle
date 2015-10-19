@@ -30,6 +30,7 @@ dependencies {
 
     compile 'commons-lang:commons-lang:2.6'
     compile 'log4j:log4j:1.2.16'
+    compile 'commons-io:commons-io:2.4'
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}")
