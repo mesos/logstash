@@ -42,7 +42,7 @@ public class TaskInfoBuilder {
                 .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
                 .setCommand(Protos.CommandInfo.newBuilder()
                         .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getExecutorUrl()))
-                        .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getStartExecutorUrl()))
+                        .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getStartExecutorUrl()).setExecutable(true))
                         .setEnvironment(Protos.Environment.newBuilder()
                                 .addAllVariables(executorEnvVars.getList()))
                         .setValue("./" + SimpleFileServer.LOGSTASH_START_SCRIPT)

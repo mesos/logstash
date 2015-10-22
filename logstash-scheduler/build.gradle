@@ -45,12 +45,11 @@ dependencies {
 }
 
 task copyExecutor(type: Copy) {
-    from { project(":logstash-executor").getTasksByName("copyJar", false) [0].outputs.files[0] } // Include executor
-    into { "src/main/resources/" }
+    from project(":logstash-executor").getTasksByName("copyJar", false)  // Include executor
+    into "src/main/resources/"
 }
 
 jar {
-    dependsOn "copyExecutor"
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
     from { project(":logstash-executor").getTasksByName("copyJar", false) [0].outputs.files[0] } // Include executor
@@ -86,7 +85,7 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 task copyJar(type: Copy) {
-    dependsOn   "bootRepackage"
+    dependsOn   "bootRepackage", "copyExecutor"
     from        "build/libs/logstash-mesos-scheduler-${project.version}.jar"
     from        "start-scheduler.sh"
     into        "build/docker"

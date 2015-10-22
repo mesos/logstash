@@ -16,7 +16,7 @@ public class LogstashExecutor implements Executor {
     private final ConfigManager configManager;
     private final LiveState liveState;
     private final DockerClient dockerClient;
-    private TaskStatus taskStatus;
+    private TaskStatus taskStatus = new TaskStatus();
 
 
     public LogstashExecutor(ConfigManager configManager, DockerClient dockerClient,
