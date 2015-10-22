@@ -4,6 +4,8 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.log4j.Logger;
+import org.apache.mesos.logstash.executor.docker.DockerClient;
+import org.apache.mesos.logstash.executor.state.LiveState;
 
 /**
  * Executor for Logstash.
@@ -11,10 +13,17 @@ import org.apache.log4j.Logger;
 public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = Logger.getLogger(LogstashExecutor.class.toString());
+    private final ConfigManager configManager;
+    private final LiveState liveState;
+    private final DockerClient dockerClient;
     private TaskStatus taskStatus;
 
-    public LogstashExecutor(TaskStatus taskStatus) {
-        this.taskStatus = taskStatus;
+
+    public LogstashExecutor(ConfigManager configManager, DockerClient dockerClient,
+                            LiveState liveState) {
+        this.configManager = configManager;
+        this.dockerClient = dockerClient;
+        this.liveState = liveState;
     }
 
     @Override

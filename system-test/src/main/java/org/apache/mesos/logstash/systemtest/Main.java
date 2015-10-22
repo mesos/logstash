@@ -19,6 +19,7 @@ public class Main {
         cluster.start();
 
         LOGGER.info("Starting scheduler");
+//        LOGGER.info();
         LogstashSchedulerContainer scheduler = new LogstashSchedulerContainer(cluster.getConfig().dockerClient, cluster.getZkContainer().getIpAddress());
         cluster.addAndStartContainer(scheduler);
         LOGGER.info("Scheduler started at http://" + scheduler.getIpAddress() + ":9092");

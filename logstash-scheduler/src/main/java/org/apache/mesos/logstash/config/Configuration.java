@@ -95,7 +95,10 @@ public class Configuration {
 
     public String getExecutorUrl() {
         return this.httpEndpoint + "/get/" + SimpleFileServer.LOGSTASH_EXECUTOR_JAR;
+    }
 
+    public String getStartExecutorUrl() {
+        return this.httpEndpoint + "/get/" + SimpleFileServer.LOGSTASH_START_SCRIPT;
     }
 
     public void setZookeeperUrl(String zookeeperUrl) {

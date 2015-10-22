@@ -42,9 +42,10 @@ public class TaskInfoBuilder {
                 .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
                 .setCommand(Protos.CommandInfo.newBuilder()
                         .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getExecutorUrl()))
+                        .addUris(Protos.CommandInfo.URI.newBuilder().setValue(this.configuration.getStartExecutorUrl()))
                         .setEnvironment(Protos.Environment.newBuilder()
                                 .addAllVariables(executorEnvVars.getList()))
-                        .setValue("/usr/bin/java -jar ./" + SimpleFileServer.LOGSTASH_EXECUTOR_JAR)
+                        .setValue("./" + SimpleFileServer.LOGSTASH_START_SCRIPT)
                         .setShell(true))
                 .setSource("Java Test")
                 .build();

@@ -44,10 +44,16 @@ dependencies {
     compile 'org.webjars:highcharts:4.1.6'
 }
 
+task copyExecutor(type: Copy) {
+    from { project(":logstash-executor").getTasksByName("copyJar", false) [0].outputs.files[0] } // Include executor
+    into { "src/main/resources/" }
+}
+
 jar {
+    dependsOn "copyExecutor"
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
-    from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
+    from { project(":logstash-executor").getTasksByName("copyJar", false) [0].outputs.files[0] } // Include executor
 
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
@@ -80,10 +86,12 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 task copyJar(type: Copy) {
-    dependsOn   'bootRepackage'
+    dependsOn   "bootRepackage"
     from        "build/libs/logstash-mesos-scheduler-${project.version}.jar"
     from        "start-scheduler.sh"
-    into        'build/docker'
+    into        "build/docker"
+    into        "build/libs"
+
     rename { String fileName ->
         fileName.replace("-${project.version}", "")
     }

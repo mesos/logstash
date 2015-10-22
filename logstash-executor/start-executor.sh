@@ -1,3 +1,3 @@
 #!/bin/bash
 
-java $JAVA_OPTS -Djava.library.path=/usr/local/lib -jar /tmp/logstash-mesos-executor.jar $@
+/usr/bin/java $JAVA_OPTS -Djava.library.path=/usr/local/lib -jar ./logstash-mesos-executor.jar $@

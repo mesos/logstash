@@ -8,6 +8,7 @@ import com.sun.net.httpserver.HttpServer;
 import org.apache.log4j.Logger;
 import org.apache.commons.io.IOUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -21,6 +22,7 @@ import java.net.UnknownHostException;
 public class SimpleFileServer implements Runnable {
     private static final Logger LOGGER = Logger.getLogger(SimpleFileServer.class);
     public static final String LOGSTASH_EXECUTOR_JAR = "logstash-mesos-executor.jar";
+    public static final String LOGSTASH_START_SCRIPT = "start-executor.sh";
     private HttpServer server;
 
     private static void writeClassPathResource(HttpExchange t, String classPathResource) throws IOException {
@@ -76,12 +78,10 @@ public class SimpleFileServer implements Runnable {
 
     static class GetHandler implements HttpHandler {
         public void handle(HttpExchange t) throws IOException {
-
             Headers h = t.getResponseHeaders();
+            String filename = t.getRequestURI().getPath().replace("/get/", "");
             h.add("Content-Type", "application/octet-stream");
-
-            writeClassPathResource(t, LOGSTASH_EXECUTOR_JAR);
+            writeClassPathResource(t, filename);
         }
     }
-
 }

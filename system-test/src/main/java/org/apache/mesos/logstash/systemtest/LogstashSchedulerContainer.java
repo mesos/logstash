@@ -3,6 +3,8 @@ package org.apache.mesos.logstash.systemtest;
 import com.containersol.minimesos.container.AbstractContainer;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.Volume;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
@@ -48,6 +50,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
+                .withBinds(Bind.parse(System.getProperty("user.dir") + "/logstash-scheduler/build/libs/:/tmp/"))
                 .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(javaOpts, " "));
     }
 }
