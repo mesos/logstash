@@ -44,19 +44,24 @@ dependencies {
     compile 'org.webjars:highcharts:4.1.6'
 }
 
-task copyExecutor(type: Copy) {
-    from project(":logstash-executor").getTasksByName("copyJar", false)  // Include executor
-    into "src/main/resources/"
+
+clean.doFirst {
+    delete "src/main/resources/logstash-mesos-executor.jar"
+    delete "src/main/resources/start-executor.sh"
+
 }
 
 jar {
     baseName = "logstash-mesos-scheduler"
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
-    from { project(":logstash-executor").getTasksByName("copyJar", false) [0].outputs.files[0] } // Include executor
-
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
+
+    from project(":logstash-executor").getTasksByName("shadowJar", false)  // Include executor
+    from project(":logstash-executor").file("start-executor.sh")
+
+    rename(/logstash-mesos-executor-(.*)\.jar/, "logstash-mesos-executor.jar")
 
     manifest {
         attributes(
@@ -85,7 +90,7 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 task copyJar(type: Copy) {
-    dependsOn   "bootRepackage", "copyExecutor"
+    dependsOn   "bootRepackage"
     from        "build/libs/logstash-mesos-scheduler-${project.version}.jar"
     from        "start-scheduler.sh"
     into        "build/docker"
