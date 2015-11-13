@@ -1,5 +1,11 @@
 FROM ubuntu:14.04
 
+RUN echo "deb http://ppa.launchpad.net/openjdk-r/ppa/ubuntu trusty main" > /etc/apt/sources.list.d/openjdk.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv 86F44E2A && \
+  apt-get update && \
+  apt-get -y install openjdk-8-jre-headless && \
+  rm -rf /var/lib/apt/lists/*
+
 RUN echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources.list.d/mesosphere.list && \
   apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
   apt-get -y update && \
@@ -11,13 +17,6 @@ RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main'
 RUN apt-get update && apt-get install -y software-properties-common
 
 RUN apt-get install -y --force-yes logstash
-
-RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-  add-apt-repository -y ppa:webupd8team/java && \
-  apt-get update && \
-  apt-get install -y oracle-java8-installer && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/oracle-jdk8-installer
 
 RUN bash -c "/opt/logstash/bin/plugin install logstash-output-syslog"
 RUN bash -c "/opt/logstash/bin/plugin install logstash-output-kafka"
