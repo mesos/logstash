@@ -1,5 +1,13 @@
 apply plugin: 'com.google.protobuf'
 
+ext {
+    imageName = imagePrefix + '/logstash-commons'
+}
+
+task taskCopyFilesForDocker(type: Copy) {
+//    Nothing to copy, but required by docker build
+}
+
 dependencies {
     compile 'com.google.protobuf:protobuf-java:2.6.1'
 }
