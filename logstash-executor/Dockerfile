@@ -1,10 +1,11 @@
 FROM ubuntu:14.04
 MAINTAINER Mesosphere <support@mesosphere.io>
 
-RUN echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources.list.d/mesosphere.list
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
-RUN apt-get -y update
-RUN apt-get -y install mesos=0.22.1-1.0.ubuntu1404
+RUN echo "deb http://repos.mesosphere.io/ubuntu/ trusty main" > /etc/apt/sources.list.d/mesosphere.list && \
+  apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF && \
+  apt-get -y update && \
+  apt-get -y install mesos=0.22.1-1.0.ubuntu1404 && \
+  rm -rf /var/lib/apt/lists/*
 
 RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main' | tee /etc/apt/sources.list.d/logstash.list
 
