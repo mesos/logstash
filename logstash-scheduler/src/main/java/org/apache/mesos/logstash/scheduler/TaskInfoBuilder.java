@@ -27,6 +27,7 @@ public class TaskInfoBuilder {
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
             .newBuilder()
             .setForcePullImage(false)
+            .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
             .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()

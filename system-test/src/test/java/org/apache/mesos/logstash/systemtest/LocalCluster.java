@@ -1,23 +1,29 @@
 package org.apache.mesos.logstash.systemtest;
 
+import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.mesos.ClusterUtil;
+import com.containersol.minimesos.mesos.MesosClusterConfig;
+import com.containersol.minimesos.mesos.MesosSlave;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
-import org.apache.mesos.mini.MesosCluster;
-import org.apache.mesos.mini.mesos.MesosClusterConfig;
 
 import java.util.List;
+import java.util.TreeMap;
 
 @SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class LocalCluster {
 
     private static final String DOCKER_PORT = "2376";
-    public final MesosCluster cluster = MesosClusterConfig.builder()
-        .numberOfSlaves(1)
-        .privateRegistryPort(3333)
-        .slaveResources(new String[]{"ports(*):[9299-9299,9300-9300]"})
-        .build();
+    public final MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(3, zooKeeper -> new MesosSlave(null, zooKeeper) {
+        @Override
+        public TreeMap<String, String> getDefaultEnvVars() {
+            final TreeMap<String, String> envVars = super.getDefaultEnvVars();
+            envVars.put("MESOS_RESOURCES", "ports(*):[9299-9299,9300-9300]");
+            return envVars;
+        }
+    }).withMaster().withZooKeeper().build());
 
     public static void main(String[] args) throws Exception {
         new LocalCluster().run();
@@ -29,25 +35,21 @@ public class LocalCluster {
 
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
             .createDefaultConfigBuilder()
-            .withUri("http://" + cluster.getMesosContainer().getIpAddress() + ":" + DOCKER_PORT);
+            .withUri("http://" + cluster.getMesosMasterContainer().getIpAddress() + ":" + DOCKER_PORT);
         DockerClient clusterDockerClient = DockerClientBuilder
             .getInstance(dockerConfigBuilder.build()).build();
-
-        cluster.injectImage("mesos/logstash-executor");
 
         DummyFrameworkContainer dummyFrameworkContainer = new DummyFrameworkContainer(
             clusterDockerClient, "dummy-framework");
         dummyFrameworkContainer.start();
 
-        String zkAddress = cluster.getMesosContainer().getIpAddress() + ":2181";
-
-        System.setProperty("mesos.zk", "zk://" + zkAddress + "/mesos");
+        System.setProperty("mesos.zk", cluster.getZkUrl());
         System.setProperty("mesos.logstash.logstash.heap.size", "128");
         System.setProperty("mesos.logstash.executor.heap.size", "64");
 
         System.out.println("");
         System.out.println("Cluster Started.");
-        System.out.println("MASTER URL: " + cluster.getMesosContainer().getMesosMasterURL());
+        System.out.println("MASTER URL: " + cluster.getMesosMasterContainer().getFormattedZKAddress());
         System.out.println("");
 
         while (!Thread.currentThread().isInterrupted()) {

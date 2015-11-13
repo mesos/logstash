@@ -3,8 +3,9 @@ dependencies {
     compile project(':logstash-scheduler')
 
     compile 'com.github.docker-java:docker-java:1.3.0'
+    compile 'commons-lang:commons-lang:2.6'
     compile 'com.mashape.unirest:unirest-java:1.4.5'
-    compile 'com.github.ContainerSolutions:mini-mesos:0.2.9'
+    compile 'com.github.ContainerSolutions:mini-mesos:9d8c635265'
 }
 
 test {

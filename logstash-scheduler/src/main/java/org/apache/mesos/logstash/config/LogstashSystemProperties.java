@@ -6,8 +6,8 @@ import java.util.Properties;
 
 public class LogstashSystemProperties {
 
-    private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 512;
-    private static final int DEFAULT_EXECUTOR_HEAP_SIZE = 256;
+    private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 128;
+    private static final int DEFAULT_EXECUTOR_HEAP_SIZE = 64;
 
     private static final double DEFAULT_CPUS = 0.2;
     private static final double DEFAULT_EXECUTOR_CPUS = DEFAULT_CPUS;

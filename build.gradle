@@ -4,24 +4,13 @@ import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
 
 ext {
     imagePrefix = 'mesos'
-    mesosVer = "0.22.1"
+    mesosVer = "0.25.0"
     slf4jVer = "1.7.12"
     springBootVersion = "1.2.5.RELEASE"
     junitVer = "4.11"
     awaitilityVer = "1.6.3"
     mockitoVer = "1.9.5"
     logbackVer = "1.1.3"
-}
-
-allprojects {
-    apply plugin: 'idea'
-}
-
-idea {
-    project {
-        languageLevel = '1.8'
-        vcs = 'Git'
-    }
 }
 
 buildscript {

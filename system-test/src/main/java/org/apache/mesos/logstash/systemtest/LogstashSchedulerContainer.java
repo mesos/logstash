@@ -1,8 +1,10 @@
 package org.apache.mesos.logstash.systemtest;
 
+import com.containersol.minimesos.container.AbstractContainer;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import org.apache.mesos.mini.container.AbstractContainer;
+import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.PortBinding;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
@@ -24,17 +26,17 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     private String ipAddress;
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String ipAddress) {
+    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
         super(dockerClient);
-        this.ipAddress = ipAddress;
+        this.ipAddress = zookeeperIpAddress;
         this.javaOpts = asList(
-                "-Xmx256m",
+//                "-Xmx256m",
                 "-Dmesos.logstash.web.port=9092",
                 "-Dmesos.logstash.framework.name=logstash",
-                "-Dmesos.logstash.logstash.heap.size=512",
-                "-Dmesos.logstash.executor.heap.size=256",
+                "-Dmesos.logstash.logstash.heap.size=128",
+                "-Dmesos.logstash.executor.heap.size=64",
                 "-Dmesos.logstash.volumes=/var/log/mesos",
-                "-Dmesos.zk=zk://" + ipAddress + ":2181/mesos"
+                "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
         );
     }
 
