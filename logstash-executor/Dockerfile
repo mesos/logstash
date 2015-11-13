@@ -1,10 +1,9 @@
 FROM mesos/logstash-commons:latest
 
-RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main' | tee /etc/apt/sources.list.d/logstash.list
-
-RUN apt-get update
-
-RUN apt-get install -y --force-yes logstash
+RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main' > /etc/apt/sources.list.d/logstash.list && \
+  apt-get update && \
+  apt-get install -y --force-yes logstash && \
+  rm -rf /var/lib/apt/lists/*
 
 RUN bash -c "/opt/logstash/bin/plugin install logstash-output-syslog"
 RUN bash -c "/opt/logstash/bin/plugin install logstash-output-kafka"
