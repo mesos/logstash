@@ -2,7 +2,7 @@ FROM mesos/logstash-commons:latest
 
 RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main' | tee /etc/apt/sources.list.d/logstash.list
 
-RUN apt-get update && apt-get install -y software-properties-common
+RUN apt-get update
 
 RUN apt-get install -y --force-yes logstash
 
