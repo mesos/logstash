@@ -12,6 +12,7 @@ dependencies {
     compile 'com.google.protobuf:protobuf-java:2.6.1'
 }
 
+/*
 idea {
     // We want IDEA to find the generated protobuf source file.
     // Problem is that the "build/" dir is excluded.
@@ -27,6 +28,7 @@ idea {
         sourceDirs  += file('build/generated/source/proto')
     }
 }
+*/
 
 protobuf {
 
