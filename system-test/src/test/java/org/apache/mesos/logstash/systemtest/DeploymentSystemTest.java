@@ -3,7 +3,6 @@ package org.apache.mesos.logstash.systemtest;
 import com.containersol.minimesos.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
-import com.containersol.minimesos.mesos.MesosSlave;
 import com.containersol.minimesos.state.Framework;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -28,14 +27,7 @@ public class DeploymentSystemTest {
     private static MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
             .withMaster()
-            .withSlave(zooKeeper -> new MesosSlave(dockerClient, zooKeeper) {
-                @Override
-                public TreeMap<String, String> getDefaultEnvVars() {
-                    final TreeMap<String, String> envVars = super.getDefaultEnvVars();
-                    envVars.put("MESOS_RESOURCES", "ports(*):[9299-9299,9300-9300]; cpus(*):0.2; mem(*):256; disk(*):200");
-                    return envVars;
-                }
-            })
+            .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
             .build());
 
     @Before
