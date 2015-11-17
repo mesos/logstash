@@ -8,18 +8,11 @@ your logs to ElasticSearch.
 
 This framework will try to launch a logstash-process per slave.
 
-The user writes logstash configuration files for the frameworks and docker images that he wants to support.
-Logstash-mesos will then be able to extract logs *out of* any docker container and parse
-them according to the supplied configuration.
-
-The configuration files can be supplied either trough the web UI of the scheduler or through writing
-directly to the schedulers configuration directory.
-
 # Roadmap
 
 ## Version 1 - July 24th
 
-- ☑ Automatic discovery of running frameworks, streaming logs from files inside the containers.
+- ☑ Automatic discovery of running frameworks, streaming logs from files inside the containers. (This feature has since been removed.)
 - ☑ Shared Test- and Development- Setup with `mesos-elasticsearch`, `mesos-kibana`
 - ☑ External LogStash Configuration (config files propagated from Master to Slaves)
 - ☑ Support for outputting to Elastic Search
@@ -51,19 +44,9 @@ Mesos 0.22.1 (or compatible).
 
 ### Access to Docker Host
 
-The executor will require access to its docker host in order to be able to discover
-and stream from docker containers.
-
 Since the executor runs inside its own docker container it will try to reach its host using:
 `http://<slavehostname>:2376`.
 
-### Requirements on Docker Containers
-
-In order to stream the content of monitored log files, each docker container hosting these files 
-must have the following binaries installed and executable:
-
-- tail
-- sh
 
 ## Running as Marathon app
 
@@ -256,25 +239,6 @@ Removes the configuration for this framework. Please make sure that framework-na
 
 The mesos-logstash framework is written in Java (Version 8).
 
-## How we extract the container logs
-
-Currently we only support monitoring log files within a running docker container. See configuration section how to
-specify the log file location. 
-
-For each log file within a docker container we run
-```docker exec <observed-container> tail -f /my/configured/logfile```
-in the background. We then stream the contents into a local file within the logstash container.
-This avoids doing intrusive changes (i.e, mounting a new ad-hoc volume) to the container.
-
-The file size of each streamed log file within the logstash container is limited
-(currently max. 5MB). When the file size
-exceeds that limit the file content is truncated.
-This might cause loss of data but is in our opinion still acceptable (best effort).  
-
-
-The `tail -f` will steal some of the computing resources allocated to that container. But the
-resource-restrictions imposed by Mesos will still be respected. 
-
 ## Build the framework
 
 Compilation
@@ -328,12 +292,6 @@ which is hard to estimate beforehand, since it depends on the number of availabl
 The intention is to do a best guess when allocating resources from Mesos (Work in Progress).
 
 # Security
-
-The framework will process log files of any docker container which is running on the same slave
-node and which are accessable via `docker exec <observed-container> tail -f /my/configured/logfile`. 
-
-There is no mechanism which ensures that you're authorized to monitor the log files of
-a specific framework running on the same cluster/node.
 
 There is no mechanism which ensures that the logstash output might overlap with other
 logstash configurations. In other words: logstash might observe one framework

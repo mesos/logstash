@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,16 +26,13 @@ public class ConfigManager {
 
     private final LogstashService logstash;
     private DockerClient containerizerClient;
-    private DockerLogStreamManager dockerLogStreamManager;
 
     public List<LogstashConfig> dockerInfo = new ArrayList<>();
     private List<LogstashConfig> hostInfo = new ArrayList<>();
 
-    public ConfigManager(LogstashService logstash, DockerClient containerizerClient,
-        DockerLogStreamManager dockerLogStreamManager) {
+    public ConfigManager(LogstashService logstash, DockerClient containerizerClient) {
         this.logstash = logstash;
         this.containerizerClient = containerizerClient;
-        this.dockerLogStreamManager = dockerLogStreamManager;
         this.containerizerClient.setDelegate(this::onContainerListUpdated);
     }
 
@@ -76,15 +72,6 @@ public class ConfigManager {
             .filter(hasKnownConfig)
             .map(createFramework);
 
-        // - For each new running container start streaming logs.
-
-        frameworks.forEach(dockerLogStreamManager::setupContainerLogfileStreaming);
-
-        Set<String> frameworksToStopStreaming = dockerLogStreamManager.getProcessedContainers()
-            .stream().filter(hasUnknownConfigOrIsNotRunningAnymore).collect(Collectors.toSet());
-
-        frameworksToStopStreaming.stream()
-            .forEach(dockerLogStreamManager::stopStreamingForWholeFramework);
     }
 
     private Function<String, LogstashConfig> createLookupHelper(

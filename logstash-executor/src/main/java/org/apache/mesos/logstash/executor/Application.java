@@ -3,8 +3,6 @@ package org.apache.mesos.logstash.executor;
 import org.apache.mesos.MesosExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
-import org.apache.mesos.logstash.executor.docker.DockerStreamer;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
 import org.apache.mesos.logstash.executor.state.LiveState;
 
@@ -26,14 +24,12 @@ public class Application implements Runnable {
         DockerClient dockerClient = new DockerClient();
 
         FileLogSteamWriter writer = new FileLogSteamWriter(MAX_LOG_SIZE);
-        DockerStreamer streamer = new DockerStreamer(writer, dockerClient);
-        DockerLogStreamManager streamManager = new DockerLogStreamManager(streamer);
 
         LogstashService logstashService = new LogstashService(dockerClient);
         logstashService.start();
 
-        ConfigManager configManager = new ConfigManager(logstashService, dockerClient, streamManager);
-        LiveState liveState = new LiveState(logstashService, dockerClient, streamManager);
+        ConfigManager configManager = new ConfigManager(logstashService, dockerClient);
+        LiveState liveState = new LiveState(logstashService, dockerClient);
 
         LogstashExecutor executor = new LogstashExecutor(configManager, dockerClient, liveState);
 

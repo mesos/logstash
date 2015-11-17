@@ -8,6 +8,11 @@ import java.io.OutputStream;
 
 /**
  * Outputstream for Logstash pid.
+ * Behavior is to:
+ *   - filter out all substrings that are delimited by the start character MAGIC_CHARACTER
+ *     and the end character '\n'.
+ *   - identify the first such substring which is parseable as an integer,
+ *     log it, and make it available as `getPid()`.
  */
 public class LogstashPidFilterOutputStream extends FilterOutputStream {
 

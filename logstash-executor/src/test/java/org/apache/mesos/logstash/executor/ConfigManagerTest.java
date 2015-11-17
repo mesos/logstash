@@ -3,7 +3,6 @@ package org.apache.mesos.logstash.executor;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.docker.DockerLogStreamManager;
 import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +22,6 @@ public class ConfigManagerTest {
     private ConfigManager configManager;
     private DockerClient client;
     private LogstashService logstash;
-    private DockerLogStreamManager streamManager;
 
     ArgumentCaptor<DockerFramework> dockerFrameworkArgumentCaptor = ArgumentCaptor
         .forClass(DockerFramework.class);
@@ -38,9 +36,8 @@ public class ConfigManagerTest {
     public void setup() {
         client = mock(DockerClient.class);
         logstash = mock(LogstashService.class);
-        streamManager = mock(DockerLogStreamManager.class);
 
-        configManager = new ConfigManager(logstash, client, streamManager);
+        configManager = new ConfigManager(logstash, client);
 
         configureMocks(framework1, framework2, framework3, hostFramework);
     }
@@ -59,88 +56,8 @@ public class ConfigManagerTest {
         verify(logstash, times(1)).update(dockerFrameworks, hostFrameworks);
     }
 
-    @Test
-    public void onNewConfigsFromScheduler_shouldStartContainerLogfileFileStreamingWithCorrectDockerFramework() {
-        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(framework1, framework2,
-            framework3);
-        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
-
-        configureAsRunningFrameworks(framework1);
-
-        configManager.onNewConfigsFromScheduler(hostFrameworks, dockerFrameworks);
-
-        verify(streamManager, times(1)).setupContainerLogfileStreaming(
-            dockerFrameworkArgumentCaptor.capture());
-
-        DockerFramework expectedDockerFramework = new DockerFramework(framework1.getLogstashConfig(),
-            new DockerFramework.ContainerId(framework1.getId()));
-
-        assertEquals(expectedDockerFramework.getContainerId(),
-            dockerFrameworkArgumentCaptor.getAllValues().get(0).getContainerId());
-        assertEquals(expectedDockerFramework.getConfiguration(),
-            dockerFrameworkArgumentCaptor.getAllValues().get(0).getConfiguration());
-        assertEquals(expectedDockerFramework.getName(),
-            dockerFrameworkArgumentCaptor.getAllValues().get(0).getName());
-    }
-
-    @Test
-    public void onNewConfigsFromScheduler_shouldStartContainerLogFileStreamingWithAllMatchingContainers() {
-        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(framework1, framework2,
-            framework3);
-        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
-
-        configureAsRunningFrameworks(framework1, framework3);
-
-        configManager.onNewConfigsFromScheduler(hostFrameworks, dockerFrameworks);
-
-        verify(streamManager, times(2)).setupContainerLogfileStreaming(
-            dockerFrameworkArgumentCaptor.capture());
-
-        assertTrue(asContainerIdSet(framework1, framework3).contains(
-            dockerFrameworkArgumentCaptor.getAllValues().get(0).getContainerId()));
-
-        assertTrue(asContainerIdSet(framework1, framework3).contains(
-            dockerFrameworkArgumentCaptor.getAllValues().get(1).getContainerId()));
-    }
-
-    @Test
-    public void onNewConfigsFromScheduler_shouldStopRunningContainerLogFileStreamingWithNoMatchingConfiguration() {
-        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(
-            framework1); // only one docker container config, but three running container which were streaming
-        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
-
-        configureAsRunningFrameworks(framework1, framework2, framework3);
-
-        configManager.onNewConfigsFromScheduler(hostFrameworks, dockerFrameworks);
-
-        verify(streamManager, times(2)).stopStreamingForWholeFramework(
-            stringArgumentCaptor.capture());
-
-        assertTrue(asContainerIdSet(framework2, framework3).contains(
-            stringArgumentCaptor.getAllValues().get(0)));
-
-        assertTrue(asContainerIdSet(framework2, framework3).contains(
-            stringArgumentCaptor.getAllValues().get(1)));
-    }
-
-    @Test
-    public void onNewConfigsFromScheduler_shouldNotStopAnyRunningContainerLogFileStreamingWhenAllHaveMatchingConfiguration() {
-        List<LogstashConfig> dockerFrameworks = asLogstashConfigList(
-            framework1, framework2, framework3);
-        List<LogstashConfig> hostFrameworks = asLogstashConfigList(hostFramework);
-
-        configureAsRunningFrameworks(framework1, framework2, framework3);
-
-        configManager.onNewConfigsFromScheduler(hostFrameworks, dockerFrameworks);
-
-        verify(streamManager, times(0)).stopStreamingForWholeFramework(
-            stringArgumentCaptor.capture());
-    }
-
     private void configureAsRunningFrameworks(FrameworkDescription... frameworkDescriptions) {
         when(client.getRunningContainers()).thenReturn(asContainerIdSet(frameworkDescriptions));
-        when(streamManager.getProcessedContainers())
-            .thenReturn(asContainerIdSet(frameworkDescriptions));
     }
 
     private void configureMocks(FrameworkDescription... frameworkDescriptions) {
