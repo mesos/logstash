@@ -23,7 +23,7 @@ public class Main {
         cluster.start();
 
         LOGGER.info("Starting scheduler");
-        LogstashSchedulerContainer scheduler = new LogstashSchedulerContainer(dockerClient, cluster.getMesosMasterContainer().getIpAddress());
+        LogstashSchedulerContainer scheduler = new LogstashSchedulerContainer(dockerClient, cluster.getZkContainer().getIpAddress());
         scheduler.start();
         LOGGER.info("Scheduler started at http://" + scheduler.getIpAddress() + ":9092");
 

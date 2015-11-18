@@ -25,13 +25,14 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private List<String> javaOpts;
 
     private String ipAddress;
+    private final int apiPort = 9092;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
         super(dockerClient);
         this.ipAddress = zookeeperIpAddress;
         this.javaOpts = asList(
 //                "-Xmx256m",
-                "-Dmesos.logstash.web.port=9092",
+                "-Dmesos.logstash.web.port=" + apiPort,
                 "-Dmesos.logstash.framework.name=logstash",
                 "-Dmesos.logstash.logstash.heap.size=128",
                 "-Dmesos.logstash.executor.heap.size=64",
@@ -51,6 +52,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(javaOpts, " "))
+                .withExposedPorts(ExposedPort.tcp(apiPort))
                 .withExtraHosts(IntStream.rangeClosed(1, 3).mapToObj(value -> "slave" + value + ":" + ipAddress).toArray(String[]::new));
     }
 }
