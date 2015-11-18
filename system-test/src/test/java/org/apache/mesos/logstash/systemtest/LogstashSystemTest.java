@@ -210,48 +210,6 @@ public class LogstashSystemTest extends AbstractLogstashFrameworkTest {
             });
     }
 
-    private void waitForPsAux(DummyFrameworkContainer framework, String[] existingProcesses,
-        String[] notExistingProcesses) {
-
-        try {
-            await().atMost(90, TimeUnit.SECONDS).until(() -> {
-                try {
-                    String psAuxOutput = framework.getPsAuxOutput();
-
-                    if (existingProcesses != null) {
-                        for (String process : existingProcesses) {
-                            if (!psAuxOutput.contains(process)) {
-                                return false;
-                            }
-                        }
-                    }
-
-                    if (notExistingProcesses != null) {
-                        for (String process : notExistingProcesses) {
-                            if (psAuxOutput.contains(process)) {
-                                return false;
-                            }
-                        }
-                    }
-
-                    return true;
-
-                } catch (InternalServerErrorException e) {
-                    System.out.println(
-                        "ERROR while polling ps aux (" + framework + "): " + e);
-
-                    return false;
-                }
-            });
-        } catch (ConditionTimeoutException e) {
-            System.out.println(
-                "Unmatched ps aux output of executor (" + framework + "): " + framework
-                    .getPsAuxOutput());
-
-            throw e;
-        }
-    }
-
     private String getFile(String filename) throws IOException, URISyntaxException {
         Path conf = Paths.get(getClass().getClassLoader().getResource(filename).toURI());
         return new String(Files.readAllBytes(conf));

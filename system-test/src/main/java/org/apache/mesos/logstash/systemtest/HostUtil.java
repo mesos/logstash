@@ -19,10 +19,6 @@ public class HostUtil {
         writeToFile(">", dest, content);
     }
 
-    public void appendContentToFile(String dest, String content) {
-        writeToFile(">>", dest, content);
-    }
-
     private void writeToFile(String op, String dest, String content) {
         ExecCreateCmdResponse execCreateCmdResponse;
         InputStream execCmdStream;
