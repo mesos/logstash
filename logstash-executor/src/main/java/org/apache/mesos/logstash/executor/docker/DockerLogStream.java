@@ -14,7 +14,7 @@ import java.io.OutputStream;
  *  TODO: remove this class put the logic to whom who uses attach
  */
 public class DockerLogStream implements LogStream {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DockerStreamer.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DockerLogStream.class);
     private final com.spotify.docker.client.LogStream innerLogStream;
 
     private LogstashPidFilterOutputStream logstashPidFilterOutputStream;
