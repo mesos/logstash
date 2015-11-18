@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.*;
 
@@ -52,6 +53,24 @@ public class DeploymentSystemTest {
                 framework != null && framework.getTasks().size() > 0 &&
                 framework.getTasks().get(0).getState().equals("TASK_RUNNING");
         });
+    }
+
+    @Test
+    public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
+        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
+        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        cluster.addAndStartContainer(container);
+
+        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            Framework framework = cluster.getStateInfo().getFramework("logstash");
+            return
+                framework != null && framework.getTasks().size() > 0 &&
+                framework.getTasks().get(0).getState().equals("TASK_RUNNING");
+        });
+
+        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
+
+        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> cluster.getStateInfo().getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3);
     }
 
 }
