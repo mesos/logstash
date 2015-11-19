@@ -70,12 +70,6 @@ public class DockerFramework implements Framework {
         }
     }
 
-    public List<DockerLogPath> getLogFiles() {
-        return logLocations.stream()
-            .map((path) -> new DockerLogPath(this.containerId.id, this.getName(), path))
-            .collect(Collectors.toList());
-    }
-
     public String getName() {
         return frameworkInfo.getFrameworkName();
     }
