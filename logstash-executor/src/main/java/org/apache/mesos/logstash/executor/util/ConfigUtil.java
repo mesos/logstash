@@ -23,14 +23,14 @@ public final class ConfigUtil {
 
         final StringBuilder text = new StringBuilder();
 
-        Map<String, LogstashConfig> dockerConfigs = dockerInfo.stream().collect(
+        Map<String, LogstashConfig> dockerConfigsByFrameworkName = dockerInfo.stream().collect(
             toMap(LogstashConfig::getFrameworkName, x -> x));
 
         client.getRunningContainers().forEach(containerId -> {
             String name = client.getImageNameOfContainer(containerId);
 
-            if (dockerConfigs.containsKey(name)) {
-                LogstashConfig info = dockerConfigs.get(name);
+            if (dockerConfigsByFrameworkName.containsKey(name)) {
+                LogstashConfig info = dockerConfigsByFrameworkName.get(name);
 
                 DockerFramework framework = new DockerFramework(info, new DockerFramework.ContainerId(containerId));
                 text.append(framework.getConfiguration()).append("\n");
