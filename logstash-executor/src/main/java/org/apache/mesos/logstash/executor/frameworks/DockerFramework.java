@@ -38,8 +38,7 @@ public class DockerFramework implements Framework {
 
         // Replace all log paths with paths to temporary files
         for (String logLocation : logLocations) {
-            String localLocation = new DockerLogPath(this.containerId.id, frameworkInfo.getFrameworkName(),
-                logLocation).getExecutorLogPath();
+            String localLocation = Paths.get("/tmp", this.containerId.id, logLocation).toString();
             generatedConfiguration = generatedConfiguration.replace(logLocation, localLocation);
         }
 
