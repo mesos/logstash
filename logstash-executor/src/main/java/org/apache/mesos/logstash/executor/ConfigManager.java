@@ -9,11 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -58,28 +54,17 @@ public class ConfigManager {
 
         // - Find running containers that have a matching config.
 
-        Function<String, LogstashConfig> lookupConfig = createLookupHelper(dockerInfo);
-
-        Predicate<String> hasKnownConfig = c -> lookupConfig.apply(c) != null;
-        Predicate<String> hasUnknownConfigOrIsNotRunningAnymore = c -> lookupConfig.apply(c) == null;
-
-        Function<String, DockerFramework> createFramework = c ->
-                new DockerFramework(lookupConfig.apply(c), new DockerFramework.ContainerId(c));
-
-        Stream<DockerFramework> frameworks = containerizerClient
-            .getRunningContainers()
-            .stream()
-            .filter(hasKnownConfig)
-            .map(createFramework);
-
-    }
-
-    private Function<String, LogstashConfig> createLookupHelper(
-        List<LogstashConfig> logstashInfos) {
-
-        Map<String, LogstashConfig> logstashInfoMap = logstashInfos
+        Map<String, LogstashConfig> logstashConfigsByFrameworkName = dockerInfo
             .stream()
             .collect(toMap(LogstashConfig::getFrameworkName, x -> x));
-        return c -> logstashInfoMap.get(containerizerClient.getImageNameOfContainer(c));
+
+        Function<String, LogstashConfig> lookupConfig = c1 -> logstashConfigsByFrameworkName.get(containerizerClient.getImageNameOfContainer(c1));
+
+        containerizerClient
+            .getRunningContainers()
+            .stream()
+            .forEach(c -> { if (lookupConfig.apply(c) != null) { new DockerFramework(lookupConfig.apply(c)); } });
+
     }
+
 }

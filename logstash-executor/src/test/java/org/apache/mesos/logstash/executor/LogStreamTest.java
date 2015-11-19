@@ -2,7 +2,11 @@ package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.mesos.logstash.executor.logging.FileLogSteamWriter;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;

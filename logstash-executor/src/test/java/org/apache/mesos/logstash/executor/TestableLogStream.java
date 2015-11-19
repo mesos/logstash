@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
+
 import org.apache.mesos.logstash.executor.logging.LogStream;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 

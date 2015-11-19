@@ -4,7 +4,6 @@ import org.apache.mesos.logstash.common.ConcurrentUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +51,16 @@ public class LogstashService {
         // Producer: We only keep the latest config in case of multiple
         // updates.
         LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
-        String config = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
+
+        // TODO this should be a Logstash config which tells it to
+        // (1) be a syslog server and listen for syslog events
+        // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
+        String config = "";
+
         LOGGER.debug("Writing new configuration:\n{}", config);
-        setLatestConfig(config);
+        synchronized (lock) {
+            latestConfig = config;
+        }
     }
 
     private void run() {
@@ -108,9 +114,4 @@ public class LogstashService {
         }
     }
 
-    private void setLatestConfig(String config) {
-        synchronized (lock) {
-            latestConfig = config;
-        }
-    }
 }
