@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.concurrent.Executors;
 
 public class ByteBufferLogSteamWriter implements LogStreamWriter {
 
