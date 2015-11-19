@@ -1,20 +1,27 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.ConcurrentUtils;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.util.ConfigUtil;
+import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.util.stream.Collectors.toMap;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -52,9 +59,51 @@ public class LogstashService {
         // Producer: We only keep the latest config in case of multiple
         // updates.
         LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
-        String config = ConfigUtil.generateConfigFile(client, dockerInfo, hostInfo);
+
+        final StringBuilder logstashConfig = new StringBuilder();
+
+        Map<String, LogstashProtos.LogstashConfig> dockerConfigsByFrameworkName = dockerInfo.stream().collect(
+            toMap(LogstashProtos.LogstashConfig::getFrameworkName, x -> x));
+
+        client.getRunningContainers().forEach(containerId -> {
+            String dockerImageName = client.getImageNameOfContainer(containerId);
+
+            if (dockerConfigsByFrameworkName.containsKey(dockerImageName)) {
+                LogstashProtos.LogstashConfig info = dockerConfigsByFrameworkName.get(dockerImageName);
+
+                List<String> locations = new ArrayList<>();
+                Matcher matcher = Pattern.compile("docker-path\\s*=>\\s*\"([^}\\s]+)\"").matcher(info.getConfig());
+                while (matcher.find()) {
+                    locations.add(matcher.group(1));
+                }
+
+                logstashConfig.append("# " + info.getFrameworkName() + "\n" +
+                        // Replace all log paths with paths to temporary files
+                        locations.stream().reduce(
+                                info.getConfig(),
+                                (config1, logFilePath) ->
+                                        config1.replace(
+                                                logFilePath,
+                                                Paths.get("/tmp", containerId, logFilePath).toString()))
+                                // replace 'magic' string docker-path with normal path string
+                                .replace("docker-path", "path")).append("\n");
+            }
+        });
+
+        hostInfo.forEach(config1 -> {
+            logstashConfig.append(String.format("# %s\n%s\n",
+                    config1.getFrameworkName(),
+                    config1.getConfig().replaceAll(
+                            "\"?host-path\"?\\s*=>\\s*\"([^}\\s]+)\"",
+                            "\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"")
+            ));
+        });
+
+        String config = logstashConfig.toString();
         LOGGER.debug("Writing new configuration:\n{}", config);
-        setLatestConfig(config);
+        synchronized (lock) {
+            latestConfig = config;
+        }
     }
 
     private void run() {
@@ -108,9 +157,4 @@ public class LogstashService {
         }
     }
 
-    private void setLatestConfig(String config) {
-        synchronized (lock) {
-            latestConfig = config;
-        }
-    }
 }
