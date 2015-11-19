@@ -1,27 +1,19 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.ConcurrentUtils;
-import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.frameworks.DockerFramework;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static java.util.stream.Collectors.toMap;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.

@@ -1,17 +1,9 @@
 package org.apache.mesos.logstash.executor.util;
-import jdk.nashorn.internal.runtime.regexp.joni.Config;
-import org.apache.mesos.logstash.common.LogstashConstants;
+
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
 import org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
