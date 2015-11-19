@@ -55,7 +55,16 @@ public class LogstashService {
         // TODO this should be a Logstash config which tells it to
         // (1) be a syslog server and listen for syslog events
         // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
-        String config = "";
+        String config =
+            "input { " +
+            "  syslog {\n" +
+            "  \n" +
+            "  }\n" +
+            "}\n" +
+            "output {\n" +
+            "  elasticsearch { hosts => [\"localhost:9200\"] }\n" +
+            "}";
+
 
         LOGGER.debug("Writing new configuration:\n{}", config);
         synchronized (lock) {
