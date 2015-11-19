@@ -60,46 +60,11 @@ public class LogstashService {
         // updates.
         LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
 
-        final StringBuilder logstashConfig = new StringBuilder();
+        // TODO this should be a Logstash config which tells it to
+        // (1) be a syslog server and listen for syslog events
+        // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
+        String config = "";
 
-        Map<String, LogstashProtos.LogstashConfig> dockerConfigsByFrameworkName = dockerInfo.stream().collect(
-            toMap(LogstashProtos.LogstashConfig::getFrameworkName, x -> x));
-
-        client.getRunningContainers().forEach(containerId -> {
-            String dockerImageName = client.getImageNameOfContainer(containerId);
-
-            if (dockerConfigsByFrameworkName.containsKey(dockerImageName)) {
-                LogstashProtos.LogstashConfig info = dockerConfigsByFrameworkName.get(dockerImageName);
-
-                List<String> locations = new ArrayList<>();
-                Matcher matcher = Pattern.compile("docker-path\\s*=>\\s*\"([^}\\s]+)\"").matcher(info.getConfig());
-                while (matcher.find()) {
-                    locations.add(matcher.group(1));
-                }
-
-                logstashConfig.append("# " + info.getFrameworkName() + "\n" +
-                        // Replace all log paths with paths to temporary files
-                        locations.stream().reduce(
-                                info.getConfig(),
-                                (config1, logFilePath) ->
-                                        config1.replace(
-                                                logFilePath,
-                                                Paths.get("/tmp", containerId, logFilePath).toString()))
-                                // replace 'magic' string docker-path with normal path string
-                                .replace("docker-path", "path")).append("\n");
-            }
-        });
-
-        hostInfo.forEach(config1 -> {
-            logstashConfig.append(String.format("# %s\n%s\n",
-                    config1.getFrameworkName(),
-                    config1.getConfig().replaceAll(
-                            "\"?host-path\"?\\s*=>\\s*\"([^}\\s]+)\"",
-                            "\"path\" => \"" + LogstashConstants.VOLUME_MOUNT_DIR + "$1\"")
-            ));
-        });
-
-        String config = logstashConfig.toString();
         LOGGER.debug("Writing new configuration:\n{}", config);
         synchronized (lock) {
             latestConfig = config;
