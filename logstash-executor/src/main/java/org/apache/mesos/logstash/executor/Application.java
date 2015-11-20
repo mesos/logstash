@@ -23,8 +23,6 @@ public class Application implements Runnable {
     public void run() {
         DockerClient dockerClient = new DockerClient();
 
-        FileLogSteamWriter writer = new FileLogSteamWriter(MAX_LOG_SIZE);
-
         LogstashService logstashService = new LogstashService(dockerClient);
         logstashService.start();
 
