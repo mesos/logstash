@@ -52,19 +52,24 @@ public class LogstashService {
         // updates.
         LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
 
+        String elasticsearchDomainAndPort = null; // TODO
+
         // TODO this should be a Logstash config which tells it to
         // (1) be a syslog server and listen for syslog events
         // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
         String config =
-            "input { " +
-            "  syslog {\n" +
-            "  \n" +
-            "  }\n" +
-            "}\n" +
-            "output {\n" +
-            "  elasticsearch { hosts => [\"localhost:9200\"] }\n" +
-            "}";
-
+                LS.config(
+                        LS.section("input",
+                            LS.plugin("syslog", LS.map(
+                                    LS.kv("port", LS.number(514))
+                            ))
+                        ),
+                        LS.section("output",
+                            LS.plugin("elasticsearch", LS.map(
+                                    LS.kv("hosts", LS.array(LS.string(elasticsearchDomainAndPort)))
+                            ))
+                        )
+                ).serialize();
 
         LOGGER.debug("Writing new configuration:\n{}", config);
         synchronized (lock) {
