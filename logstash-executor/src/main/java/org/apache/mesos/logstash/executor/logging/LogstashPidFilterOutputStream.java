@@ -1,7 +1,5 @@
 package org.apache.mesos.logstash.executor.logging;
 
-import org.apache.mesos.logstash.executor.ConfigManager;
-
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
