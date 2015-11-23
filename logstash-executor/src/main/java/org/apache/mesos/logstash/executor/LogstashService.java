@@ -1,16 +1,13 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.ConcurrentUtils;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
-import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
