@@ -56,7 +56,7 @@ public class LS {
         }
     }
 
-    public static class Plugin {
+    public static class Plugin implements Value {
         private java.lang.String name;
         private Map config;
         public Plugin(java.lang.String name, Map config) {
