@@ -1,29 +1,26 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.mesos.MesosSchedulerDriver;
+import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.math.RandomUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
+import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonList;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -43,6 +40,11 @@ public class LogstashSchedulerTest {
     private Configuration configuration;
     private ConfigManager configManager;
     private FrameworkState frameworkState ;
+
+    final ClusterMonitor clusterMonitor = mock(ClusterMonitor.class);
+    final ClusterState clusterState = mock(ClusterState.class);
+    final TaskInfoBuilder taskInfoBuilder = mock(TaskInfoBuilder.class);
+
 
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
@@ -146,6 +148,77 @@ public class LogstashSchedulerTest {
 
     private Protos.FrameworkID createFrameworkId(String frameworkId) {
         return Protos.FrameworkID.newBuilder().setValue(frameworkId).build();
+    }
+
+
+    @Test
+    public void shouldNotAcceptOffersWithoutPort5000Available() throws Exception {
+        when(clusterMonitor.getClusterState()).thenReturn(clusterState);
+        when(clusterState.getTaskList()).thenReturn(emptyList());
+
+        scheduler.clusterMonitor = clusterMonitor;
+        scheduler.taskInfoBuilder = taskInfoBuilder;
+
+        scheduler.resourceOffers(driver, asList(createOffer(1.0, 512.0, asList(new PortRange(1, 4999)))));
+
+        verify(taskInfoBuilder, never()).buildTask(any(Protos.Offer.class));
+    }
+
+    @Test
+    public void shouldAcceptOffersWithPort5000Available() throws Exception {
+        when(clusterMonitor.getClusterState()).thenReturn(clusterState);
+        when(clusterState.getTaskList()).thenReturn(emptyList());
+        when(taskInfoBuilder.buildTask(any(Protos.Offer.class))).thenThrow(new RuntimeException("Offer accepted"));
+
+        scheduler.clusterMonitor = clusterMonitor;
+        scheduler.taskInfoBuilder = taskInfoBuilder;
+
+        try {
+            scheduler.resourceOffers(driver, asList(createOffer(1.0, 512.0, asList(new PortRange(1, 5000)))));
+        } catch (RuntimeException e) {
+            // TODO: 23/11/2015 REALLY?!
+            assertEquals("Offer accepted", e.getMessage());
+        }
+
+        verify(taskInfoBuilder).buildTask(any(Protos.Offer.class));
+    }
+
+    private Protos.Offer createOffer(double cpu, double memory, List<PortRange> portRanges) {
+        return Protos.Offer.newBuilder()
+                .setId(Protos.OfferID.newBuilder().setValue("offer-" + System.currentTimeMillis()))
+                .setFrameworkId(createFrameworkId("logstash"))
+                .setSlaveId(Protos.SlaveID.newBuilder().setValue("slave"))
+                .setHostname(RandomStringUtils.randomAlphabetic(8))
+                .addResources(Protos.Resource.newBuilder()
+                        .setName("ranges")
+                        .setType(Protos.Value.Type.RANGES)
+                        .setRanges(Protos.Value.Ranges.newBuilder().addAllRange(portRanges.stream().map(PortRange::toProto).collect(Collectors.toList())))
+                )
+                .addResources(Protos.Resource.newBuilder()
+                        .setName("cpus")
+                        .setType(Protos.Value.Type.SCALAR)
+                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(cpu))
+                )
+                .addResources(Protos.Resource.newBuilder()
+                        .setName("mem")
+                        .setType(Protos.Value.Type.SCALAR)
+                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(memory))
+                )
+                .build();
+    }
+
+    private static class PortRange {
+        final long begin, end;
+
+        private PortRange(long begin, long end) {
+            this.begin = begin;
+            this.end = end;
+        }
+
+
+        public Protos.Value.Range toProto() {
+            return Protos.Value.Range.newBuilder().setBegin(begin).setEnd(end).build();
+        }
     }
 
 }

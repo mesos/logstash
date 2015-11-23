@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.LongRange;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
@@ -27,6 +28,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
@@ -41,10 +43,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private final LiveState liveState;
 
     private final Configuration configuration;
-    private TaskInfoBuilder taskInfoBuilder;
+    TaskInfoBuilder taskInfoBuilder;
 
     private SchedulerDriver driver;
-    private ClusterMonitor clusterMonitor = null;
+    ClusterMonitor clusterMonitor = null;
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
     private MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
 
@@ -294,7 +296,18 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             return false;
         }
 
-        return true;
+        final List<Integer> neededPorts = asList(5000);
+
+        return neededPorts.stream()
+                .allMatch(
+                        port -> offer.getResourcesList().stream()
+                                .filter(Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
+                                .anyMatch(resource -> portIsInRanges(port, resource.getRanges()))
+                );
+    }
+
+    private boolean portIsInRanges(int port, Value.Ranges ranges) {
+        return ranges.getRangeList().stream().anyMatch(range -> new LongRange(range.getBegin(), range.getEnd()).containsLong(port));
     }
 
     private boolean hasEnoughOfResourceType(Offer offer, String resourceName, double minSize) {
