@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
-    private final DockerClient client;
 
     private ExecutorStatus status;
 
@@ -30,8 +29,7 @@ public class LogstashService {
     private String latestConfig;
     private Process process;
 
-    public LogstashService(DockerClient client) {
-        this.client = client;
+    public LogstashService() {
         status = ExecutorStatus.INITIALIZING;
         executorService = Executors.newSingleThreadScheduledExecutor();
     }
@@ -47,21 +45,15 @@ public class LogstashService {
         ConcurrentUtils.stop(executorService);
     }
 
-    public void update(List<LogstashProtos.LogstashConfig> dockerInfo, List<LogstashProtos.LogstashConfig> hostInfo) {
+    public void update(int syslogPort, String elasticsearchDomainAndPort) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
-        LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
 
-        String elasticsearchDomainAndPort = null; // TODO
-
-        // TODO this should be a Logstash config which tells it to
-        // (1) be a syslog server and listen for syslog events
-        // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
         String config =
                 LS.config(
                         LS.section("input",
                             LS.plugin("syslog", LS.map(
-                                    LS.kv("port", LS.number(514))
+                                    LS.kv("port", LS.number(syslogPort))
                             ))
                         ),
                         LS.section("output",
