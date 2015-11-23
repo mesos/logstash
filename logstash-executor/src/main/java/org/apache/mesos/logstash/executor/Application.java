@@ -23,13 +23,11 @@ public class Application implements Runnable {
     public void run() {
         DockerClient dockerClient = new DockerClient();
 
-        LogstashService logstashService = new LogstashService(dockerClient);
-        logstashService.start();
+        LogstashService logstashService = new LogstashService();
 
-        ConfigManager configManager = new ConfigManager(logstashService, dockerClient);
         LiveState liveState = new LiveState(logstashService, dockerClient);
 
-        LogstashExecutor executor = new LogstashExecutor(configManager, dockerClient, liveState);
+        LogstashExecutor executor = new LogstashExecutor(logstashService, dockerClient, liveState);
 
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
 
