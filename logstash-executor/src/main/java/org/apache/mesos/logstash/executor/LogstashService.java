@@ -5,9 +5,6 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -84,10 +81,6 @@ public class LogstashService {
         status = ExecutorStatus.RESTARTING;
 
         try {
-            Path configFile = Paths.get("/tmp/logstash/logstash.conf");
-            Files.createDirectories(configFile.getParent());
-            Files.write(configFile.resolve(configFile), newConfig.getBytes());
-
             // Stop any existing logstash instance. It does not have to complete
             // before we start the new one.
 
@@ -100,7 +93,7 @@ public class LogstashService {
                     new String[]{
                             "/opt/logstash/bin/logstash",
                             "--log", "/var/log/logstash.log",
-                            "--config", "/tmp/logstash/logstash.conf"
+                            "-e", newConfig
                     },
                     new String[]{
                             "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
