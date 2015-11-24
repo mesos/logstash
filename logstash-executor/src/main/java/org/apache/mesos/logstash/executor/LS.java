@@ -1,7 +1,11 @@
 package org.apache.mesos.logstash.executor;
 
+import com.google.common.collect.Sets;
+
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -47,12 +51,13 @@ public class LS {
         private java.lang.String name;
         private Plugin[] plugins;
         public Section(java.lang.String name, Plugin... plugins) {
+            validateName(name);
             this.name = name;
             this.plugins = plugins;
         }
 
         public java.lang.String serialize() {
-            return stringToLogstashString(name) + " " + unlines(Arrays.stream(plugins).map(Plugin::serialize)) + "\n}";
+            return name + " {\n" + unlines(Arrays.stream(plugins).map(Plugin::serialize)) + "\n}";
         }
     }
 
@@ -60,12 +65,13 @@ public class LS {
         private java.lang.String name;
         private Map config;
         public Plugin(java.lang.String name, Map config) {
+            validateName(name);
             this.name = name;
             this.config = config;
         }
 
         public java.lang.String serialize() {
-            return stringToLogstashString(name) + " " + config.serialize();
+            return name + " " + config.serialize();
         }
     }
 
@@ -129,7 +135,17 @@ public class LS {
             this.number = number;
         }
         public java.lang.String serialize() {
-            return Double.toString(number);
+            return ((long) number) == number ? Long.toString((long) number) : Double.toString(number);
+        }
+    }
+
+    public static class Bool implements Value {
+        private boolean bool;
+        public Bool(boolean bool) {
+            this.bool = bool;
+        }
+        public java.lang.String serialize() {
+            return this.bool ? "true" : "false";
         }
     }
 
@@ -165,27 +181,59 @@ public class LS {
         return new Number(number);
     }
 
+    public static Bool bool(boolean b) {
+        return new Bool(b);
+    }
+
     private static java.lang.String intercalate(java.lang.String separator, List<java.lang.String> strings) {
         return strings.isEmpty() ? "" : strings.subList(1, strings.size()).stream().reduce(strings.get(0), (s1,s2) -> s1 + separator + s2);
     }
 
     private static java.lang.String unlines(Stream<java.lang.String> lines) {
-        return lines.reduce("", (acc,line) -> acc + "\n" + line);
+        return intercalate("\n", lines.collect(Collectors.toList()));
     }
 
     private static java.lang.String stringToLogstashString(java.lang.String string) {
-        boolean hasSingles = string.chars().anyMatch(c -> c == '"');
-        boolean hasDoubles = string.chars().anyMatch(c -> c == '\"');
+        boolean hasSingles = string.chars().anyMatch(c -> c == '\'');
+        boolean hasDoubles = string.chars().anyMatch(c -> c == '"');
 
         if (hasSingles && hasDoubles) {
             // FIXME if and when Logstash fixes its broken syntax, we can allow these forbidden characters https://github.com/elastic/logstash/issues/1645
             throw new RuntimeException("Logstash configuration syntax cannot represent string literals with both single quotes and double quotes. This string has both: " + string);
         }
-        else if (hasSingles) {
+        else if (hasDoubles) {
             return "'" + string + "'";
         }
         else {
             return "\"" + string + "\"";
+        }
+    }
+
+    private static Set<Integer> toCharSet(java.lang.String s) {
+        return s.chars().mapToObj(c -> new Integer(c)).collect(Collectors.toSet());
+    }
+
+    private static java.lang.String charSetToString(Set<Integer> s) {
+        java.lang.String acc = "";
+        for (Integer i : s) {
+            acc = acc + Character.toChars(i.intValue());
+        }
+        return acc;
+    }
+
+    // Conservative (probably overly restrictive)
+    private static void validateName(java.lang.String name) {
+        Set<Integer> firstCharAllowedChars = toCharSet("abcdefghijklmnopqrstuvwxyz");
+        Set<Integer> allowedChars = toCharSet("abcdefghijklmnopqrstuvwxyz1234567890_");
+
+        if (name.length() == 0) {
+            throw new RuntimeException("Name cannot be empty string");
+        }
+        else if (!firstCharAllowedChars.contains(new Integer((int) name.charAt(0)))) {
+            throw new RuntimeException("Name cannot start with character: " + name.charAt(0));
+        }
+        else if (!allowedChars.containsAll(toCharSet(name.substring(1)))) {
+            throw new RuntimeException("Name cannot contain characters: " + charSetToString(Sets.difference(toCharSet(name.substring(1)), allowedChars)));
         }
     }
 }
