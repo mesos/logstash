@@ -100,7 +100,7 @@ public class LogstashService {
                     new String[]{
                             "/opt/logstash/bin/logstash",
                             "--log", "/var/log/logstash.log",
-                            "--config", "/tmp/logstash/"
+                            "--config", "/tmp/logstash/logstash.conf"
                     },
                     new String[]{
                             "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
