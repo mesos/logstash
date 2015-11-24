@@ -99,8 +99,8 @@ public class LogstashService {
             process = Runtime.getRuntime().exec(
                     new String[]{
                             "/opt/logstash/bin/logstash",
-                            "-l", "/var/log/logstash.log",
-                            "-f", "/tmp/logstash/"
+                            "--log", "/var/log/logstash.log",
+                            "--config", "/tmp/logstash/"
                     },
                     new String[]{
                             "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
