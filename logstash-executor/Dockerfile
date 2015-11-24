@@ -10,7 +10,6 @@ RUN bash -c "/opt/logstash/bin/plugin install logstash-output-kafka"
 
 ADD ./build/docker/logstash-mesos-executor.jar /tmp/logstash-mesos-executor.jar
 
-ADD ./build/resources/main/run_logstash.sh /tmp/run_logstash.sh
 ADD ./start-executor.sh /tmp/start-executor.sh
 
 # See https://github.com/elastic/logstash/issues/3127
