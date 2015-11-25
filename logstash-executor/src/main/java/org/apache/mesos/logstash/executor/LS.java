@@ -9,32 +9,25 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-// Since Logstash has helpfully created a new syntax with absolutely no specification or documentation,
-// here is a a best-effort attempt at a syntax definition and an AST for it:
-
-// Logstash config file syntax is:
-// file ::= section*
-// section ::= str "{" plugin* "}" "\n"
-// plugin ::= str map
-// map ::= "{" mapping* "}" "\n"
-// mapping ::= string "=>" value "\n"
-// value ::= map | array | string | ...
-// string ::= "\"" escaped-char* "\""     // do we always need the quotes? also there must be some syntax for escaping
-// array ::= "[" (value ",")* "]" "\n"
-
-// Example usage:
-//
-//LS.config(
-//    LS.section("input",
-//        LS.plugin("file", LS.map(
-//            LS.kv("path", LS.string("/var/log/messages")),
-//            LS.kv("type", LS.string("syslog"))
-//            ))),
-//    LS.section("output",
-//        LS.plugin("statsd", LS.map(
-//            LS.kv("increment", LS.string("apache.%{[response][status]}"))
-//        ))))
-
+/**
+ * <p>Since Logstash has helpfully created a new syntax with absolutely no specification or documentation,
+ * here is a a best-effort attempt at an AST and syntax definition.</p>
+ *
+ * <p>Example usage assuming :</p>
+ *
+ * <blockquote><pre>
+ * LS.config(
+ *     LS.section("input",
+ *         LS.plugin("file", LS.map(
+ *             LS.kv("path", LS.string("/var/log/messages")),
+ *             LS.kv("type", LS.string("syslog"))
+ *             ))),
+ *     LS.section("output",
+ *         LS.plugin("statsd", LS.map(
+ *             LS.kv("increment", LS.string("apache.%{[response][status]}"))
+ *         ))))
+ * </pre></blockquote>
+ */
 public class LS {
     public static class Config {
         private Section[] sections;
