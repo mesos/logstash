@@ -12,11 +12,15 @@ import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.Link;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHitField;
+import org.elasticsearch.search.SearchHits;
 import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
@@ -24,14 +28,19 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.*;
 import static org.junit.Assert.assertEquals;
+
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -71,7 +80,7 @@ public class DeploymentSystemTest {
     }
 
     @Test
-    public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException {
+    public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException, ExecutionException, InterruptedException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
         final String elasticsearchClusterName = "test-" + System.currentTimeMillis();
@@ -131,9 +140,9 @@ public class DeploymentSystemTest {
         final String randomMessageId = new BigInteger(130, new SecureRandom()).toString(32);
         final String randomLogLine = new BigInteger(130, new SecureRandom()).toString(32);
 
-        // TODO: 18/11/2015 Log something through logstash
+        dockerClient.pullImageCmd("ubuntu:14.04");
         dockerClient
-                .createContainerCmd("ubuntu")
+                .createContainerCmd("ubuntu:14.04")
                 .withLinks(new Link(cluster.getSlaves()[0].getContainerId(), "mesos-slave"))
                 .withCmd(
                         "logger",
@@ -145,6 +154,15 @@ public class DeploymentSystemTest {
                 .exec();
 
         // TODO: 18/11/2015 Look for a statement in ES
+        // Where should it actually be?
+        SearchHit[] hits = elasticsearchClient.get().search(new SearchRequest().indices("logstash")).get().getHits().getHits();  // FIXME configure the index that Logstash to writes to
+        System.out.println(hits.toString());
+        assertThat(hits.length, greaterThan(0));
+        List<Object> messages = hits[0].field("message").getValues();
+        assertEquals(messages.size(), 1);
+        Object message = messages.get(0);
+        assertEquals(randomLogLine, message);
+
     }
 
     @Test
