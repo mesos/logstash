@@ -70,9 +70,6 @@ public class TaskInfoBuilder {
             .addAllResources(getResourcesList())
             .setName(LogstashConstants.TASK_NAME)
             .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
-                // TODO (thb) Consider using setData to pass the current config.
-                // This would prevent a round trip, asking the scheduler for it.
-                // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
             .setData(logstashConfiguration.toByteString())
             .build();
