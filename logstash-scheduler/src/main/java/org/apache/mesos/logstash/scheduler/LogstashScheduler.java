@@ -28,7 +28,6 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
@@ -49,20 +48,22 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     ClusterMonitor clusterMonitor = null;
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
     private MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
-
+    private final OfferStrategy offerStrategy;
 
 
     @Autowired
     public LogstashScheduler(
-        LiveState liveState,
-        Configuration configuration,
-        ConfigManager configManager,
-        MesosSchedulerDriverFactory mesosSchedulerDriverFactory) {
+            LiveState liveState,
+            Configuration configuration,
+            ConfigManager configManager,
+            MesosSchedulerDriverFactory mesosSchedulerDriverFactory,
+            OfferStrategy offerStrategy) {
         this.liveState = liveState;
 
         this.configuration = configuration;
         this.configManager = configManager;
         this.mesosSchedulerDriverFactory = mesosSchedulerDriverFactory;
+        this.offerStrategy = offerStrategy;
         this.taskInfoBuilder = new TaskInfoBuilder(configuration);
 
         this.listeners = synchronizedCollection(new ArrayList<>());
@@ -169,10 +170,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         }
 
         offers.forEach(offer -> {
-
-            // TODO: Debug log the offered resource,
-            // it can be used to debug why executes are not spinning up.
-
             if (shouldAcceptOffer(offer)) {
 
                 LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
@@ -275,50 +272,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         }
     }
 
-
-
     private boolean shouldAcceptOffer(Offer offer) {
-
-        if (isHostAlreadyRunningTask(offer)) {
-            LOGGER.debug("Declining offer from slave " + offer.getSlaveId() + " because that slave already runs an executor");
-            return false;
+        final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterMonitor.getClusterState(), offer);
+        if (!result.acceptable) {
+            LOGGER.debug("Declined offer: " + flattenProtobufString(offer.toString()) + " reason: " + result.reason.orElse("Unknown"));
         }
-
-        boolean enoughCPU = hasEnoughOfResourceType(offer, "cpus", configuration.getExecutorCpus());
-        boolean enoughMEM = hasEnoughOfResourceType(offer, "mem",
-            configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize() + configuration.getExecutorOverheadMem());
-
-        if (!enoughCPU) {
-            LOGGER.debug("Declined offer: Not enough CPU resources");
-            return false;
-        } else if (!enoughMEM) {
-            LOGGER.debug("Declined offer: Not enough MEM resources");
-            return false;
-        }
-
-        final List<Integer> neededPorts = asList(5000);
-
-        return neededPorts.stream()
-                .allMatch(
-                        port -> offer.getResourcesList().stream()
-                                .filter(Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
-                                .anyMatch(resource -> portIsInRanges(port, resource.getRanges()))
-                );
+        return result.acceptable;
     }
 
-    private boolean portIsInRanges(int port, Value.Ranges ranges) {
-        return ranges.getRangeList().stream().anyMatch(range -> new LongRange(range.getBegin(), range.getEnd()).containsLong(port));
-    }
-
-    private boolean hasEnoughOfResourceType(Offer offer, String resourceName, double minSize) {
-
-        for (Resource resource : offer.getResourcesList()) {
-            if (resourceName.equals(resource.getName())) {
-                return resource.getScalar().getValue() >= minSize;
-            }
-        }
-
-        return false;
+    private String flattenProtobufString(String s) {
+        return s.replace("  ", " ").replace("{\n", "{").replace("\n}", " }").replace("\n", ", ");
     }
 
     public void requestExecutorStats() {
@@ -381,17 +344,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         return taskStatus.getState().equals(TaskState.TASK_RUNNING);
     }
 
-
-    private boolean isHostAlreadyRunningTask(Protos.Offer offer) {
-        Boolean result = false;
-        List<Protos.TaskInfo> stateList = clusterMonitor.getClusterState().getTaskList();
-        for (Protos.TaskInfo t : stateList) {
-            if (t.getSlaveId().equals(offer.getSlaveId())) {
-                result = true;
-            }
-        }
-        return result;
-    }
 
     private void reconcileTasks() {
         clusterMonitor.startReconciling(driver);

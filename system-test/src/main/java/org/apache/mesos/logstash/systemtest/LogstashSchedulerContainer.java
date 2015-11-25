@@ -52,7 +52,6 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(javaOpts, " "))
-                .withExposedPorts(ExposedPort.tcp(apiPort))
-                .withExtraHosts(IntStream.rangeClosed(1, 3).mapToObj(value -> "slave" + value + ":" + ipAddress).toArray(String[]::new));
+                .withExposedPorts(ExposedPort.tcp(apiPort));
     }
 }

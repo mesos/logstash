@@ -1,7 +1,5 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.math.RandomUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
@@ -61,7 +59,7 @@ public class LogstashSchedulerTest {
         driverFactory = mock(MesosSchedulerDriverFactory.class);
         driver = mock(SchedulerDriver.class);
 
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory);
+        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class));
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }
@@ -149,76 +147,4 @@ public class LogstashSchedulerTest {
     private Protos.FrameworkID createFrameworkId(String frameworkId) {
         return Protos.FrameworkID.newBuilder().setValue(frameworkId).build();
     }
-
-
-    @Test
-    public void shouldNotAcceptOffersWithoutPort5000Available() throws Exception {
-        when(clusterMonitor.getClusterState()).thenReturn(clusterState);
-        when(clusterState.getTaskList()).thenReturn(emptyList());
-
-        scheduler.clusterMonitor = clusterMonitor;
-        scheduler.taskInfoBuilder = taskInfoBuilder;
-
-        scheduler.resourceOffers(driver, asList(createOffer(1.0, 512.0, asList(new PortRange(1, 4999)))));
-
-        verify(taskInfoBuilder, never()).buildTask(any(Protos.Offer.class));
-    }
-
-    @Test
-    public void shouldAcceptOffersWithPort5000Available() throws Exception {
-        when(clusterMonitor.getClusterState()).thenReturn(clusterState);
-        when(clusterState.getTaskList()).thenReturn(emptyList());
-        when(taskInfoBuilder.buildTask(any(Protos.Offer.class))).thenThrow(new RuntimeException("Offer accepted"));
-
-        scheduler.clusterMonitor = clusterMonitor;
-        scheduler.taskInfoBuilder = taskInfoBuilder;
-
-        try {
-            scheduler.resourceOffers(driver, asList(createOffer(1.0, 512.0, asList(new PortRange(1, 5000)))));
-        } catch (RuntimeException e) {
-            // TODO: 23/11/2015 REALLY?!
-            assertEquals("Offer accepted", e.getMessage());
-        }
-
-        verify(taskInfoBuilder).buildTask(any(Protos.Offer.class));
-    }
-
-    private Protos.Offer createOffer(double cpu, double memory, List<PortRange> portRanges) {
-        return Protos.Offer.newBuilder()
-                .setId(Protos.OfferID.newBuilder().setValue("offer-" + System.currentTimeMillis()))
-                .setFrameworkId(createFrameworkId("logstash"))
-                .setSlaveId(Protos.SlaveID.newBuilder().setValue("slave"))
-                .setHostname(RandomStringUtils.randomAlphabetic(8))
-                .addResources(Protos.Resource.newBuilder()
-                        .setName("ranges")
-                        .setType(Protos.Value.Type.RANGES)
-                        .setRanges(Protos.Value.Ranges.newBuilder().addAllRange(portRanges.stream().map(PortRange::toProto).collect(Collectors.toList())))
-                )
-                .addResources(Protos.Resource.newBuilder()
-                        .setName("cpus")
-                        .setType(Protos.Value.Type.SCALAR)
-                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(cpu))
-                )
-                .addResources(Protos.Resource.newBuilder()
-                        .setName("mem")
-                        .setType(Protos.Value.Type.SCALAR)
-                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(memory))
-                )
-                .build();
-    }
-
-    private static class PortRange {
-        final long begin, end;
-
-        private PortRange(long begin, long end) {
-            this.begin = begin;
-            this.end = end;
-        }
-
-
-        public Protos.Value.Range toProto() {
-            return Protos.Value.Range.newBuilder().setBegin(begin).setEnd(end).build();
-        }
-    }
-
 }
