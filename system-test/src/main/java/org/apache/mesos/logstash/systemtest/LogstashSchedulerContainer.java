@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -39,17 +40,29 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     }
 
     private List<String> getJavaOpts() {
-        List<String> r = asList(
-//                "-Xmx256m",
-                "-Dmesos.logstash.web.port=" + apiPort,
-                "-Dmesos.logstash.framework.name=logstash",
-                "-Dmesos.logstash.logstash.heap.size=128",
-                "-Dmesos.logstash.executor.heap.size=64",
-                "-Dmesos.logstash.volumes=/var/log/mesos",
-                "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
+        return concatLists(
+                asList(
+    //                "-Xmx256m",
+                    "-Dmesos.logstash.web.port=" + apiPort,
+                    "-Dmesos.logstash.framework.name=logstash",
+                    "-Dmesos.logstash.logstash.heap.size=128",
+                    "-Dmesos.logstash.executor.heap.size=64",
+                    "-Dmesos.logstash.volumes=/var/log/mesos",
+                    "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
+            ),
+            optionalToList(elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d))
         );
-        elasticsearchDomainAndPort.map(d -> r.add("-Dmesos.logstash.elasticsearchDomainAndPort=" + d));
+    }
+
+    private static <T> List<T> concatLists(List<T> a, List<T> b) {
+        ArrayList<T> r = new ArrayList<T>();
+        r.addAll(a);
+        r.addAll(b);
         return r;
+    }
+
+    private static <T> List<T> optionalToList(Optional<T> ox) {
+        return ox.map(x -> asList(x)).orElse(asList());
     }
 
     @Override

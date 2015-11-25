@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.Link;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
@@ -21,6 +22,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -118,13 +121,28 @@ public class DeploymentSystemTest {
         // A Logstash framework has started which has been pointed at the Elasticsearch instance for persistence.
         // The framework has registered itself on the Mesos cluster,
         // and started an executor on the single slave,
-        // on which it should be running a Logstash instance.
+        // on which it should be running a Logstash instance (FIXME with what port).
         // and to output events to our Elasticsearch instance.
 
         // So we should be able to post a log line to syslog on our Mesos slave,
         // and see it appear in our Elasticsearch instance.
 
+        final String sysLogPort = "514";
+        final String randomMessageId = new BigInteger(130, new SecureRandom()).toString(32);
+        final String randomLogLine = new BigInteger(130, new SecureRandom()).toString(32);
+
         // TODO: 18/11/2015 Log something through logstash
+        dockerClient
+                .createContainerCmd("ubuntu")
+                .withLinks(new Link(cluster.getSlaves()[0].getContainerId(), "mesos-slave"))
+                .withCmd(
+                        "logger",
+                        "--server", "mesos-slave",
+                        "--tcp", "--port", sysLogPort,
+                        "--msgid", randomMessageId,
+                        randomLogLine
+                )
+                .exec();
 
         // TODO: 18/11/2015 Look for a statement in ES
     }
