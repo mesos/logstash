@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.config;
 
 import org.apache.mesos.logstash.state.SerializableState;
 
+import java.util.Optional;
 import java.util.Properties;
 
 public class LogstashSystemProperties {
@@ -105,7 +106,7 @@ public class LogstashSystemProperties {
 
     public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }
 
-    public String getElasticsearchDomainAndPort() {
-        return props.getProperty("mesos.logstash.elasticsearchDomainAndPort", "");
+    public Optional<String> getElasticsearchDomainAndPort() {
+        return Optional.ofNullable(props.getProperty("mesos.logstash.elasticsearchDomainAndPort", null));
     }
 }

@@ -61,7 +61,7 @@ public class TaskInfoBuilder {
                 // This would prevent a round trip, asking the scheduler for it.
                 // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
-            .setData(ByteString.copyFromUtf8(configuration.getElasticsearchDomainAndPort()))
+            .setData(ByteString.copyFromUtf8(configuration.getElasticsearchDomainAndPort().orElse("")))  // TODO data should be an extensible object notation e.g. s-exprs or JSON
             .build();
     }
 

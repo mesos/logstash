@@ -8,6 +8,7 @@ import org.apache.mesos.logstash.state.SerializableState;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class Configuration {
 
@@ -26,7 +27,7 @@ public class Configuration {
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
-    private String elasticsearchDomainAndPort = null;
+    private Optional<String> elasticsearchDomainAndPort = Optional.empty();
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -178,11 +179,11 @@ public class Configuration {
         this.webServerPort = webServerPort;
     }
 
-    public String getElasticsearchDomainAndPort() {
+    public Optional<String> getElasticsearchDomainAndPort() {
         return elasticsearchDomainAndPort;
     }
 
-    public void setElasticsearchDomainAndPort(String elasticsearchDomainAndPort) {
+    public void setElasticsearchDomainAndPort(Optional<String> elasticsearchDomainAndPort) {
         this.elasticsearchDomainAndPort = elasticsearchDomainAndPort;
     }
 }

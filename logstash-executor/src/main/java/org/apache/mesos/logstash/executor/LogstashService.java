@@ -5,9 +5,14 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Arrays.asList;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -39,9 +44,17 @@ public class LogstashService {
         ConcurrentUtils.stop(executorService);
     }
 
-    public void update(int syslogPort, String elasticsearchDomainAndPort) {
+    public void update(int syslogPort, Optional<String> elasticsearchDomainAndPort) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
+
+        List<LS.Plugin> outputPlugins = elasticsearchDomainAndPort.map(d ->
+                asList(
+                        LS.plugin("elasticsearch", LS.map(
+                                LS.kv("hosts", LS.array(LS.string(d)))
+                        ))
+                ))
+                .orElse(asList());
 
         String config =
                 LS.config(
@@ -50,11 +63,7 @@ public class LogstashService {
                                     LS.kv("port", LS.number(syslogPort))
                             ))
                         ),
-                        LS.section("output",
-                            LS.plugin("elasticsearch", LS.map(
-                                    LS.kv("hosts", LS.array(LS.string(elasticsearchDomainAndPort)))
-                            ))
-                        )
+                        LS.section("output", outputPlugins.toArray(new LS.Plugin[0]))
                 ).serialize();
 
         LOGGER.debug("Writing new configuration:\n{}", config);

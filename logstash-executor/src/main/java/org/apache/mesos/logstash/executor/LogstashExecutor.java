@@ -9,6 +9,8 @@ import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
 
@@ -32,7 +34,8 @@ public class LogstashExecutor implements Executor {
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
         // FIXME for forwards compatibility, task.getData() this should be some data structure serialized in some extensible format e.g. JSON
-        String elasticsearchDomainAndPort = task.getData().toStringUtf8();
+        Optional<String> elasticsearchDomainAndPort = Optional.of(task.getData().toStringUtf8());
+        if (elasticsearchDomainAndPort.get() == "") { elasticsearchDomainAndPort = Optional.empty(); }
 
         logstashService.update(514, elasticsearchDomainAndPort);
         logstashService.start();
