@@ -9,6 +9,7 @@ import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static java.util.Arrays.asList;
@@ -24,14 +25,21 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     private String zookeeperIpAddress;
     private final int apiPort = 9092;
+    private Optional<String> elasticsearchDomainAndPort = Optional.empty();
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
         super(dockerClient);
         this.zookeeperIpAddress = zookeeperIpAddress;
     }
 
+    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String elasticsearchDomainAndPort) {
+        super(dockerClient);
+        this.zookeeperIpAddress = zookeeperIpAddress;
+        this.elasticsearchDomainAndPort = Optional.ofNullable(elasticsearchDomainAndPort);
+    }
+
     private List<String> getJavaOpts() {
-        return asList(
+        List<String> r = asList(
 //                "-Xmx256m",
                 "-Dmesos.logstash.web.port=" + apiPort,
                 "-Dmesos.logstash.framework.name=logstash",
@@ -40,6 +48,8 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "-Dmesos.logstash.volumes=/var/log/mesos",
                 "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
         );
+        elasticsearchDomainAndPort.map(d -> r.add("-Dmesos.logstash.elasticsearchDomainAndPort=" + d));
+        return r;
     }
 
     @Override

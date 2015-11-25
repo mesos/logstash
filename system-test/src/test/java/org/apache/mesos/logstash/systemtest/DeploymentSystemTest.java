@@ -66,13 +66,12 @@ public class DeploymentSystemTest {
                 framework.getTasks().get(0).getState().equals("TASK_RUNNING");
         });
     }
+
     @Test
     public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        cluster.addAndStartContainer(container);
 
-        final String clusterName = "test-" + System.currentTimeMillis();
+        final String elasticsearchClusterName = "test-" + System.currentTimeMillis();
         final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
             private final String version = "1.7";
 
@@ -83,24 +82,27 @@ public class DeploymentSystemTest {
 
             @Override
             protected CreateContainerCmd dockerCommand() {
-                return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + clusterName + "\"");
+                return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"");
             }
         };
         cluster.addAndStartContainer(elasticsearchInstance);
 
-        AtomicReference<Client> client = new AtomicReference<>();
+        AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
         await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", clusterName).build()).addTransportAddress(new InetSocketTransportAddress(elasticsearchInstance.getIpAddress(), 9300));
+            Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", elasticsearchClusterName).build()).addTransportAddress(new InetSocketTransportAddress(elasticsearchInstance.getIpAddress(), 9300));
             try {
                 c.admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet();
             } catch (ElasticsearchException e) {
                 c.close();
                 return false;
             }
-            client.set(c);
+            elasticsearchClient.set(c);
             return true;
         });
-        assertEquals(clusterName, client.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
+        assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
+
+        LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, elasticsearchInstance.getIpAddress() + ":9300");
+        cluster.addAndStartContainer(logstashSchedulerContainer);
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
             Framework framework = cluster.getStateInfo().getFramework("logstash");
@@ -111,7 +113,7 @@ public class DeploymentSystemTest {
 
         // At this point we have a running Mesos cluster with one master, one slave, and a zookeeper instance;
         // we also have a standalone (non-Mesos) instance of Elasticsearch.
-        // A Logstash framework has started which has been pointed at the Elasticsearch instance for persistence (TODO).
+        // A Logstash framework has started which has been pointed at the Elasticsearch instance for persistence.
         // The framework has registered itself on the Mesos cluster,
         // and started an executor on the single slave,
         // on which it should be running a Logstash instance.
