@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.scheduler;
 import com.google.protobuf.ByteString;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.util.Clock;
@@ -52,6 +53,18 @@ public class TaskInfoBuilder {
                 .setShell(false))
             .build();
 
+        LogstashProtos.LogstashPluginOutputElasticsearch.Builder elasticsearchConfig = LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder();
+        configuration.getElasticsearchDomainAndPort().map(dp -> elasticsearchConfig.setHosts(0, dp));
+
+        LogstashProtos.LogstashConfiguration logstashConfiguration =
+                LogstashProtos.LogstashConfiguration.newBuilder()
+                    .setLogstashPluginInputSyslog(
+                            LogstashProtos.LogstashPluginInputSyslog.newBuilder()
+                                .setPort(514) // FIXME take from config
+                    )
+                    .setLogstashPluginOutputElasticsearch(elasticsearchConfig)
+                    .build();
+
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)
             .addAllResources(getResourcesList())
@@ -61,7 +74,7 @@ public class TaskInfoBuilder {
                 // This would prevent a round trip, asking the scheduler for it.
                 // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
-            .setData(ByteString.copyFromUtf8(configuration.getElasticsearchDomainAndPort().orElse("")))  // TODO data should be an extensible object notation e.g. s-exprs or JSON
+            .setData(logstashConfiguration.toByteString())
             .build();
     }
 
