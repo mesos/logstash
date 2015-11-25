@@ -11,4 +11,8 @@ public class MesosSchedulerDriverFactory {
     public SchedulerDriver createMesosDriver(Scheduler scheduler, Protos.FrameworkInfo frameworkInfo, String zookeeperURL){
        return new MesosSchedulerDriver(scheduler, frameworkInfo, zookeeperURL);
    }
+
+    public SchedulerDriver createMesosDriver(Scheduler scheduler, Protos.FrameworkInfo frameworkInfo, Protos.Credential credential, String zookeeperURL){
+       return new MesosSchedulerDriver(scheduler, frameworkInfo, zookeeperURL,credential);
+   }
 }

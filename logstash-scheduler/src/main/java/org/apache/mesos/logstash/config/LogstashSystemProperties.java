@@ -91,6 +91,14 @@ public class LogstashSystemProperties {
         return props.getProperty("mesos.logstash.role", "*");
     }
 
+    public String getMesosPrincipal() {
+        return props.getProperty("mesos.principal",null);
+    }
+
+    public String getMesosSecret() {
+        return props.getProperty("mesos.secret",null);
+    }
+
     public int getZkTimeout() {
         return getInt("mesos.zk.timeout.ms", DEFAULT_ZK_TIME_MS);
     }
