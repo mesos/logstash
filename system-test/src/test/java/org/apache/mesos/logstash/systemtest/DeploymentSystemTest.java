@@ -108,7 +108,20 @@ public class DeploymentSystemTest {
                 framework != null && framework.getTasks().size() > 0 &&
                 framework.getTasks().get(0).getState().equals("TASK_RUNNING");
         });
+
+        // At this point we have a running Mesos cluster with one master, one slave, and a zookeeper instance;
+        // we also have a standalone (non-Mesos) instance of Elasticsearch.
+        // A Logstash framework has started which has been pointed at the Elasticsearch instance for persistence (TODO).
+        // The framework has registered itself on the Mesos cluster,
+        // and started an executor on the single slave,
+        // on which it should be running a Logstash instance.
+        // and to output events to our Elasticsearch instance.
+
+        // So we should be able to post a log line to syslog on our Mesos slave,
+        // and see it appear in our Elasticsearch instance.
+
         // TODO: 18/11/2015 Log something through logstash
+
         // TODO: 18/11/2015 Look for a statement in ES
     }
 
