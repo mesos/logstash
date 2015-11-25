@@ -54,7 +54,7 @@ public class TaskInfoBuilder {
             .build();
 
         LogstashProtos.LogstashPluginOutputElasticsearch.Builder elasticsearchConfig = LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder();
-        configuration.getElasticsearchDomainAndPort().map(dp -> elasticsearchConfig.setHosts(0, dp));
+        configuration.getElasticsearchDomainAndPort().map(dp -> elasticsearchConfig.addHosts(dp));
 
         LogstashProtos.LogstashConfiguration logstashConfiguration =
                 LogstashProtos.LogstashConfiguration.newBuilder()
