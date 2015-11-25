@@ -26,6 +26,7 @@ public class Configuration {
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
+    private String elasticsearchDomainAndPort = null;
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -175,5 +176,13 @@ public class Configuration {
 
     public void setWebServerPort(int webServerPort) {
         this.webServerPort = webServerPort;
+    }
+
+    public String getElasticsearchDomainAndPort() {
+        return elasticsearchDomainAndPort;
+    }
+
+    public void setElasticsearchDomainAndPort(String elasticsearchDomainAndPort) {
+        this.elasticsearchDomainAndPort = elasticsearchDomainAndPort;
     }
 }

@@ -1,4 +1,5 @@
 package org.apache.mesos.logstash.scheduler;
+import com.google.protobuf.ByteString;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.config.Configuration;
@@ -60,6 +61,7 @@ public class TaskInfoBuilder {
                 // This would prevent a round trip, asking the scheduler for it.
                 // e.g. .setData(latestConfig.toByteString())
             .setSlaveId(offer.getSlaveId())
+            .setData(ByteString.copyFromUtf8(configuration.getElasticsearchDomainAndPort()))
             .build();
     }
 

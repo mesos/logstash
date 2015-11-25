@@ -9,12 +9,6 @@ import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig;
-import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.DOCKER;
-import static org.apache.mesos.logstash.common.LogstashProtos.LogstashConfig.LogstashConfigType.HOST;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
 
@@ -25,19 +19,23 @@ public class LogstashExecutor implements Executor {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class.toString());
 
-    private final ConfigManager configManager;
+    private final LogstashService logstashService;
     private final LiveState liveState;
     private final DockerClient dockerClient;
 
-    public LogstashExecutor(ConfigManager configManager, DockerClient dockerClient,
-        LiveState liveState) {
-        this.configManager = configManager;
+    public LogstashExecutor(LogstashService logstashService, DockerClient dockerClient, LiveState liveState) {
+        this.logstashService = logstashService;
         this.dockerClient = dockerClient;
         this.liveState = liveState;
     }
 
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
+        // FIXME for forwards compatibility, task.getData() this should be some data structure serialized in some extensible format e.g. JSON
+        String elasticsearchDomainAndPort = task.getData().toStringUtf8();
+
+        logstashService.update(514, elasticsearchDomainAndPort);
+        logstashService.start();
 
         LOGGER.info("Notifying scheduler that executor has started.");
 
@@ -77,15 +75,10 @@ public class LogstashExecutor implements Executor {
     }
 
     private void updateConfig(SchedulerMessage message) {
-        List<LogstashConfig> dockerInfo = message.getConfigsList().stream()
-            .filter(c -> c.getType() == DOCKER)
-            .collect(Collectors.toList());
+        LOGGER.info("New configuration received. Reconfiguring...");
 
-        List<LogstashConfig> hostInfo = message.getConfigsList().stream()
-            .filter(c -> c.getType() == HOST)
-            .collect(Collectors.toList());
-
-        configManager.onNewConfigsFromScheduler(hostInfo, dockerInfo);
+        // TODO extract config and update service:
+        // logstashService.update(514, "elasticsearch.service:9200");
     }
 
     private void sendStatsToScheduler(ExecutorDriver driver) {

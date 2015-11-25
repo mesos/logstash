@@ -105,5 +105,7 @@ public class LogstashSystemProperties {
 
     public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }
 
-
+    public String getElasticsearchDomainAndPort() {
+        return props.getProperty("mesos.logstash.elasticsearchDomainAndPort", "");
+    }
 }

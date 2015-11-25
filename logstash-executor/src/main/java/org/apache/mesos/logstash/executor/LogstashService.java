@@ -1,16 +1,10 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.mesos.logstash.common.ConcurrentUtils;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
-import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
-    private final DockerClient client;
 
     private ExecutorStatus status;
 
@@ -30,8 +23,7 @@ public class LogstashService {
     private String latestConfig;
     private Process process;
 
-    public LogstashService(DockerClient client) {
-        this.client = client;
+    public LogstashService() {
         status = ExecutorStatus.INITIALIZING;
         executorService = Executors.newSingleThreadScheduledExecutor();
     }
@@ -47,15 +39,23 @@ public class LogstashService {
         ConcurrentUtils.stop(executorService);
     }
 
-    public void update(List<LogstashProtos.LogstashConfig> dockerInfo, List<LogstashProtos.LogstashConfig> hostInfo) {
+    public void update(int syslogPort, String elasticsearchDomainAndPort) {
         // Producer: We only keep the latest config in case of multiple
         // updates.
-        LOGGER.info("LogstashService.update, {}\n-------\n{}", dockerInfo, hostInfo);
 
-        // TODO this should be a Logstash config which tells it to
-        // (1) be a syslog server and listen for syslog events
-        // (2) forward those events to Elasticsearch at a location specified by the scheduler in the task info
-        String config = "";
+        String config =
+                LS.config(
+                        LS.section("input",
+                            LS.plugin("syslog", LS.map(
+                                    LS.kv("port", LS.number(syslogPort))
+                            ))
+                        ),
+                        LS.section("output",
+                            LS.plugin("elasticsearch", LS.map(
+                                    LS.kv("hosts", LS.array(LS.string(elasticsearchDomainAndPort)))
+                            ))
+                        )
+                ).serialize();
 
         LOGGER.debug("Writing new configuration:\n{}", config);
         synchronized (lock) {
@@ -81,10 +81,6 @@ public class LogstashService {
         status = ExecutorStatus.RESTARTING;
 
         try {
-            Path configFile = Paths.get("/tmp/logstash/logstash.conf");
-            Files.createDirectories(configFile.getParent());
-            Files.write(configFile.resolve(configFile), newConfig.getBytes());
-
             // Stop any existing logstash instance. It does not have to complete
             // before we start the new one.
 
@@ -93,8 +89,18 @@ public class LogstashService {
                 process.waitFor(5, TimeUnit.MINUTES);
             }
 
-            process = Runtime.getRuntime().exec("bash /tmp/run_logstash.sh",
-                    new String[]{"LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size")}
+            process = Runtime.getRuntime().exec(
+                    new String[]{
+                            "/opt/logstash/bin/logstash",
+                            "--log", "/var/log/logstash.log",
+                            "-e", newConfig
+                    },
+                    new String[]{
+                            "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
+                            "HOME=/root"
+                    }
+
+
             );
         } catch (Exception e) {
             status = ExecutorStatus.ERROR;

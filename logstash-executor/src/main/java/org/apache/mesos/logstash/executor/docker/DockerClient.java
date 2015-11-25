@@ -138,21 +138,4 @@ public class DockerClient {
         }
         return containerIdsAndNames;
     }
-
-    public LogStream exec(String containerId, String... command) {
-
-        // TODO: Handle error properly.
-
-        try {
-            String id = dockerClient.execCreate(containerId, command,
-                com.spotify.docker.client.DockerClient.ExecParameter.STDOUT);
-
-            return new DockerLogStream(dockerClient.execStart(id));
-
-        } catch (DockerException | InterruptedException e) {
-            LOGGER.error(String.format("Error executing in container %s: %s", containerId, e));
-        }
-
-        return null;
-    }
 }
