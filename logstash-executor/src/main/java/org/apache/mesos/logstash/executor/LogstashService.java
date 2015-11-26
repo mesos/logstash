@@ -6,15 +6,13 @@ import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorS
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -50,26 +48,21 @@ public class LogstashService {
         // Producer: We only keep the latest config in case of multiple
         // updates.
 
-        List<LS.Plugin> inputPlugins =
-                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputSyslog())
-                .map(config ->
-                asList(
-                        LS.plugin("syslog", LS.map(
-                                LS.kv("port", LS.number(config.getPort()))
-                        ))
-                ))
-                .orElse(asList());
+        List<LS.Plugin> inputPlugins = optionalValuesToList(
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputSyslog()).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputCollectd()).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(config.getPort())), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map())))))
+        );
 
-        List<LS.Plugin> outputPlugins =
-                Optional.ofNullable(logstashConfiguration.getLogstashPluginOutputElasticsearch())
-                .map(config ->
-                asList(
-                        LS.plugin("elasticsearch", LS.map(
-                                LS.kv("hosts", LS.array(config.getHostsList().stream().map(LS::string).collect(Collectors.toList()).toArray(new LS.Value[0]))),
-                                LS.kv("index", LS.string("logstash"))  // FIXME this should be configurable
-                        ))
+        List<LS.Plugin> outputPlugins = optionalValuesToList(
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginOutputElasticsearch()).map(config -> LS.plugin(
+                        "elasticsearch",
+                        LS.map(
+                                LS.kv("hosts", LS.array()),
+                                LS.kv("index", LS.string("logstash"))  /* FIXME this should be configurable*/
+                        )
                 ))
-                .orElse(asList());
+        );
+
 
         String config =
                 LS.config(
@@ -81,6 +74,10 @@ public class LogstashService {
         synchronized (lock) {
             latestConfig = config;
         }
+    }
+
+    public static <T> List<T> optionalValuesToList(Optional<T> ... optionals) {
+        return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
     private void run() {

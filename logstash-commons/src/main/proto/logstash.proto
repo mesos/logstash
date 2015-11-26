@@ -16,11 +16,16 @@ message LogstashConfig {
 // Everything the executor needs to know in order to configure the instance of Logstash on its Mesos slave
 message LogstashConfiguration {
   optional LogstashPluginInputSyslog logstashPluginInputSyslog = 1;
+  optional LogstashPluginInputCollectd logstashPluginInputCollectd = 3;
   optional LogstashPluginOutputElasticsearch logstashPluginOutputElasticsearch = 2;
 }
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html
 message LogstashPluginInputSyslog {
+  required uint64 port = 1;
+}
+
+message LogstashPluginInputCollectd {
   required uint64 port = 1;
 }
 
