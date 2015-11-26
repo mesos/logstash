@@ -4,6 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.executor.docker.DockerClient;
 import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
@@ -32,9 +33,15 @@ public class LogstashExecutor implements Executor {
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
         // FIXME for forwards compatibility, task.getData() this should be some data structure serialized in some extensible format e.g. JSON
-        String elasticsearchDomainAndPort = task.getData().toStringUtf8();
 
-        logstashService.update(514, elasticsearchDomainAndPort);
+        LogstashProtos.LogstashConfiguration logstashConfiguration;
+        try {
+            logstashConfiguration = LogstashProtos.LogstashConfiguration.parseFrom(task.getData().toByteArray());
+        } catch (InvalidProtocolBufferException e) {
+            throw new RuntimeException(e);
+        }
+
+        logstashService.update(logstashConfiguration);
         logstashService.start();
 
         LOGGER.info("Notifying scheduler that executor has started.");

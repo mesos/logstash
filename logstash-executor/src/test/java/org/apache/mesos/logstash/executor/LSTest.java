@@ -5,57 +5,57 @@ import org.junit.Test;
 
 public class LSTest {
     @Test
-    public void testSerializeNoQuoteString() {
+    public void serializeNoQuoteString() {
         Assert.assertEquals("\"foo\"", LS.string("foo").serialize());
     }
 
     @Test
-    public void testSerializeSingleQuoteString() {
+    public void serializeSingleQuoteString() {
         Assert.assertEquals("\"O'Brien\"", LS.string("O'Brien").serialize());
     }
 
     @Test
-    public void testSerializeDoubleQuoteString() {
+    public void serializeDoubleQuoteString() {
         Assert.assertEquals("'My name is \"James\"'", LS.string("My name is \"James\"").serialize());
     }
 
     @Test(expected=RuntimeException.class)
-    public void testSerializeInvalidString() {
+    public void serializeInvalidString() {
         LS.string("My name is \"O'Brien\"").serialize();
     }
 
     @Test
-    public void testSerializeInteger() {
+    public void serializeInteger() {
         Assert.assertEquals("5", LS.number(5).serialize());
     }
 
     @Test
-    public void testSerializeDecimal() {
+    public void serializeDecimal() {
         Assert.assertEquals("5.5", LS.number(5.5).serialize());
     }
 
     @Test
-    public void testSerializeKV() {
+    public void serializeKV() {
         Assert.assertEquals("\"port\" => 8080", LS.kv("port", LS.number(8080)).serialize());
     }
 
     @Test
-    public void testSerializeArray() {
+    public void serializeArray() {
         Assert.assertEquals("[ 1, 2, 3 ]", LS.array(LS.number(1), LS.number(2), LS.number(3)).serialize());
     }
 
     @Test
-    public void testSerializeMap() {
+    public void serializeMap() {
         Assert.assertEquals("{\n\"port\" => 8080\n\"domain\" => \"localhost\"\n}", LS.map(LS.kv("port", LS.number(8080)), LS.kv("domain", LS.string("localhost"))).serialize());
     }
 
     @Test
-    public void testSerializePlugin() {
+    public void serializePlugin() {
         Assert.assertEquals("collectd {\n\"prune_intervals\" => true\n}", LS.plugin("collectd", LS.map(LS.kv("prune_intervals", LS.bool(true)))).serialize());
     }
 
     @Test
-    public void testSerializeSection() {
+    public void serializeSection() {
         Assert.assertEquals(
                 "input {\n" +
                     "elasticsearch {\n" +
@@ -73,7 +73,7 @@ public class LSTest {
     }
 
     @Test
-    public void testSerializeEmptyConfig() {
+    public void serializeEmptyConfig() {
         Assert.assertEquals(
                 "",
                 LS.config().serialize()
@@ -81,7 +81,7 @@ public class LSTest {
     }
 
     @Test
-    public void testSerializeConfig() {
+    public void serializeConfig() {
         Assert.assertEquals(
             "input {\n" +
                 "elasticsearch {\n" +
