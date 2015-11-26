@@ -4,14 +4,14 @@ import com.containersol.minimesos.container.AbstractContainer;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.ExposedPort;
-import com.github.dockerjava.api.model.PortBinding;
 import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -40,29 +40,24 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     }
 
     private List<String> getJavaOpts() {
-        return concatLists(
+        return mergeWithOptionals(
                 asList(
-    //                "-Xmx256m",
-                    "-Dmesos.logstash.web.port=" + apiPort,
-                    "-Dmesos.logstash.framework.name=logstash",
-                    "-Dmesos.logstash.logstash.heap.size=128",
-                    "-Dmesos.logstash.executor.heap.size=64",
-                    "-Dmesos.logstash.volumes=/var/log/mesos",
-                    "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
-            ),
-            optionalToList(elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d))
+                        "-Dmesos.logstash.web.port=" + apiPort,
+                        "-Dmesos.logstash.framework.name=logstash",
+                        "-Dmesos.logstash.logstash.heap.size=128",
+                        "-Dmesos.logstash.executor.heap.size=64",
+                        "-Dmesos.logstash.volumes=/var/log/mesos",
+                        "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
+                ),
+                elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
         );
     }
 
-    private static <T> List<T> concatLists(List<T> a, List<T> b) {
-        ArrayList<T> r = new ArrayList<T>();
-        r.addAll(a);
-        r.addAll(b);
-        return r;
-    }
-
-    private static <T> List<T> optionalToList(Optional<T> ox) {
-        return ox.map(x -> asList(x)).orElse(asList());
+    private static <T> List<T> mergeWithOptionals(List<T> list, Optional<T> ... optionals) {
+        return Stream.concat(
+                list.stream(),
+                Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get)
+        ).collect(Collectors.toList());
     }
 
     @Override
@@ -76,7 +71,6 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(getJavaOpts(), " "))
-                .withExposedPorts(ExposedPort.tcp(apiPort))
-                .withExtraHosts(IntStream.rangeClosed(1, 3).mapToObj(value -> "slave" + value + ":" + zookeeperIpAddress).toArray(String[]::new));
+                .withExposedPorts(ExposedPort.tcp(apiPort));
     }
 }

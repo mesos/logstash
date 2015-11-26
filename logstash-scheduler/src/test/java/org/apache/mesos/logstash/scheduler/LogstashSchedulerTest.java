@@ -1,29 +1,24 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.mesos.MesosSchedulerDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
+import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.Mockito;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.time.ZonedDateTime;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static java.util.Collections.singletonList;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -44,6 +39,11 @@ public class LogstashSchedulerTest {
     private ConfigManager configManager;
     private FrameworkState frameworkState ;
 
+    final ClusterMonitor clusterMonitor = mock(ClusterMonitor.class);
+    final ClusterState clusterState = mock(ClusterState.class);
+    final TaskInfoBuilder taskInfoBuilder = mock(TaskInfoBuilder.class);
+
+
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
     @Before
@@ -59,7 +59,7 @@ public class LogstashSchedulerTest {
         driverFactory = mock(MesosSchedulerDriverFactory.class);
         driver = mock(SchedulerDriver.class);
 
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory);
+        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class));
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }
@@ -147,5 +147,4 @@ public class LogstashSchedulerTest {
     private Protos.FrameworkID createFrameworkId(String frameworkId) {
         return Protos.FrameworkID.newBuilder().setValue(frameworkId).build();
     }
-
 }

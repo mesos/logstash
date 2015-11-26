@@ -14,15 +14,20 @@ import org.apache.mesos.state.ZooKeeperState;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"org.apache.mesos.logstash"})
+@EnableConfigurationProperties
 public class Application {
+    @Inject
+    Features features;
 
     private LogstashSystemProperties logstashSystemProperties = new LogstashSystemProperties();
 

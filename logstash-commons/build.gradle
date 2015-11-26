@@ -10,6 +10,7 @@ task taskCopyFilesForDocker(type: Copy) {
 
 dependencies {
     compile 'com.google.protobuf:protobuf-java:2.6.1'
+    compile 'javax.inject:javax.inject:1'
 }
 
 /*

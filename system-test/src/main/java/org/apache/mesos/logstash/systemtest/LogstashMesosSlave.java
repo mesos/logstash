@@ -14,7 +14,7 @@ public class LogstashMesosSlave extends MesosSlave {
     @Override
     public TreeMap<String, String> getDefaultEnvVars() {
         final TreeMap<String, String> envVars = super.getDefaultEnvVars();
-        envVars.put("MESOS_RESOURCES", "ports(*):[9299-9299,9300-9300]");
+        envVars.put("MESOS_RESOURCES", "ports(*):[5000-5000,9299-9299,9300-9300]");
         return envVars;
     }
 }
