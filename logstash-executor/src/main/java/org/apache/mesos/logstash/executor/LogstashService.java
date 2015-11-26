@@ -65,7 +65,8 @@ public class LogstashService {
                 .map(config ->
                 asList(
                         LS.plugin("elasticsearch", LS.map(
-                                LS.kv("hosts", LS.array(config.getHostsList().stream().map(LS::string).collect(Collectors.toList()).toArray(new LS.Value[0]))),
+                                LS.kv("host", LS.string(config.getHostsList().stream().findFirst().get())), // FIXME don't assume that we have exactly one host in the list ...
+                                // This only works for Logstash 2: LS.kv("hosts", LS.array(config.getHostsList().stream().map(LS::string).collect(Collectors.toList()).toArray(new LS.Value[0]))),
                                 LS.kv("index", LS.string("logstash"))  // FIXME this should be configurable
                         ))
                 ))
