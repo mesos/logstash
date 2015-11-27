@@ -53,17 +53,14 @@ public class TaskInfoBuilder {
                 .setShell(false))
             .build();
 
-        LogstashProtos.LogstashPluginOutputElasticsearch.Builder elasticsearchConfig = LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder();
-        configuration.getElasticsearchDomainAndPort().map(dp -> elasticsearchConfig.addHosts(dp));
 
-        LogstashProtos.LogstashConfiguration logstashConfiguration =
-                LogstashProtos.LogstashConfiguration.newBuilder()
-                    .setLogstashPluginInputSyslog(
-                            LogstashProtos.LogstashPluginInputSyslog.newBuilder()
-                                .setPort(514) // FIXME take from config
-                    )
-                    .setLogstashPluginOutputElasticsearch(elasticsearchConfig)
-                    .build();
+        final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
+        logstashConfigBuilder.setLogstashPluginInputSyslog(
+                LogstashProtos.LogstashPluginInputSyslog.newBuilder()
+                        .setPort(514) // FIXME take from config
+        );
+        configuration.getElasticsearchDomainAndPort().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
+        LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)

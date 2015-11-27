@@ -57,8 +57,9 @@ public class LogstashService {
                 Optional.ofNullable(logstashConfiguration.getLogstashPluginOutputElasticsearch()).map(config -> LS.plugin(
                         "elasticsearch",
                         LS.map(
-                                LS.kv("hosts", LS.array()),
-                                LS.kv("index", LS.string("logstash"))  /* FIXME this should be configurable*/
+                                LS.kv("host", LS.string(config.getHost())),
+                                LS.kv("protocol", LS.string("http")),
+                                LS.kv("index", LS.string("logstash"))  //FIXME this should be configurable. Maybe add -%{+YYYY.MM.dd}
                         )
                 ))
         );
@@ -116,8 +117,6 @@ public class LogstashService {
                             "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
                             "HOME=/root"
                     }
-
-
             );
         } catch (Exception e) {
             status = ExecutorStatus.ERROR;

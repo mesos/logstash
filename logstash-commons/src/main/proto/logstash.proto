@@ -31,7 +31,7 @@ message LogstashPluginInputCollectd {
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html
 message LogstashPluginOutputElasticsearch {
-  repeated string hosts = 1;
+  required string host = 1;
 }
 
 message SchedulerMessage {
