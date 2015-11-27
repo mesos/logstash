@@ -202,31 +202,10 @@ public class LS {
         }
     }
 
-    private static Set<Integer> toCharSet(java.lang.String s) {
-        return s.chars().mapToObj(c -> new Integer(c)).collect(Collectors.toSet());
-    }
-
-    private static java.lang.String charSetToString(Set<Integer> s) {
-        java.lang.String acc = "";
-        for (Integer i : s) {
-            acc = acc + Character.toChars(i.intValue());
-        }
-        return acc;
-    }
-
     // Conservative (probably overly restrictive)
     private static void validateName(java.lang.String name) {
-        Set<Integer> firstCharAllowedChars = toCharSet("abcdefghijklmnopqrstuvwxyz");
-        Set<Integer> allowedChars = toCharSet("abcdefghijklmnopqrstuvwxyz1234567890_");
-
-        if (name.length() == 0) {
-            throw new RuntimeException("Name cannot be empty string");
-        }
-        else if (!firstCharAllowedChars.contains(new Integer((int) name.charAt(0)))) {
-            throw new RuntimeException("Name cannot start with character: " + name.charAt(0));
-        }
-        else if (!allowedChars.containsAll(toCharSet(name.substring(1)))) {
-            throw new RuntimeException("Name cannot contain characters: " + charSetToString(Sets.difference(toCharSet(name.substring(1)), allowedChars)));
+        if (!name.matches("^[a-z][a-z0-9_]*$")) {
+            throw new IllegalArgumentException("Illegal name=" + name);
         }
     }
 }
