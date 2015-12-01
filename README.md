@@ -247,41 +247,45 @@ Compilation
 ./gradlew --info clean compileJava
 ```
 
-System test
-
-```
-echo "schedulerImageName=mesos/logstash-scheduler" > local.properties
-echo "executorImageName=mesos/logstash-executor" >> local.properties
-./gradlew -a --info clean build :system-test:test
-```
-
 ## Run the Tests
 
-To run the tests locally you need to fulfill the following requirements:
+To run the tests (including system tests) you need to fulfill the following requirements:
 
 - Java Development Kit installed (Java 8)
-- Docker daemon running (either locally or using e.g. [Docker-Machine](https://docs.docker.com/machine/))
+- A Docker daemon. This can be either
 
-If your Docker daemon is not running natively on your machine
-(e.g. on a Mac or if you're using docker-machine) you have
-to export the DOCKER_* variables (e.g. for docker-machine use `eval $(docker-machine env dev)`).
+  - locally, or
+  
+  - remotely, e.g. using [Docker-Machine](https://docs.docker.com/machine/)) or boot2docker.
 
-Run `gradle test` to run the all tests.  
+    If choosing this option, you need to do two things before running the tests:
 
-### Routes
+    - tell your Docker client where your remote Docker daemon is.
+      For example, if you are using `docker-machine`, and your machine is called `dev`,
+      you can run in bash:
+      
+      ```
+      eval $(docker-machine env dev)
+      ```
 
-When testing against non-local docker host (e.g docker-machine, boot2docker)
-you will need to add a route to get the tests to run.
+    - Add an entry to the routing table
+      to allow the scheduler, which runs outside of docker when testing, to
+      communicate with the rest of the cluster inside docker.
 
-The reason is to allow the scheduler, which runs outside of docker when testing, to
-communicate with the rest of the cluster inside docker.
+      This command:
+      
+      ```
+      sudo route -n add 172.17.0.0/16 $(docker-machine ip dev)
+      ```
+      
+      sets up a route that allows packets to be routed from your scheduler (running locally on your
+      computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
-This command:
+Then, to run the all tests:
+  
 ```
-sudo route -n add 172.17.0.0/16 $(docker-machine ip dev)
+./gradlew -a --info build
 ```
-Sets up a route that allows packets to be routed from your scheduler (running locally on your
-computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
 # Limitations
 
