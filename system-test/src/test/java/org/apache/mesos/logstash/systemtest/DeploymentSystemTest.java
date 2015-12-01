@@ -132,7 +132,13 @@ public class DeploymentSystemTest {
             final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server", "logstash", "--rfc3164", "--tcp", "--port", sysLogPort, randomLogLine).exec();
             dockerClient.startContainerCmd(loggerContainer.getId()).exec();
             Thread.sleep(100L);
-            await().atMost(1, TimeUnit.SECONDS).until(() -> StringUtils.isNotBlank(dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt()));
+            await().atMost(10, TimeUnit.SECONDS).until(() -> {
+                // TODO: this is a hack to determine whether the container has stopped.
+                // We should use ...exec().getState().getRunning() but docker-java doesn't provide that
+                // (even though it's available in the JSON provided by Docker).
+                final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+                return StringUtils.isNotBlank(finishedAt) && !finishedAt.equals("0001-01-01T00:00:00Z");
+            });
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             return 0 == exitCode;
