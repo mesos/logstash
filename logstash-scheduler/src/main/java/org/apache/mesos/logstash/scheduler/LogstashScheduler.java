@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.LongRange;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
@@ -18,6 +17,7 @@ import org.apache.mesos.logstash.state.LSTaskStatus;
 import org.apache.mesos.logstash.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

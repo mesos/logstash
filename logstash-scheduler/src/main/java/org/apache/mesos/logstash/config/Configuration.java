@@ -23,7 +23,7 @@ public class Configuration {
     private int zkTimout =0;
     private String logStashRole = "";
     private FrameworkState frameworkState;
-    private boolean disableFailover = false;
+    private boolean disableFailover = true;
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;

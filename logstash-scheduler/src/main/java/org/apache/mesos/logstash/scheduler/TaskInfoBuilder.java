@@ -30,6 +30,8 @@ public class TaskInfoBuilder {
             .newBuilder()
             .setForcePullImage(false)
             .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
+            .addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"))
+            .addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"))
             .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
@@ -103,7 +105,15 @@ public class TaskInfoBuilder {
                 .setType(Protos.Value.Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder()
                     .setValue(memNeeded).build())
-                .build()
+                .build(),
+                Protos.Resource.newBuilder()
+                .setName("ports")
+                .setType(Protos.Value.Type.RANGES)
+                        .setRanges(Protos.Value.Ranges.newBuilder()
+                                .addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514))
+                                .addRange(Protos.Value.Range.newBuilder().setBegin(5000).setEnd(5000))
+                        )
+                        .build()
         );
     }
     private String formatTaskId(Protos.Offer offer) {
