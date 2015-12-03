@@ -59,7 +59,21 @@ public class TaskInfoBuilder {
                 LogstashProtos.LogstashPluginInputSyslog.newBuilder()
                         .setPort(514) // FIXME take from config
         );
-        configuration.getElasticsearchDomainAndPort().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
+        if (configuration.getEnableCollectd()) {
+            logstashConfigBuilder.setLogstashPluginInputCollectd(
+                    LogstashProtos.LogstashPluginInputCollectd.newBuilder()
+                        .setPort(configuration.getCollectdPort())
+            );
+        }
+
+        configuration.getElasticsearchDomainAndPort().ifPresent(
+                hostAndPort ->
+                        logstashConfigBuilder.setLogstashPluginOutputElasticsearch(
+                                LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)
+                        )
+        );
+
+
         LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
         return Protos.TaskInfo.newBuilder()

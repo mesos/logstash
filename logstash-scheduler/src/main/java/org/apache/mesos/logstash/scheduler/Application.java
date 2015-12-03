@@ -64,6 +64,8 @@ public class Application {
         conf.setZkTimout(logstashSystemProperties.getZkTimeout());
         conf.setWebServerPort(logstashSystemProperties.getWebServerPort());
         conf.setElasticsearchDomainAndPort(logstashSystemProperties.getElasticsearchDomainAndPort());
+        conf.setEnableCollectd(logstashSystemProperties.getEnableCollectd());
+        conf.setCollectdPort(logstashSystemProperties.getCollectdPort());
 
         return conf;
     }

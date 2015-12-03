@@ -109,4 +109,14 @@ public class LogstashSystemProperties {
     public Optional<String> getElasticsearchDomainAndPort() {
         return Optional.ofNullable(props.getProperty("mesos.logstash.elasticsearchDomainAndPort", null));
     }
+
+    public boolean getEnableCollectd() {
+        String enable = props.getProperty("mesos.logstash.collectd.enable");
+        return enable != null && enable.equals("true");
+    }
+
+    public long getCollectdPort() {
+        String port = props.getProperty("mesos.logstash.collectd.port");
+        return port == null ? 25826 : Long.parseLong(port);
+    }
 }

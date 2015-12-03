@@ -28,6 +28,8 @@ public class Configuration {
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
     private Optional<String> elasticsearchDomainAndPort = Optional.empty();
+    private boolean enableCollectd;
+    private long collectdPort;
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -186,4 +188,21 @@ public class Configuration {
     public void setElasticsearchDomainAndPort(Optional<String> elasticsearchDomainAndPort) {
         this.elasticsearchDomainAndPort = elasticsearchDomainAndPort;
     }
+
+    public boolean getEnableCollectd() {
+        return this.enableCollectd;
+    }
+
+    public void setEnableCollectd(boolean enableCollectd) {
+        this.enableCollectd = enableCollectd;
+    }
+
+    public long getCollectdPort() {
+        return this.collectdPort;
+    }
+
+    public void setCollectdPort(long collectdPort) {
+        this.collectdPort = collectdPort;
+    }
+
 }
