@@ -47,7 +47,9 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                         "-Dmesos.logstash.logstash.heap.size=128",
                         "-Dmesos.logstash.executor.heap.size=64",
                         "-Dmesos.logstash.volumes=/var/log/mesos",
-                        "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
+                        "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos",
+                        "-Dmesos.logstash.collectd.enable=true",
+                        "-Dmesos.logstash.collectd.port=25827"
                 ),
                 elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
         );
