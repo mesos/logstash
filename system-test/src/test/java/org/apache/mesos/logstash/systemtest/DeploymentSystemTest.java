@@ -87,6 +87,53 @@ public class DeploymentSystemTest {
         assertEquals(randomLogLine, getFirstMessageInLogstashIndex(elasticsearchClient));
     }
 
+    @Test
+    public void willForwardCollectdLogsToElasticsearch() {
+        String elasticsearchClusterName = "test-" + System.currentTimeMillis();
+        final AbstractContainer elasticsearchInstance = startElasticsearchClusterWithName(elasticsearchClusterName);
+        Client elasticsearchClient = elasticsearchClientForCluster(elasticsearchInstance, elasticsearchClusterName);
+        startLogstash(cluster.getZkContainer().getIpAddress(), elasticsearchInstance);
+        CreateContainerResponse collectdClientContainer = createCollectdClientSendingIrqLogsToCollectdServer(getLogstashExecutor());
+        waitForCollectdIrqEventsInElasticsearch(elasticsearchClient);
+        dockerClient.removeContainerCmd(collectdClientContainer.getId()).exec();
+    }
+
+    private CreateContainerResponse createCollectdClientSendingIrqLogsToCollectdServer(Container collectdServerContainer) {
+        final String collectdConf =
+                // Watch for interrupt request events ...
+                "LoadPlugin irq\n" +
+
+                // ... and log those events to our collectd server
+                "LoadPlugin \"network\"\n" +
+                "<Plugin \"network\">\n" +
+                "  Server \"collectdserver\" \"25827\"\n" +
+                "</Plugin>\n";
+
+        return dockerClient
+                .createContainerCmd("docker-collectd:latest")
+                .withLinks(new Link(collectdServerContainer.getId(), "collectdserver"))
+                .withEnv("COLLECTD_CONF=" + collectdConf)
+                .exec();
+    }
+
+    private void waitForCollectdIrqEventsInElasticsearch(Client elasticsearchClient) {
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            try {
+                long numberOfIrqEventsInElasticsearch = elasticsearchClient
+                        .prepareSearch("logstash")
+                        .setQuery(QueryBuilders.matchQuery("plugin", "irq"))
+                        .addField("message")
+                        .execute()
+                        .actionGet()
+                        .getHits()
+                        .getTotalHits();
+                return numberOfIrqEventsInElasticsearch > 0;
+            } catch (Exception e) {
+                return false;
+            }
+        });
+    }
+
     private AbstractContainer startElasticsearchClusterWithName(String elasticsearchClusterName) {
         final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
             private final String version = "1.7";
