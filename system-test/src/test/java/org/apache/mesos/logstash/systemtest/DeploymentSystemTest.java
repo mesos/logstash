@@ -110,7 +110,7 @@ public class DeploymentSystemTest {
                 "</Plugin>\n";
 
         return dockerClient
-                .createContainerCmd("docker-collectd:latest")
+                .createContainerCmd("jhftrifork/docker-collectd:latest")
                 .withLinks(new Link(collectdServerContainer.getId(), "collectdserver"))
                 .withEnv("COLLECTD_CONF=" + collectdConf)
                 .exec();
