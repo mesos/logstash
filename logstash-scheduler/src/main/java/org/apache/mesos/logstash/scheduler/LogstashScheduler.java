@@ -17,7 +17,6 @@ import org.apache.mesos.logstash.state.LSTaskStatus;
 import org.apache.mesos.logstash.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -57,14 +56,15 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             Configuration configuration,
             ConfigManager configManager,
             MesosSchedulerDriverFactory mesosSchedulerDriverFactory,
-            OfferStrategy offerStrategy) {
+            OfferStrategy offerStrategy,
+            Features features) {
         this.liveState = liveState;
 
         this.configuration = configuration;
         this.configManager = configManager;
         this.mesosSchedulerDriverFactory = mesosSchedulerDriverFactory;
         this.offerStrategy = offerStrategy;
-        this.taskInfoBuilder = new TaskInfoBuilder(configuration);
+        this.taskInfoBuilder = new TaskInfoBuilder(configuration, features);
 
         this.listeners = synchronizedCollection(new ArrayList<>());
 

@@ -58,6 +58,7 @@ public class Application {
         conf.setExecutorHeapSize(logstashSystemProperties.getExecutorHeapSize());
         conf.setLogstashHeapSize(logstashSystemProperties.getLogstashHeapSize());
         conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
+        conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
         conf.setFrameworkName(logstashSystemProperties.getFrameworkName());
         conf.setLogStashRole(logstashSystemProperties.getLogstashRole());
         conf.setLogStashUser(logstashSystemProperties.getLogstashUser());

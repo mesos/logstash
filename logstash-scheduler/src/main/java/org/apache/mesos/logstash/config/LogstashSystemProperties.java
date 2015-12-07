@@ -109,4 +109,8 @@ public class LogstashSystemProperties {
     public Optional<String> getElasticsearchDomainAndPort() {
         return Optional.ofNullable(props.getProperty("mesos.logstash.elasticsearchDomainAndPort", null));
     }
+
+    public boolean isDisableFailover() {
+        return getBoolean("mesos.logstash.disableFailover", false);
+    }
 }

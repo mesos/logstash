@@ -1,5 +1,4 @@
 package org.apache.mesos.logstash.scheduler;
-import com.google.protobuf.ByteString;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
@@ -18,9 +17,11 @@ public class TaskInfoBuilder {
 
     private final Configuration configuration;
     private final Clock clock;
+    private final Features features;
 
-    public TaskInfoBuilder(Configuration configuration) {
+    public TaskInfoBuilder(Configuration configuration, Features features) {
         this.configuration = configuration;
+        this.features = features;
         this.clock = new Clock();
     }
 
@@ -30,9 +31,14 @@ public class TaskInfoBuilder {
             .newBuilder()
             .setForcePullImage(false)
             .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-            .addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"))
-            .addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"))
             .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
+
+        if (features.isSyslog()) {
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
+        }
+        if (features.isCollectd()) {
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"));
+        }
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
             .setType(Protos.ContainerInfo.Type.DOCKER)
@@ -57,10 +63,12 @@ public class TaskInfoBuilder {
 
 
         final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
-        logstashConfigBuilder.setLogstashPluginInputSyslog(
-                LogstashProtos.LogstashPluginInputSyslog.newBuilder()
-                        .setPort(514) // FIXME take from config
-        );
+        if (features.isSyslog()) {
+            logstashConfigBuilder.setLogstashPluginInputSyslog(
+                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(514) // FIXME take from config
+            );
+        }
+        //TODO: repeat for collectd
         configuration.getElasticsearchDomainAndPort().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
         LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
@@ -103,19 +111,25 @@ public class TaskInfoBuilder {
             Protos.Resource.newBuilder()
                 .setName("mem")
                 .setType(Protos.Value.Type.SCALAR)
-                .setScalar(Protos.Value.Scalar.newBuilder()
-                    .setValue(memNeeded).build())
+                .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
                 .build(),
-                Protos.Resource.newBuilder()
+            Protos.Resource.newBuilder()
                 .setName("ports")
-                .setType(Protos.Value.Type.RANGES)
-                        .setRanges(Protos.Value.Ranges.newBuilder()
-                                .addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514))
-                                .addRange(Protos.Value.Range.newBuilder().setBegin(5000).setEnd(5000))
-                        )
-                        .build()
+                .setType(Protos.Value.Type.RANGES).setRanges(mapSelectedPortRanges()).build()
         );
     }
+
+    private Protos.Value.Ranges.Builder mapSelectedPortRanges() {
+        Protos.Value.Ranges.Builder rangesBuilder = Protos.Value.Ranges.newBuilder();
+        if (features.isSyslog()) {
+            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514));
+        }
+        if (features.isCollectd()) {
+            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(5000).setEnd(5000));
+        }
+        return rangesBuilder;
+    }
+
     private String formatTaskId(Protos.Offer offer) {
         String date = new SimpleDateFormat(LogstashConstants.TASK_DATE_FORMAT).format(clock.now());
         return LogstashConstants.FRAMEWORK_NAME + "_" + offer.getHostname() + "_" + date;
