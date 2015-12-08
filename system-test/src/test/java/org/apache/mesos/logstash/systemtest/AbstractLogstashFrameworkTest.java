@@ -32,8 +32,9 @@ public abstract class AbstractLogstashFrameworkTest {
 
     private static final String DOCKER_PORT = "2376";
 
+    public static final int NUMBER_OF_SLAVES = 3;
     @ClassRule
-    public static MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(3, zooKeeper -> new MesosSlave(null, zooKeeper) {
+    public static MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(NUMBER_OF_SLAVES, zooKeeper -> new MesosSlave(null, zooKeeper) {
         @Override
         public TreeMap<String, String> getDefaultEnvVars() {
             final TreeMap<String, String> envVars = super.getDefaultEnvVars();
@@ -72,7 +73,7 @@ public abstract class AbstractLogstashFrameworkTest {
         configManager.start();
 
         System.out.println("**************** RECONCILIATION_DONE CONTAINERS ON TEST START *******************");
-        printRunningContainers();
+        printRunningContainers(clusterDockerClient);
         System.out.println("*********************************************************************");
 
         waitForLogstashFramework();
@@ -81,9 +82,7 @@ public abstract class AbstractLogstashFrameworkTest {
         executorContainer = new LogstashExecutorContainer(clusterDockerClient);
     }
 
-    private void printRunningContainers() {
-        DockerClient dockerClient = cluster.getConfig().dockerClient;
-
+    private void printRunningContainers(DockerClient dockerClient) {
         List<Container> containers = dockerClient.listContainersCmd().exec();
         for (Container container : containers) {
             System.out.println(container.getImage());
@@ -114,7 +113,7 @@ public abstract class AbstractLogstashFrameworkTest {
         Predicate<List<ExecutorMessage>> predicate) {
 
         int seconds = 10;
-        int numberOfExpectedMessages = cluster.getConfig().numberOfSlaves;
+        int numberOfExpectedMessages = NUMBER_OF_SLAVES;
 
         executorMessageListener.clearAllMessages();
 

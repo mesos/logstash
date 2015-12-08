@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.systemtest;
 
 import com.containersol.minimesos.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterUtil;
-import com.containersol.minimesos.mesos.MesosClusterConfig;
 import com.containersol.minimesos.mesos.MesosSlave;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
@@ -54,13 +53,11 @@ public class LocalCluster {
 
         while (!Thread.currentThread().isInterrupted()) {
             Thread.sleep(5000);
-            printRunningContainers();
+            printRunningContainers(clusterDockerClient);
         }
     }
 
-    private void printRunningContainers() {
-        DockerClient dockerClient = cluster.getConfig().dockerClient;
-
+    private void printRunningContainers(DockerClient dockerClient) {
         List<Container> containers = dockerClient.listContainersCmd().exec();
         for (Container container : containers) {
             System.out.println(container.getImage());

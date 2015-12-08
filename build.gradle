@@ -127,8 +127,8 @@ subprojects {
         runtime "ch.qos.logback:logback-classic:${logbackVer}"
 
         testCompile "org.hamcrest:hamcrest-core:1.3"
-        testCompile "junit:junit-dep:${junitVer}"
-        testCompile "com.jayway.awaitility:awaitility:${awaitilityVer}"
+        compile "junit:junit-dep:${junitVer}"
+        compile "com.jayway.awaitility:awaitility:${awaitilityVer}"
         testCompile "org.mockito:mockito-all:${mockitoVer}"
     }
 
