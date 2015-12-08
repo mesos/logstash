@@ -14,11 +14,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 import java.net.InetAddress;
-import java.util.List;
-import java.util.stream.Collectors;
 
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
@@ -59,7 +55,7 @@ public class LogstashSchedulerTest {
         driverFactory = mock(MesosSchedulerDriverFactory.class);
         driver = mock(SchedulerDriver.class);
 
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class));
+        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class), mock(Features.class));
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }

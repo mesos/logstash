@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.math.LongRange;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
@@ -57,14 +56,15 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             Configuration configuration,
             ConfigManager configManager,
             MesosSchedulerDriverFactory mesosSchedulerDriverFactory,
-            OfferStrategy offerStrategy) {
+            OfferStrategy offerStrategy,
+            Features features) {
         this.liveState = liveState;
 
         this.configuration = configuration;
         this.configManager = configManager;
         this.mesosSchedulerDriverFactory = mesosSchedulerDriverFactory;
         this.offerStrategy = offerStrategy;
-        this.taskInfoBuilder = new TaskInfoBuilder(configuration);
+        this.taskInfoBuilder = new TaskInfoBuilder(configuration, features);
 
         this.listeners = synchronizedCollection(new ArrayList<>());
 

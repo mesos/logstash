@@ -5,34 +5,27 @@ import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.executor.docker.DockerClient;
-import org.apache.mesos.logstash.executor.state.LiveState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
-import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.REQUEST_STATS;
 
 /**
  * Executor for Logstash.
  */
 public class LogstashExecutor implements Executor {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class.toString());
+    public static final Logger LOGGER = LoggerFactory.getLogger(LogstashExecutor.class);
 
     private final LogstashService logstashService;
-    private final LiveState liveState;
-    private final DockerClient dockerClient;
 
-    public LogstashExecutor(LogstashService logstashService, DockerClient dockerClient, LiveState liveState) {
+    public LogstashExecutor(LogstashService logstashService) {
         this.logstashService = logstashService;
-        this.dockerClient = dockerClient;
-        this.liveState = liveState;
     }
 
     @Override
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
-        // FIXME for forwards compatibility, task.getData() this should be some data structure serialized in some extensible format e.g. JSON
+        LOGGER.info("Launching task taskId={}", task.getTaskId());
 
         LogstashProtos.LogstashConfiguration logstashConfiguration;
         try {
@@ -41,10 +34,23 @@ public class LogstashExecutor implements Executor {
             throw new RuntimeException(e);
         }
 
-        logstashService.update(logstashConfiguration);
-        logstashService.start();
+        final Thread thread = new Thread(() -> {
+            LOGGER.info("Forked thread with LogstashService.run()");
+            try {
+                logstashService.run(logstashConfiguration);
+                LOGGER.error("LogstashService finished");
+            } catch (Exception e) {
+                LOGGER.error("Logstash service failed", e);
+            }
 
-        LOGGER.info("Notifying scheduler that executor has started.");
+            driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
+                    .setExecutorId(task.getExecutor().getExecutorId())
+                    .setTaskId(task.getTaskId())
+                    .setState(Protos.TaskState.TASK_FAILED).build());
+            driver.stop();
+        });
+        thread.setDaemon(true);
+        thread.start();
 
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
             .setExecutorId(task.getExecutor().getExecutorId())
@@ -65,34 +71,40 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
-
+        System.out.println("LogstashExecutor.frameworkMessage");
         try {
             SchedulerMessage message = SchedulerMessage.parseFrom(data);
 
             LOGGER.info("SchedulerMessage. message={}", message);
 
+/*
             if (message.getType().equals(REQUEST_STATS)) {
                 sendStatsToScheduler(driver);
             } else {
                 updateConfig(message);
             }
+*/
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler.", e);
         }
     }
 
+/*
     private void updateConfig(SchedulerMessage message) {
         LOGGER.info("New configuration received. Reconfiguring...");
 
         // TODO extract config and update service:
         // logstashService.update(514, "elasticsearch.service:9200");
     }
+*/
 
+/*
     private void sendStatsToScheduler(ExecutorDriver driver) {
         driver.sendFrameworkMessage(liveState.getStateAsExecutorMessage().toByteArray());
 
     }
 
+*/
     @Override
     public void shutdown(ExecutorDriver driver) {
         // The task i killed automatically, so we don't have to
@@ -109,9 +121,6 @@ public class LogstashExecutor implements Executor {
     public void registered(ExecutorDriver driver, Protos.ExecutorInfo executorInfo,
         Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
         LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
-
-        liveState.setHostName(slaveInfo.getHostname());
-        dockerClient.startupComplete(slaveInfo.getHostname());
     }
 
     @Override
