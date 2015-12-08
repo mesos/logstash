@@ -5,6 +5,7 @@ import com.containersol.minimesos.container.AbstractContainer;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
 import com.containersol.minimesos.state.Framework;
+import com.containersol.minimesos.state.State;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
@@ -34,12 +35,13 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.*;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -71,17 +73,30 @@ public class DeploymentSystemTest {
         cluster.stop();
     }
 
+    protected State getClusterStateInfo() {
+        try {
+            return cluster.getStateInfo();
+        } catch (Exception e) {
+            fail(e.getMessage());
+            return null;
+        }
+    }
+
     @Test
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
         cluster.addAndStartContainer(container);
 
+        waitForFramework();
+    }
+
+    private void waitForFramework() {
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            Framework framework = cluster.getStateInfo().getFramework("logstash");
-            return
-                framework != null && framework.getTasks().size() > 0 &&
-                framework.getTasks().get(0).getState().equals("TASK_RUNNING");
+            Framework framework = getClusterStateInfo().getFramework("logstash");
+            assertNotNull(framework);
+            assertThat(framework.getTasks().size(), is(greaterThan(0)));
+            assertEquals("TASK_RUNNING", framework.getTasks().get(0).getState());
         });
     }
 
@@ -125,12 +140,7 @@ public class DeploymentSystemTest {
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            Framework framework = cluster.getStateInfo().getFramework("logstash");
-            return
-                framework != null && framework.getTasks().size() > 0 &&
-                framework.getTasks().get(0).getState().equals("TASK_RUNNING");
-        });
+        waitForFramework();
 
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
@@ -167,12 +177,7 @@ public class DeploymentSystemTest {
         LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
         cluster.addAndStartContainer(container);
 
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            Framework framework = cluster.getStateInfo().getFramework("logstash");
-            return
-                framework != null && framework.getTasks().size() > 0 &&
-                framework.getTasks().get(0).getState().equals("TASK_RUNNING");
-        });
+        waitForFramework();
 
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
