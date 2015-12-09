@@ -42,6 +42,7 @@ public class LogstashService {
         ).serialize();
     }
 
+    @SafeVarargs
     private static <T> List<T> optionalValuesToList(Optional<T> ... optionals) {
         return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
