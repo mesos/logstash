@@ -28,18 +28,18 @@ configurations {
 dependencies {
     compile project(':logstash-commons')
 
-    compile 'log4j:log4j:1.2.16'
+    compile "log4j:log4j:$log4jVer" // TODO (pnw) I saw logback used somewhere else. Check
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}")
     compile("org.springframework:spring-messaging")
 
-    compile 'org.webjars:react:0.13.3'
-    compile 'org.webjars:react-router:0.13.2'
-    compile 'org.webjars.bower:stomp-websocket:2.3.4'
-    compile 'org.webjars:sockjs-client:1.0.0'
-    compile 'org.webjars:highcharts:4.1.6'
+    compile "org.webjars:react:$reactVer"
+    compile "org.webjars:react-router:$reactRouterVer"
+    compile "org.webjars.bower:stomp-websocket:$stompWebsocketVer"
+    compile "org.webjars:sockjs-client:$sockjsClientVer"
+    compile "org.webjars:highcharts:$highchartsVer"
 }
 
 jar {

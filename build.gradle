@@ -11,6 +11,22 @@ ext {
     awaitilityVer = "1.7.0"
     mockitoVer = "1.9.5"
     logbackVer = "1.1.3"
+    protobufVer = "2.6.1"
+
+    // System test
+    dockerJavaVer = "4f094c112";
+    unirestVer = "1.4.7"
+    minimesosVer = "0.5.0"
+    elasticsearchVer = "1.7.3"
+    javaxInjectVer = "1";
+
+    // Scheduler
+    log4jVer = "1.2.16"
+    reactVer = "0.13.3"
+    reactRouterVer = "0.13.2"
+    stompWebsocketVer = "2.3.4"
+    sockjsClientVer = "1.0.0"
+    highchartsVer = "4.1.6"
 }
 
 buildscript {
