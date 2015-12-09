@@ -2,11 +2,10 @@ dependencies {
     compile project(':logstash-commons')
     compile project(':logstash-scheduler')
 
-    compile 'com.github.docker-java:docker-java:4f094c112'
-    compile 'commons-lang:commons-lang:2.6'
-    compile 'com.mashape.unirest:unirest-java:1.4.5'
-    compile 'com.github.ContainerSolutions:minimesos:0.5.0'
-    compile 'org.elasticsearch:elasticsearch:1.7.3'
+    compile "com.github.docker-java:docker-java:$dockerJavaVer"
+    compile "com.mashape.unirest:unirest-java:$unirestVer"
+    compile "com.github.ContainerSolutions:minimesos:$minimesosVer"
+    compile "org.elasticsearch:elasticsearch:$elasticsearchVer"
 }
 
 test {

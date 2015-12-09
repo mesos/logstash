@@ -55,6 +55,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         );
     }
 
+    @SafeVarargs
     private static <T> List<T> mergeWithOptionals(List<T> list, Optional<T> ... optionals) {
         return Stream.concat(
                 list.stream(),
