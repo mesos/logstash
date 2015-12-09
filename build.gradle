@@ -18,6 +18,7 @@ buildscript {
         jcenter()
     }
     dependencies {
+        classpath "org.ajoberstar:semver-vcs-gradle-grgit:0.1.0"
         classpath "org.ajoberstar:grgit:1.4.1"
         classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE" // Unable to parametize this?
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
