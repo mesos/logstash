@@ -28,7 +28,6 @@ configurations {
 dependencies {
     compile project(':logstash-commons')
 
-    compile 'commons-lang:commons-lang:2.6'
     compile 'log4j:log4j:1.2.16'
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")

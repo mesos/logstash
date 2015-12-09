@@ -9,9 +9,8 @@ ext {
 dependencies {
     compile project(':logstash-commons')
 
-    compile 'com.github.docker-java:docker-java:1.3.0'
-    compile 'com.spotify:docker-client:2.7.7'
-
+    compile 'com.github.docker-java:docker-java:1.3.0' // TODO (pnw): Check use and remove
+    compile 'com.spotify:docker-client:2.7.7' // TODO (pnw): Check use and remove
 }
 
 shadowJar {
