@@ -27,6 +27,10 @@ ext {
     stompWebsocketVer = "2.3.4"
     sockjsClientVer = "1.0.0"
     highchartsVer = "4.1.6"
+
+    // Executor
+    commonsCompressVer = "1.10"
+    guavaVer = "18.0"
 }
 
 buildscript {
