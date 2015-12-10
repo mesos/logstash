@@ -3,6 +3,7 @@ package org.apache.mesos.logstash.scheduler;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +25,8 @@ public class OfferStrategyTest {
     Configuration configuration;
 
     @Mock
+    ExecutorConfig executorConfig;
+    @Mock
     ClusterState clusterState;
 
     @InjectMocks
@@ -41,7 +44,7 @@ public class OfferStrategyTest {
     @Test
     public void willDeclineOfferIfOfferDoesNotHaveEnoughCpu() throws Exception {
         when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
-        when(configuration.getExecutorCpus()).thenReturn(1.0);
+        when(executorConfig.getCpus()).thenReturn(1.0);
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, baseOfferBuilder("host2").addResources(cpus(0.9, FRAMEWORK_ROLE)).build());
         assertFalse(result.acceptable);
@@ -51,7 +54,7 @@ public class OfferStrategyTest {
     @Test
     public void willDeclineOfferIfOfferDoesNotHaveEnoughMem() throws Exception {
         when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
-        when(configuration.getExecutorHeapSize()).thenReturn(2048);
+        when(executorConfig.getHeapSize()).thenReturn(2048);
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, baseOfferBuilder("host2").addResources(cpus(1.0, FRAMEWORK_ROLE)).build());
         assertFalse(result.acceptable);

@@ -5,6 +5,7 @@ import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LiveState;
@@ -55,7 +56,7 @@ public class LogstashSchedulerTest {
         driverFactory = mock(MesosSchedulerDriverFactory.class);
         driver = mock(SchedulerDriver.class);
 
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class), mock(Features.class));
+        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class), mock(Features.class), mock(ExecutorConfig.class));
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }

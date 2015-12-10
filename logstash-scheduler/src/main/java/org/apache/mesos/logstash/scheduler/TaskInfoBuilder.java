@@ -3,6 +3,7 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.util.Clock;
 
@@ -18,10 +19,12 @@ public class TaskInfoBuilder {
     private final Configuration configuration;
     private final Clock clock;
     private final Features features;
+    private final ExecutorConfig executorConfig;
 
-    public TaskInfoBuilder(Configuration configuration, Features features) {
+    public TaskInfoBuilder(Configuration configuration, Features features, ExecutorConfig executorConfig) {
         this.configuration = configuration;
         this.features = features;
+        this.executorConfig = executorConfig;
         this.clock = new Clock();
     }
 
@@ -46,7 +49,7 @@ public class TaskInfoBuilder {
             .setDocker(dockerExecutor.build());
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
-            configuration);
+            configuration, executorConfig);
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
@@ -99,14 +102,14 @@ public class TaskInfoBuilder {
 
     public List<Protos.Resource> getResourcesList() {
 
-        int memNeeded = configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize() + configuration.getExecutorOverheadMem();
+        int memNeeded = executorConfig.getHeapSize() + configuration.getLogstashHeapSize() + executorConfig.getOverheadMem();
 
         return Arrays.asList(
             Protos.Resource.newBuilder()
                 .setName("cpus")
                 .setType(Protos.Value.Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder()
-                    .setValue(configuration.getExecutorCpus()).build())
+                    .setValue(executorConfig.getCpus()).build())
                 .build(),
             Protos.Resource.newBuilder()
                 .setName("mem")

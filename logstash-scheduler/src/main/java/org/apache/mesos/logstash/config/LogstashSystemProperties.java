@@ -5,6 +5,7 @@ import org.apache.mesos.logstash.state.SerializableState;
 import java.util.Optional;
 import java.util.Properties;
 
+@Deprecated
 public class LogstashSystemProperties {
 
     private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 128;
@@ -47,14 +48,6 @@ public class LogstashSystemProperties {
 
     public String getNativeLibrary() {
         return props.getProperty("mesos.native.library", null);
-    }
-
-    public double getExecutorCpus() {
-        return getDouble("mesos.logstash.executor.cpus", DEFAULT_EXECUTOR_CPUS);
-    }
-
-    public int getExecutorHeapSize() {
-        return getInt("mesos.logstash.executor.heap.size", DEFAULT_EXECUTOR_HEAP_SIZE);
     }
 
     public int getLogstashHeapSize() {

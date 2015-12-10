@@ -10,12 +10,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated
 public class Configuration {
 
     private String zookeeperUrl = null;
     private SerializableState state = null;
-    private double executorCpus = 0;
-    private int executorHeapSize = 0;
     private int logstashHeapSize = 0;
     private String frameworkName = "logstash";
     private long failoverTimeout = 0;
@@ -25,7 +24,6 @@ public class Configuration {
     private FrameworkState frameworkState;
     private boolean disableFailover = false;
     private int reconcilationTimeoutSek = 60 * 1;
-    private int executorOverheadMem = 50;
     private int webServerPort = 9092;
     private Optional<String> elasticsearchDomainAndPort = Optional.empty();
 
@@ -56,7 +54,8 @@ public class Configuration {
 
     // Generate a fingerprint that can be used to compare configurations quickly
     public String getFingerprint() {
-        String fingerprint = "EXECUTOR HEAPSIZE " + executorHeapSize + " EXECUTOR CPUS " + executorCpus + "LS HEAP SIZE" + logstashHeapSize;
+        // TODO: 10/12/2015 REMOVE METHOD
+        String fingerprint = "EXECUTOR HEAPSIZE " + "TODO" + " EXECUTOR CPUS " + "TODO" + "LS HEAP SIZE" + logstashHeapSize;
         fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
         fingerprint = fingerprint + " VOLUMES " + this.volumeString + "EXECUTOR_VERSION " + LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
 
@@ -100,23 +99,6 @@ public class Configuration {
     public void setState(SerializableState state) {
         this.state = state;
     }
-
-    public double getExecutorCpus() {
-        return executorCpus;
-    }
-
-    public void setExecutorCpus(double executorCpus) {
-        this.executorCpus = executorCpus;
-    }
-
-    public int getExecutorHeapSize() {
-        return executorHeapSize;
-    }
-
-    public void setExecutorHeapSize(int executorHeapSize) {
-        this.executorHeapSize = executorHeapSize;
-    }
-
     public int getLogstashHeapSize() {
         return logstashHeapSize;
     }
@@ -165,10 +147,6 @@ public class Configuration {
 
     public void setZkTimout(int zkTimout) {
         this.zkTimout = zkTimout;
-    }
-
-    public int getExecutorOverheadMem() {
-        return executorOverheadMem;
     }
 
     public int getWebServerPort() {

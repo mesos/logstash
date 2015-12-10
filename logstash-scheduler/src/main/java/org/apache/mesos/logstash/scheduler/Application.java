@@ -54,8 +54,6 @@ public class Application {
         conf.setVolumeString(logstashSystemProperties.getVolumes());
         conf.setState(getState(logstashSystemProperties));
         conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
-        conf.setExecutorCpus(logstashSystemProperties.getExecutorCpus());
-        conf.setExecutorHeapSize(logstashSystemProperties.getExecutorHeapSize());
         conf.setLogstashHeapSize(logstashSystemProperties.getLogstashHeapSize());
         conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
         conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
