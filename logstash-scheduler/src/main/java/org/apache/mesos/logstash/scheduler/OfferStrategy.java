@@ -3,8 +3,8 @@ package org.apache.mesos.logstash.scheduler;
 import org.apache.commons.lang.math.LongRange;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
+import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.springframework.stereotype.Component;
 
@@ -22,10 +22,10 @@ public class OfferStrategy {
     private static final Logger LOGGER = Logger.getLogger(OfferStrategy.class);
 
     @Inject
-    private Configuration configuration;
+    private ExecutorConfig executorConfig;
 
     @Inject
-    private ExecutorConfig executorConfig;
+    private LogstashConfig logstashConfig;
 
     private List<Integer> neededPorts = asList(5000); // TODO: 25/11/2015 Configurable
 
@@ -86,7 +86,7 @@ public class OfferStrategy {
     }
 
     private boolean isNotEnoughRAM(ClusterState clusterState, Protos.Offer offer) {
-        return !hasEnoughOfResourceType(offer.getResourcesList(), "mem", executorConfig.getHeapSize() + configuration.getLogstashHeapSize() + executorConfig.getOverheadMem());
+        return !hasEnoughOfResourceType(offer.getResourcesList(), "mem", executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem());
     }
 
     private boolean isNotWithNeededPorts(ClusterState clusterState, Protos.Offer offer) {

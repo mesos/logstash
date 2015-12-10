@@ -8,14 +8,12 @@ import org.apache.mesos.logstash.state.SerializableState;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Deprecated
 public class Configuration {
 
     private String zookeeperUrl = null;
     private SerializableState state = null;
-    private int logstashHeapSize = 0;
     private String frameworkName = "logstash";
     private long failoverTimeout = 0;
     private String logStashUser = "";
@@ -25,7 +23,6 @@ public class Configuration {
     private boolean disableFailover = false;
     private int reconcilationTimeoutSek = 60 * 1;
     private int webServerPort = 9092;
-    private Optional<String> elasticsearchDomainAndPort = Optional.empty();
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -55,7 +52,7 @@ public class Configuration {
     // Generate a fingerprint that can be used to compare configurations quickly
     public String getFingerprint() {
         // TODO: 10/12/2015 REMOVE METHOD
-        String fingerprint = "EXECUTOR HEAPSIZE " + "TODO" + " EXECUTOR CPUS " + "TODO" + "LS HEAP SIZE" + logstashHeapSize;
+        String fingerprint = "EXECUTOR HEAPSIZE " + "TODO" + " EXECUTOR CPUS " + "TODO" + "LS HEAP SIZE" + "TODO";
         fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
         fingerprint = fingerprint + " VOLUMES " + this.volumeString + "EXECUTOR_VERSION " + LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
 
@@ -99,13 +96,7 @@ public class Configuration {
     public void setState(SerializableState state) {
         this.state = state;
     }
-    public int getLogstashHeapSize() {
-        return logstashHeapSize;
-    }
 
-    public void setLogstashHeapSize(int logstashHeapSize) {
-        this.logstashHeapSize = logstashHeapSize;
-    }
     public Protos.FrameworkID getFrameworkId() {
         return getFrameworkState().getFrameworkID();
     }
@@ -155,13 +146,5 @@ public class Configuration {
 
     public void setWebServerPort(int webServerPort) {
         this.webServerPort = webServerPort;
-    }
-
-    public Optional<String> getElasticsearchDomainAndPort() {
-        return elasticsearchDomainAndPort;
-    }
-
-    public void setElasticsearchDomainAndPort(Optional<String> elasticsearchDomainAndPort) {
-        this.elasticsearchDomainAndPort = elasticsearchDomainAndPort;
     }
 }

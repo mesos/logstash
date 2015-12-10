@@ -12,6 +12,7 @@ import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
+import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LSTaskStatus;
@@ -58,14 +59,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             ConfigManager configManager,
             MesosSchedulerDriverFactory mesosSchedulerDriverFactory,
             OfferStrategy offerStrategy,
-            Features features, ExecutorConfig executorConfig) {
+            Features features, ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
         this.liveState = liveState;
 
         this.configuration = configuration;
         this.configManager = configManager;
         this.mesosSchedulerDriverFactory = mesosSchedulerDriverFactory;
         this.offerStrategy = offerStrategy;
-        this.taskInfoBuilder = new TaskInfoBuilder(configuration, features, executorConfig);
+        this.taskInfoBuilder = new TaskInfoBuilder(configuration, features, executorConfig, logstashConfig);
 
         this.listeners = synchronizedCollection(new ArrayList<>());
 

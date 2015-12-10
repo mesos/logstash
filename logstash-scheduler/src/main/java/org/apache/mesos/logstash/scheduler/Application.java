@@ -54,7 +54,6 @@ public class Application {
         conf.setVolumeString(logstashSystemProperties.getVolumes());
         conf.setState(getState(logstashSystemProperties));
         conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
-        conf.setLogstashHeapSize(logstashSystemProperties.getLogstashHeapSize());
         conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
         conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
         conf.setFrameworkName(logstashSystemProperties.getFrameworkName());
@@ -62,7 +61,6 @@ public class Application {
         conf.setLogStashUser(logstashSystemProperties.getLogstashUser());
         conf.setZkTimout(logstashSystemProperties.getZkTimeout());
         conf.setWebServerPort(logstashSystemProperties.getWebServerPort());
-        conf.setElasticsearchDomainAndPort(logstashSystemProperties.getElasticsearchDomainAndPort());
 
         return conf;
     }

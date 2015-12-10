@@ -15,10 +15,10 @@ public class ExecutorEnvironmentalVariables {
     private final List<Protos.Environment.Variable> envList = new ArrayList<>();
 
     /**
-     * @param configuration The mesos cluster configuration
+     * @param logstashConfig
      */
-    public ExecutorEnvironmentalVariables(Configuration configuration, ExecutorConfig executorConfig) {
-        populateEnvMap(configuration, executorConfig);
+    public ExecutorEnvironmentalVariables(ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
+        populateEnvMap(executorConfig, logstashConfig);
     }
 
     /**
@@ -33,10 +33,9 @@ public class ExecutorEnvironmentalVariables {
      * Adds environmental variables to the list. Please add new environmental variables here.
      * @param configuration
      */
-    private void populateEnvMap(Configuration configuration, ExecutorConfig executorConfig) {
+    private void populateEnvMap(ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
         addToList(native_mesos_library_key, native_mesos_library_path);
-        addToList(JAVA_OPTS, getExecutorHeap(executorConfig) + " " + getLogstashHeap(
-            configuration));
+        addToList(JAVA_OPTS, getExecutorHeap(executorConfig) + " " + getLogstashHeap(logstashConfig));
     }
 
     private void addToList(String key, String value) {
@@ -60,7 +59,7 @@ public class ExecutorEnvironmentalVariables {
      * @param configuration The mesos cluster configuration
      * @return A string representing the java heap space.
      */
-    private String getLogstashHeap(Configuration configuration) {
-        return "-Dmesos.logstash.logstash.heap.size=" + configuration.getLogstashHeapSize() + "m";
+    private String getLogstashHeap(LogstashConfig logstashConfig) {
+        return "-Dmesos.logstash.logstash.heap.size=" + logstashConfig.getHeapSize() + "m";
     }
 }

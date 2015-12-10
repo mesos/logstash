@@ -5,6 +5,7 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
+import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
 
 import java.nio.file.Paths;
@@ -20,11 +21,13 @@ public class TaskInfoBuilder {
     private final Clock clock;
     private final Features features;
     private final ExecutorConfig executorConfig;
+    private final LogstashConfig logstashConfig;
 
-    public TaskInfoBuilder(Configuration configuration, Features features, ExecutorConfig executorConfig) {
+    public TaskInfoBuilder(Configuration configuration, Features features, ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
         this.configuration = configuration;
         this.features = features;
         this.executorConfig = executorConfig;
+        this.logstashConfig = logstashConfig;
         this.clock = new Clock();
     }
 
@@ -49,7 +52,7 @@ public class TaskInfoBuilder {
             .setDocker(dockerExecutor.build());
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
-            configuration, executorConfig);
+                executorConfig, logstashConfig);
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
@@ -72,7 +75,7 @@ public class TaskInfoBuilder {
             );
         }
         //TODO: repeat for collectd
-        configuration.getElasticsearchDomainAndPort().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
+        logstashConfig.getElasticsearchUrl().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
         LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
         return Protos.TaskInfo.newBuilder()
@@ -102,7 +105,7 @@ public class TaskInfoBuilder {
 
     public List<Protos.Resource> getResourcesList() {
 
-        int memNeeded = executorConfig.getHeapSize() + configuration.getLogstashHeapSize() + executorConfig.getOverheadMem();
+        int memNeeded = executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem();
 
         return Arrays.asList(
             Protos.Resource.newBuilder()

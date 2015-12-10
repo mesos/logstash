@@ -9,10 +9,8 @@ import java.util.Properties;
 public class LogstashSystemProperties {
 
     private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 128;
-    private static final int DEFAULT_EXECUTOR_HEAP_SIZE = 64;
 
     private static final double DEFAULT_CPUS = 0.2;
-    private static final double DEFAULT_EXECUTOR_CPUS = DEFAULT_CPUS;
 
     private static final int DEFAULT_FAILOVER_TIMEOUT = 31449600;
     private static final int DEFAULT_ZK_TIME_MS = 20000;
@@ -98,10 +96,6 @@ public class LogstashSystemProperties {
     }
 
     public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }
-
-    public Optional<String> getElasticsearchDomainAndPort() {
-        return Optional.ofNullable(props.getProperty("mesos.logstash.elasticsearchDomainAndPort", null));
-    }
 
     public boolean isDisableFailover() {
         return getBoolean("mesos.logstash.disableFailover", false);
