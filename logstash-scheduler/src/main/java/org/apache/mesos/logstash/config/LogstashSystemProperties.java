@@ -48,10 +48,6 @@ public class LogstashSystemProperties {
         return props.getProperty("mesos.native.library", null);
     }
 
-    public int getLogstashHeapSize() {
-        return getInt("mesos.logstash.logstash.heap.size", DEFAULT_LOGSTASH_HEAP_SIZE);
-    }
-
     /**
      * @return the setting for the zk servers. Note: it's not validated whether this is a valid zk URI
      */

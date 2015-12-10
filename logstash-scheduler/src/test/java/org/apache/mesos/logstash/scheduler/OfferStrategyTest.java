@@ -4,6 +4,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
+import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,10 +23,9 @@ import static org.mockito.Mockito.when;
 public class OfferStrategyTest {
     public static final String FRAMEWORK_ROLE = "testRole";
     @Mock
-    Configuration configuration;
-
-    @Mock
     ExecutorConfig executorConfig;
+    @Mock
+    LogstashConfig logstashConfig;
     @Mock
     ClusterState clusterState;
 
