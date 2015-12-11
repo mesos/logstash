@@ -12,23 +12,14 @@ import java.util.List;
 @Deprecated
 public class Configuration {
 
-    private String zookeeperUrl = null;
     private SerializableState state = null;
-    private String frameworkName = "logstash";
     private long failoverTimeout = 0;
     private String logStashUser = "";
-    private int zkTimout =0;
     private String logStashRole = "";
     private FrameworkState frameworkState;
     private boolean disableFailover = false;
     private int reconcilationTimeoutSek = 60 * 1;
     private int webServerPort = 9092;
-
-    public void setVolumeString(String volumeString) {
-        this.volumeString = volumeString;
-    }
-
-    private String volumeString = "";
 
     public int getReconcilationTimeoutMillis() {
         return reconcilationTimeoutSek * 1000;
@@ -36,10 +27,6 @@ public class Configuration {
 
     public void setReconcilationTimeoutSek(int reconcilationTimeoutSek) {
         this.reconcilationTimeoutSek = reconcilationTimeoutSek;
-    }
-
-    public List<String> getVolumes() {
-        return splitVolumes(volumeString);
     }
 
     private static List<String> splitVolumes(String volumeString) {
@@ -53,8 +40,8 @@ public class Configuration {
     public String getFingerprint() {
         // TODO: 10/12/2015 REMOVE METHOD
         String fingerprint = "EXECUTOR HEAPSIZE " + "TODO" + " EXECUTOR CPUS " + "TODO" + "LS HEAP SIZE" + "TODO";
-        fingerprint = fingerprint + "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
-        fingerprint = fingerprint + " VOLUMES " + this.volumeString + "EXECUTOR_VERSION " + LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
+        fingerprint += "LS USER " + logStashUser + "LOGSTASH ROLE" + logStashRole;
+        fingerprint += "EXECUTOR_VERSION " + LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
 
         return fingerprint;
     }
@@ -69,10 +56,6 @@ public class Configuration {
 
 
 
-    public String getZookeeperUrl() {
-        return zookeeperUrl;
-    }
-
     public void setFrameworkState(FrameworkState frameworkState) {
         this.frameworkState = frameworkState;
     }
@@ -85,10 +68,6 @@ public class Configuration {
     }
 
 
-    public void setZookeeperUrl(String zookeeperUrl) {
-        this.zookeeperUrl = zookeeperUrl;
-    }
-
     public SerializableState getState() {
         return state;
     }
@@ -100,14 +79,6 @@ public class Configuration {
     public Protos.FrameworkID getFrameworkId() {
         return getFrameworkState().getFrameworkID();
     }
-    public String getFrameworkName() {
-        return frameworkName;
-    }
-
-    public void setFrameworkName(String frameworkName) {
-        this.frameworkName = frameworkName;
-    }
-
     public long getFailoverTimeout() {
         return failoverTimeout;
     }
@@ -132,19 +103,7 @@ public class Configuration {
         this.logStashRole = logStashRole;
     }
 
-    public int getZkTimout() {
-        return zkTimout;
-    }
-
-    public void setZkTimout(int zkTimout) {
-        this.zkTimout = zkTimout;
-    }
-
     public int getWebServerPort() {
         return webServerPort;
-    }
-
-    public void setWebServerPort(int webServerPort) {
-        this.webServerPort = webServerPort;
     }
 }

@@ -2,19 +2,19 @@ package org.apache.mesos.logstash.scheduler;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.cluster.ClusterMonitor;
-import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.config.ExecutorConfig;
-import org.apache.mesos.logstash.config.LogstashConfig;
-import org.apache.mesos.logstash.state.ClusterState;
+import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
+import javax.inject.Inject;
 import java.net.InetAddress;
 
 import static org.junit.Assert.*;
@@ -23,54 +23,53 @@ import static org.mockito.Mockito.*;
 /**
  * Tests Scheduler API.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LogstashSchedulerTest {
-
-    LogstashScheduler scheduler;
-
-
+    @Mock
     MesosSchedulerDriverFactory driverFactory;
 
-
+    @Mock
     SchedulerDriver driver;
 
-    private Configuration configuration;
-    private ConfigManager configManager;
-    private FrameworkState frameworkState ;
+    Configuration configuration = new Configuration();
 
-    final ClusterMonitor clusterMonitor = mock(ClusterMonitor.class);
-    final ClusterState clusterState = mock(ClusterState.class);
-    final TaskInfoBuilder taskInfoBuilder = mock(TaskInfoBuilder.class);
+    private FrameworkConfig frameworkConfig = new FrameworkConfig();
 
+    @Mock
+    ConfigManager configManager;
+
+    FrameworkState frameworkState = new FrameworkState(new TestSerializableStateImpl());
 
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
+    @InjectMocks
+    LogstashScheduler scheduler;
+
     @Before
     public void setup(){
-        LiveState liveState = new LiveState();
-
-        configuration = new Configuration();
-        frameworkState = new FrameworkState(new TestSerializableStateImpl());
         configuration.setFrameworkState(frameworkState);
 
-        // mocks
-        configManager = mock(ConfigManager.class);
-        driverFactory = mock(MesosSchedulerDriverFactory.class);
-        driver = mock(SchedulerDriver.class);
-
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class), mock(Features.class), mock(ExecutorConfig.class), mock(LogstashConfig.class));
+        scheduler.configuration = configuration;
+        scheduler.frameworkConfig = frameworkConfig;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
+    }
+
+    @Test
+    public void hasInjected() throws Exception {
+        assertNotNull(configManager);
+        assertSame(configManager, scheduler.configManager);
+
     }
 
     @Test
     public void onStartShouldCreateAndStartFramework() throws Exception {
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getName(), configuration.getFrameworkName());
+        assertEquals(frameworkInfo.getName(), frameworkConfig.getFrameworkName());
         assertEquals(frameworkInfo.getUser(), configuration.getLogStashUser());
         assertEquals(frameworkInfo.getRole(), configuration.getLogStashRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
@@ -78,15 +77,14 @@ public class LogstashSchedulerTest {
         assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + configuration.getWebServerPort());
         assertEquals(frameworkInfo.getId().getValue(), configuration.getFrameworkId().getValue());
 
-        verify(driver, times(1)).start();
+        verify(driver).start();
     }
 
     @Test
     public void onStartShouldCreateFramework_withNoPersistedFrameworkID() throws Exception {
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getId().getValue(), "");
@@ -97,8 +95,7 @@ public class LogstashSchedulerTest {
         frameworkState.setFrameworkId(createFrameworkId("FOO"));
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getId().getValue(), "FOO");
@@ -109,7 +106,7 @@ public class LogstashSchedulerTest {
         scheduler.start();
         scheduler.stop();
 
-        verify(configManager,times(1)).setOnConfigUpdate(null);
+        verify(configManager).setOnConfigUpdate(null);
     }
 
     @Test

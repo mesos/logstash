@@ -7,7 +7,9 @@ import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -15,21 +17,17 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Component
 public class TaskInfoBuilder {
 
-    private final Configuration configuration;
-    private final Clock clock;
-    private final Features features;
-    private final ExecutorConfig executorConfig;
-    private final LogstashConfig logstashConfig;
-
-    public TaskInfoBuilder(Configuration configuration, Features features, ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
-        this.configuration = configuration;
-        this.features = features;
-        this.executorConfig = executorConfig;
-        this.logstashConfig = logstashConfig;
-        this.clock = new Clock();
-    }
+    @Inject
+    private Clock clock;
+    @Inject
+    private Features features;
+    @Inject
+    private ExecutorConfig executorConfig;
+    @Inject
+    private LogstashConfig logstashConfig;
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
@@ -48,7 +46,6 @@ public class TaskInfoBuilder {
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
             .setType(Protos.ContainerInfo.Type.DOCKER)
-            .addAllVolumes(getVolumes())
             .setDocker(dockerExecutor.build());
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
@@ -87,21 +84,6 @@ public class TaskInfoBuilder {
             .setData(logstashConfiguration.toByteString())
             .build();
     }
-
-    private List<Protos.Volume> getVolumes() {
-        return configuration.getVolumes().stream().map(s ->
-                        Protos.Volume.newBuilder()
-                                .setHostPath(s)
-                                .setContainerPath(generateVolumeContainerPath(s))
-                                .setMode(Protos.Volume.Mode.RO)
-                                .build()
-        ).collect(Collectors.toList());
-    }
-
-    private static String generateVolumeContainerPath(String hostPath) {
-        return Paths.get(LogstashConstants.VOLUME_MOUNT_DIR, hostPath).toString();
-    }
-
 
     public List<Protos.Resource> getResourcesList() {
 

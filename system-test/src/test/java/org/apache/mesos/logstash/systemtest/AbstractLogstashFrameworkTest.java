@@ -11,6 +11,7 @@ import com.github.dockerjava.core.DockerClientConfig;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.scheduler.Application;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -65,9 +66,9 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        Configuration configuration = new Application().getLogstashConfiguration();
+        Configuration configuration = new Application().getLogstashConfiguration(new FrameworkConfig());
         configuration.setDisableFailover(true); // we remove our framework completely
-        configuration.setVolumeString("/tmp");
+//        configuration.setVolumeString("/tmp");
 
         configManager = new ConfigManager(configuration);
         configManager.start();

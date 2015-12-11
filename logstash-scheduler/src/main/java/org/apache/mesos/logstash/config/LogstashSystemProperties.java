@@ -8,17 +8,11 @@ import java.util.Properties;
 @Deprecated
 public class LogstashSystemProperties {
 
-    private static final int DEFAULT_LOGSTASH_HEAP_SIZE = 128;
-
-    private static final double DEFAULT_CPUS = 0.2;
-
     private static final int DEFAULT_FAILOVER_TIMEOUT = 31449600;
-    private static final int DEFAULT_ZK_TIME_MS = 20000;
 
     private static final int DEFAULT_WEB_SERVER_PORT = 9092;
 
     private final Properties props;
-    private SerializableState state;
 
     private int getInt(String key, int defaultValue) {
         String value = props.getProperty(key);
@@ -48,17 +42,6 @@ public class LogstashSystemProperties {
         return props.getProperty("mesos.native.library", null);
     }
 
-    /**
-     * @return the setting for the zk servers. Note: it's not validated whether this is a valid zk URI
-     */
-    public String getZookeeperServerProperty() {
-        return props.getProperty("mesos.zk", null);
-    }
-
-    public String getFrameworkName() {
-        return props.getProperty("mesos.logstash.framework.name", "logstash");
-    }
-
     public long getFailoverTimeout() {
         return getLong("mesos.failover.timeout.sec", DEFAULT_FAILOVER_TIMEOUT);
     }
@@ -77,18 +60,6 @@ public class LogstashSystemProperties {
 
     public String getLogstashRole() {
         return props.getProperty("mesos.logstash.role", "*");
-    }
-
-    public int getZkTimeout() {
-        return getInt("mesos.zk.timeout.ms", DEFAULT_ZK_TIME_MS);
-    }
-
-    public SerializableState getState() {
-        return state;
-    }
-
-    public void setState(SerializableState state) {
-        this.state = state;
     }
 
     public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }

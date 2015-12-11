@@ -9,10 +9,7 @@ import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
-import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.config.ExecutorConfig;
-import org.apache.mesos.logstash.config.LogstashConfig;
+import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.LSTaskStatus;
@@ -24,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.inject.Inject;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
@@ -38,42 +36,31 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
-    private final ConfigManager configManager;
-    private final Collection<FrameworkMessageListener> listeners;
-    private final LiveState liveState;
+    @Inject
+    ConfigManager configManager;
+    private final Collection<FrameworkMessageListener> listeners = synchronizedCollection(new ArrayList<>());
 
-    private final Configuration configuration;
+    @Inject
+    LiveState liveState;
+
+    @Inject
+    Configuration configuration;
+
+    @Inject
+    FrameworkConfig frameworkConfig;
+
+    @Inject
     TaskInfoBuilder taskInfoBuilder;
 
     private SchedulerDriver driver;
     ClusterMonitor clusterMonitor = null;
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
-    private MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
-    private final OfferStrategy offerStrategy;
 
+    @Inject
+    MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
 
-    @Autowired
-    public LogstashScheduler(
-            LiveState liveState,
-            Configuration configuration,
-            ConfigManager configManager,
-            MesosSchedulerDriverFactory mesosSchedulerDriverFactory,
-            OfferStrategy offerStrategy,
-            Features features, ExecutorConfig executorConfig, LogstashConfig logstashConfig) {
-        this.liveState = liveState;
-
-        this.configuration = configuration;
-        this.configManager = configManager;
-        this.mesosSchedulerDriverFactory = mesosSchedulerDriverFactory;
-        this.offerStrategy = offerStrategy;
-        this.taskInfoBuilder = new TaskInfoBuilder(configuration, features, executorConfig, logstashConfig);
-
-        this.listeners = synchronizedCollection(new ArrayList<>());
-
-    }
-
-
-
+    @Inject
+    OfferStrategy offerStrategy;
 
     @PostConstruct
     public void start() {
@@ -82,7 +69,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         String webUiURL = createWebuiUrl(configuration.getWebServerPort());
 
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
-            .setName(configuration.getFrameworkName())
+            .setName(frameworkConfig.getFrameworkName())
             .setUser(configuration.getLogStashUser())
             .setRole(configuration.getLogStashRole())
             .setCheckpoint(true)
@@ -101,7 +88,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
         driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
-            configuration.getZookeeperUrl());
+            frameworkConfig.getZkUrl());
 
         driver.start();
     }

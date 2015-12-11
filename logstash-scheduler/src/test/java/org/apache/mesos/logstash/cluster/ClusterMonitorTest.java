@@ -5,6 +5,7 @@ import org.apache.mesos.Protos.TaskStatus;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.scheduler.Task;
 import org.apache.mesos.logstash.state.ClusterState;
 import org.apache.mesos.logstash.state.FrameworkState;
@@ -43,6 +44,7 @@ public class ClusterMonitorTest {
     private static final String SOME_TASK_ID_2 = "SOME_TASK_ID_2";
     private ClusterMonitor clusterMonitor;
     private Configuration configuration;
+    private FrameworkConfig frameworkConfig;
     private ClusterState clusterState;
     private LiveState liveState;
 
@@ -61,7 +63,8 @@ public class ClusterMonitorTest {
     @Before
     public void setup() {
         configuration = new Configuration();
-        configuration.setFrameworkName("SOME_FRAMEWORK_NAME");
+        frameworkConfig = new FrameworkConfig();
+        frameworkConfig.setFrameworkName("SOME_FRAMEWORK_NAME");
         liveState = new LiveState();
 
         TestSerializableStateImpl state = new TestSerializableStateImpl();
