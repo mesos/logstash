@@ -33,6 +33,8 @@ public class LogstashSchedulerTest {
 
     Configuration configuration = new Configuration();
 
+    LogstashConfig logstashConfig = new LogstashConfig();
+
     private FrameworkConfig frameworkConfig = new FrameworkConfig();
 
     @Mock
@@ -51,6 +53,7 @@ public class LogstashSchedulerTest {
 
         scheduler.configuration = configuration;
         scheduler.frameworkConfig = frameworkConfig;
+        scheduler.logstashConfig = logstashConfig;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }
@@ -70,8 +73,8 @@ public class LogstashSchedulerTest {
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getName(), frameworkConfig.getFrameworkName());
-        assertEquals(frameworkInfo.getUser(), configuration.getLogStashUser());
-        assertEquals(frameworkInfo.getRole(), configuration.getLogStashRole());
+        assertEquals("root", frameworkInfo.getUser());
+        assertEquals("*", frameworkInfo.getRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
         assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) configuration.getFailoverTimeout());
         assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + configuration.getWebServerPort());

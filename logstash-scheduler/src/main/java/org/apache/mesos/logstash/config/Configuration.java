@@ -87,22 +87,6 @@ public class Configuration {
         this.failoverTimeout = failoverTimeout;
     }
 
-    public String getLogStashUser() {
-        return logStashUser;
-    }
-
-    public void setLogStashUser(String logStashUser) {
-        this.logStashUser = logStashUser;
-    }
-
-    public String getLogStashRole() {
-        return logStashRole;
-    }
-
-    public void setLogStashRole(String logStashRole) {
-        this.logStashRole = logStashRole;
-    }
-
     public int getWebServerPort() {
         return webServerPort;
     }

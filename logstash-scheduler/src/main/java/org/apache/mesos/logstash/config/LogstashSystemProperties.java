@@ -54,14 +54,6 @@ public class LogstashSystemProperties {
         return getInt("mesos.logstash.web.port", DEFAULT_WEB_SERVER_PORT);
     }
 
-    public String getLogstashUser() {
-        return props.getProperty("mesos.logstash.user", "root");
-    }
-
-    public String getLogstashRole() {
-        return props.getProperty("mesos.logstash.role", "*");
-    }
-
     public String getVolumes() { return props.getProperty("mesos.logstash.volumes", ""); }
 
     public boolean isDisableFailover() {

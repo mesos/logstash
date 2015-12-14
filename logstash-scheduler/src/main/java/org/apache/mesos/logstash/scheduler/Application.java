@@ -43,7 +43,6 @@ public class Application {
 
         SpringApplication app = new SpringApplication(Application.class);
         app.setShowBanner(false);
-        app.setWebEnvironment(settings.getWebServerEnabled());
         app.run(args);
     }
 
@@ -55,8 +54,6 @@ public class Application {
         conf.setState(getState(frameworkConfig));
         conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
         conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
-        conf.setLogStashRole(logstashSystemProperties.getLogstashRole());
-        conf.setLogStashUser(logstashSystemProperties.getLogstashUser());
 
         return conf;
     }
