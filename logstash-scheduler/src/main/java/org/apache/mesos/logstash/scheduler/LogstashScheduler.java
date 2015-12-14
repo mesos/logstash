@@ -68,7 +68,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
 
-        String webUiURL = createWebuiUrl(configuration.getWebServerPort());
+        String webUiURL = createWebuiUrl(frameworkConfig.getWebserverPort());
 
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
@@ -78,7 +78,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setFailoverTimeout(configuration.getFailoverTimeout());
 
         if (webUiURL != null) {
-            frameworkBuilder.setWebuiUrl(createWebuiUrl(configuration.getWebServerPort()));
+            frameworkBuilder.setWebuiUrl(createWebuiUrl(frameworkConfig.getWebserverPort()));
         }
 
         FrameworkID frameworkID = configuration.getFrameworkId();

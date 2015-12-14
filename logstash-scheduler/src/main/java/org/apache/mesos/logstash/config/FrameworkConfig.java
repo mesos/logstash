@@ -16,6 +16,7 @@ public class FrameworkConfig {
     private int zkTimeout = 20000;
 
     private String frameworkName = "logstash";
+    private int webserverPort = 9092;
 
     public String getZkUrl() {
         return zkUrl;
@@ -39,5 +40,14 @@ public class FrameworkConfig {
 
     public void setFrameworkName(String frameworkName) {
         this.frameworkName = frameworkName;
+    }
+
+
+    public int getWebserverPort() {
+        return webserverPort;
+    }
+
+    public void setWebserverPort(int webserverPort) {
+        this.webserverPort = webserverPort;
     }
 }

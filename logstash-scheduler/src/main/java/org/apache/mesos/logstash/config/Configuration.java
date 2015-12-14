@@ -19,7 +19,6 @@ public class Configuration {
     private FrameworkState frameworkState;
     private boolean disableFailover = false;
     private int reconcilationTimeoutSek = 60 * 1;
-    private int webServerPort = 9092;
 
     public int getReconcilationTimeoutMillis() {
         return reconcilationTimeoutSek * 1000;
@@ -85,9 +84,5 @@ public class Configuration {
 
     public void setFailoverTimeout(long failoverTimeout) {
         this.failoverTimeout = failoverTimeout;
-    }
-
-    public int getWebServerPort() {
-        return webServerPort;
     }
 }
