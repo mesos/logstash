@@ -75,7 +75,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setUser(logstashConfig.getUser())
             .setRole(logstashConfig.getRole())
             .setCheckpoint(true)
-            .setFailoverTimeout(configuration.getFailoverTimeout());
+            .setFailoverTimeout(frameworkConfig.getFailoverTimeout());
 
         if (webUiURL != null) {
             frameworkBuilder.setWebuiUrl(createWebuiUrl(frameworkConfig.getWebserverPort()));

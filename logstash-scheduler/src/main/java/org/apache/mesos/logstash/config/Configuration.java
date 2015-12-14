@@ -78,11 +78,4 @@ public class Configuration {
     public Protos.FrameworkID getFrameworkId() {
         return getFrameworkState().getFrameworkID();
     }
-    public long getFailoverTimeout() {
-        return failoverTimeout;
-    }
-
-    public void setFailoverTimeout(long failoverTimeout) {
-        this.failoverTimeout = failoverTimeout;
-    }
 }

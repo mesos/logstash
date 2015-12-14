@@ -76,7 +76,7 @@ public class LogstashSchedulerTest {
         assertEquals("root", frameworkInfo.getUser());
         assertEquals("*", frameworkInfo.getRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
-        assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) configuration.getFailoverTimeout());
+        assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) frameworkConfig.getFailoverTimeout());
         assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + frameworkConfig.getWebserverPort());
         assertEquals(frameworkInfo.getId().getValue(), configuration.getFrameworkId().getValue());
 

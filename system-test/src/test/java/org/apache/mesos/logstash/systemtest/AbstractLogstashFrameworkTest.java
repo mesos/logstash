@@ -66,7 +66,7 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        Configuration configuration = new Application().getLogstashConfiguration(new FrameworkConfig());
+        Configuration configuration = new Application().getLogstashConfiguration();
         configuration.setDisableFailover(true); // we remove our framework completely
 //        configuration.setVolumeString("/tmp");
 

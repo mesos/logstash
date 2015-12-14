@@ -17,6 +17,7 @@ public class FrameworkConfig {
 
     private String frameworkName = "logstash";
     private int webserverPort = 9092;
+    private double failoverTimeout = 31449600;
 
     public String getZkUrl() {
         return zkUrl;
@@ -49,5 +50,13 @@ public class FrameworkConfig {
 
     public void setWebserverPort(int webserverPort) {
         this.webserverPort = webserverPort;
+    }
+
+    public double getFailoverTimeout() {
+        return failoverTimeout;
+    }
+
+    public void setFailoverTimeout(double failoverTimeout) {
+        this.failoverTimeout = failoverTimeout;
     }
 }

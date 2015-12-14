@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit;
 public class Application {
     @Inject
     Features features;
+    @Inject
+    FrameworkConfig frameworkConfig;
 
     private LogstashSystemProperties logstashSystemProperties = new LogstashSystemProperties();
 
@@ -47,12 +49,11 @@ public class Application {
     }
 
     @Bean
-    public Configuration getLogstashConfiguration(FrameworkConfig frameworkConfig) {
+    public Configuration getLogstashConfiguration() {
 
         Configuration conf = new Configuration();
 
         conf.setState(getState(frameworkConfig));
-        conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
         conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
 
         return conf;
@@ -66,7 +67,7 @@ public class Application {
     @Bean
     public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
         return new JettyEmbeddedServletContainerFactory(
-            logstashSystemProperties.getWebServerPort());
+            frameworkConfig.getWebserverPort());
     }
 
     private void checkSystemProperties(String zkUrl) {
