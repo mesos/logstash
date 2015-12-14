@@ -6,7 +6,6 @@ import org.apache.mesos.logstash.common.zookeeper.formatter.MesosZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.parser.ZKAddressParser;
 import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.config.LogstashSystemProperties;
 import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.state.LiveState;
 import org.apache.mesos.logstash.state.SerializableState;
@@ -32,15 +31,12 @@ public class Application {
     @Inject
     FrameworkConfig frameworkConfig;
 
-    private LogstashSystemProperties logstashSystemProperties = new LogstashSystemProperties();
-
     public static void main(String[] args) throws IOException {
         Application app = new Application();
         app.run(args);
     }
 
     private void run(String[] args) {
-        LogstashSystemProperties settings = new LogstashSystemProperties();
 //        checkSystemProperties(zkUrl);
 
         SpringApplication app = new SpringApplication(Application.class);
