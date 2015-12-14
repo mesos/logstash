@@ -43,9 +43,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private List<String> getJavaOpts() {
         return mergeWithOptionals(
                 asList(
-                        "-Dmesos.logstash.web.port=" + apiPort,
                         "-Dmesos.logstash.framework.name=logstash",
-                        "-Dmesos.logstash.disableFailover=true",
                         "-Dmesos.logstash.volumes=/var/log/mesos"
                 ),
                 elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
@@ -69,6 +67,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     protected CreateContainerCmd dockerCommand() {
         final String cmd = asList(
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
+                "--failover-enabled=false",
                 elasticsearchDomainAndPort.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
                 "--logstash.heap-size=128",

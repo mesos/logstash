@@ -54,8 +54,6 @@ public class Application {
         Configuration conf = new Configuration();
 
         conf.setState(getState(frameworkConfig));
-        conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
-
         return conf;
     }
 

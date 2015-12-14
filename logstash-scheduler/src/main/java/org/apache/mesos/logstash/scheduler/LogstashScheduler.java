@@ -47,6 +47,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     Configuration configuration;
 
     @Inject
+    Features features;
+    @Inject
     FrameworkConfig frameworkConfig;
     @Inject
     LogstashConfig logstashConfig;
@@ -101,11 +103,11 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void stop() throws ExecutionException, InterruptedException {
         configManager.setOnConfigUpdate(null);
 
-        if (configuration.isDisableFailover()) {
+        if (features.isFailover()) {
+            driver.stop(true);
+        } else {
             driver.stop(false);
             configuration.getFrameworkState().removeFrameworkId();
-        } else {
-            driver.stop(true);
         }
     }
 

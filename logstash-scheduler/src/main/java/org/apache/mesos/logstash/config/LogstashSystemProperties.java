@@ -23,8 +23,4 @@ public class LogstashSystemProperties {
     public LogstashSystemProperties() {
         this.props = System.getProperties();
     }
-
-    public boolean isDisableFailover() {
-        return getBoolean("mesos.logstash.disableFailover", false);
-    }
 }

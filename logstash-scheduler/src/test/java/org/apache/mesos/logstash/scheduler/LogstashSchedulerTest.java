@@ -33,6 +33,7 @@ public class LogstashSchedulerTest {
 
     Configuration configuration = new Configuration();
 
+    Features features = new Features();
     LogstashConfig logstashConfig = new LogstashConfig();
 
     private FrameworkConfig frameworkConfig = new FrameworkConfig();
@@ -54,6 +55,7 @@ public class LogstashSchedulerTest {
         scheduler.configuration = configuration;
         scheduler.frameworkConfig = frameworkConfig;
         scheduler.logstashConfig = logstashConfig;
+        scheduler.features = features;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }
@@ -114,7 +116,7 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStopShouldWithFailoverIfConfiguredAsFailoverEnabled() throws Exception {
-        configuration.setDisableFailover(false);
+        features.setFailover(true);
         scheduler.start();
         scheduler.stop();
 
@@ -124,7 +126,7 @@ public class LogstashSchedulerTest {
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldStop() throws Exception {
         frameworkState.setFrameworkId(createFrameworkId("FOO"));
-        configuration.setDisableFailover(true);
+        features.setFailover(false);
         scheduler.start();
         scheduler.stop();
 
@@ -134,7 +136,7 @@ public class LogstashSchedulerTest {
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldRemovePersistedFrameworkID() throws Exception {
         frameworkState.setFrameworkId(createFrameworkId("FOO"));
-        configuration.setDisableFailover(true);
+        features.setFailover(false);
         scheduler.start();
         scheduler.stop();
 

@@ -45,16 +45,6 @@ public class Configuration {
         return fingerprint;
     }
 
-    public boolean isDisableFailover() {
-        return disableFailover;
-    }
-
-    public void setDisableFailover(boolean disableFailover) {
-        this.disableFailover = disableFailover;
-    }
-
-
-
     public void setFrameworkState(FrameworkState frameworkState) {
         this.frameworkState = frameworkState;
     }
