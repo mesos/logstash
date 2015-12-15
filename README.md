@@ -146,9 +146,7 @@ If it's not `healthy` you should test your logstash configuration.
 
 Note: Currently there is no indication whether you monitoring file from the slave itself.     
     
-### Config
-
-![Config](docs/screenshot_config.png)
+### Configuration
 
 Here you can actually configure the slave and docker container configuration. See next section.
 
