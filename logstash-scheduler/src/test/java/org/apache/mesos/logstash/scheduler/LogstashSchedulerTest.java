@@ -50,7 +50,6 @@ public class LogstashSchedulerTest {
     @Before
     public void setup() throws Exception {
         scheduler.frameworkConfig = frameworkConfig;
-        scheduler.logstashConfig = logstashConfig;
         scheduler.features = features;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
