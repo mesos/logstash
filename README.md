@@ -150,27 +150,27 @@ Note: Currently there is no indication whether you monitoring file from the slav
 
 The Logstash framework is configured at the time that the scheduler is started. Each configuration option can be passed in a large number of ways:
 
-1. Command-line arguments, e.g. `java -jar logstash-mesos-scheduler.jar --logstash.heapSize=64`
+1. Command-line arguments, e.g. `java -jar logstash-mesos-scheduler.jar --logstash.heap-size=64`
 2. Environment variables, e.g. `LOGSTASH_HEAP_SIZE=64 java -jar logstash-mesos-scheduler.jar`
 3. A properties file, e.g. `echo 'logstash.heap-size=64' > ./application.properties && java -jar logstash-mesos-scheduler.jar` 
 4. ...
 
 | Command-line argument            | Environment variable           | What it does                                                                                                               |
 | -------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `--zk-url U`                     | `ZK_URL=U`                     | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
-| `--zk-timeout T`                 | `ZK_TIMEOUT=T`                 | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
-| `--framework-name N`             | `FRAMEWORK_NAME=N`             | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
-| `--webserver-port P`             | `WEBSERVER_PORT=P`             | The scheduler will listen on TCP port `P` FIXME and host what on it? Not clear from code                                   |
-| `--failover-timeout T`           | `FAILOVER_TIMEOUT=T`           | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
-| `--role R`                       | `ROLE=R`                       | The Logstash framework role will register with Mesos with framework role `U`.                                              |
-| `--user U`                       | `USER=U`                       | Logstash tasks will be launched with Unix user `U`                                                                         |
-| `--logstash.heap-size N`         | `LOGSTASH_HEAP_SIZE=N`         | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                | 
-| `--logstash.elasticsearch-url U` | `LOGSTASH_ELASTICSEARCH_URL=U` | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U`                             |
-| `--executor.cpus C`              | `EXECUTOR_CPUS=C`              | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       | 
-| `--executor.heap-size H`         | `EXECUTOR_HEAP_SIZE=H`         | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
-| `--enable.failover F`            | `ENABLE_FAILOVER=F`            | If `F` is `"true"`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F` |
-| `--enable.collectd C`            | `ENABLE_COLLECTD=C`            | If `C` is `"true"`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                         |
-| `--enable.syslog S`              | `ENABLE_SYSLOG=S`              | If `S` is `"true"`, Logstash will listen for syslog events on TCP port 514 on all executors                                |
+| `--zk-url=U`                     | `ZK_URL=U`                     | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
+| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
+| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
+| `--webserver-port=P`             | `WEBSERVER_PORT=P`             | The scheduler will listen on TCP port `P` FIXME and host what on it? Not clear from code                                   |
+| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
+| `--role=R`                       | `ROLE=R`                       | The Logstash framework role will register with Mesos with framework role `U`.                                              |
+| `--user=U`                       | `USER=U`                       | Logstash tasks will be launched with Unix user `U`                                                                         |
+| `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
+| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U`                             |
+| `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
+| `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
+| `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | If `F` is `"true"`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F` |
+| `--enable.collectd=C`            | `ENABLE_COLLECTD=C`            | If `C` is `"true"`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                         |
+| `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | If `S` is `"true"`, Logstash will listen for syslog events on TCP port 514 on all executors                                |
 
 ## <a name="fw_configuration"></a> Framework options
 
