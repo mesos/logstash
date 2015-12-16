@@ -101,7 +101,7 @@ public class DeploymentSystemTest {
     }
 
     @Test
-    public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException, ExecutionException, InterruptedException {
+    public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException, ExecutionException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
         final String elasticsearchClusterName = "test-" + System.currentTimeMillis();
@@ -150,10 +150,13 @@ public class DeploymentSystemTest {
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
             dockerClient.startContainerCmd(loggerContainer.getId()).exec();
-            try {
-                Thread.sleep(100L);
-            } catch (InterruptedException ignored) { }
-            await().atMost(1, TimeUnit.SECONDS).until(() -> StringUtils.isNotBlank(dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt()));
+            await().atMost(10, TimeUnit.SECONDS).until(() -> {
+                // TODO: this is a hack to determine whether the container has stopped.
+                // We should use ...exec().getState().getRunning() but docker-java doesn't provide that
+                // (even though it's available in the JSON provided by Docker).
+                final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+                return StringUtils.isNotBlank(finishedAt) && !finishedAt.equals("0001-01-01T00:00:00Z");
+            });
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
