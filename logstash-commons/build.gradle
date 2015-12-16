@@ -13,23 +13,21 @@ dependencies {
     compile "javax.inject:javax.inject:$javaxInjectVer"
 }
 
-/*
 idea {
     // We want IDEA to find the generated protobuf source file.
-    // Problem is that the "build/" dir is excluded.
+    // Problem is that the $buildDir dir is excluded.
     module {
-        excludeDirs -= file('build')
-        excludeDirs += file('build/classes')
-        excludeDirs += file('build/dependency-cache')
-        excludeDirs += file('build/libs')
-        excludeDirs += file('build/reports')
-        excludeDirs += file('build/resources')
-        excludeDirs += file('build/tmp')
+        excludeDirs -= file("$buildDir")
+        excludeDirs += file("$buildDir/classes")
+        excludeDirs += file("$buildDir/dependency-cache")
+        excludeDirs += file("$buildDir/libs")
+        excludeDirs += file("$buildDir/reports")
+        excludeDirs += file("$buildDir/resources")
+        excludeDirs += file("$buildDir/tmp")
 
-        sourceDirs  += file('build/generated/source/proto')
+        sourceDirs  += file("$buildDir/generated/source/proto/main/java")
     }
 }
-*/
 
 protobuf {
 
