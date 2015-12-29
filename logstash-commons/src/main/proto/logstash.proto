@@ -18,6 +18,7 @@ message LogstashConfiguration {
   optional LogstashPluginInputSyslog logstashPluginInputSyslog = 1;
   optional LogstashPluginInputCollectd logstashPluginInputCollectd = 3;
   optional LogstashPluginOutputElasticsearch logstashPluginOutputElasticsearch = 2;
+  required string mesosSlaveId = 4;
 }
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html

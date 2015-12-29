@@ -24,12 +24,14 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -39,7 +41,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
@@ -160,17 +161,25 @@ public class DeploymentSystemTest {
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-            assertEquals(randomLogLine, getFirstMessageInLogstashIndex(elasticsearchClient.get()));
-        });
-    }
 
-    private String getFirstMessageInLogstashIndex(Client elasticsearchClient) {
-        try {
-            String esMessage = elasticsearchClient.prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").execute().actionGet().getHits().getAt(0).fields().get("message").getValue();
-            return esMessage.trim();
-        } catch (Exception e) {
-            return "NOT FOUND";
-        }
+            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+
+            String esMessage = fields.get("message").getValue();
+            assertEquals(randomLogLine, esMessage.trim());
+
+            String esMesosSlaveId = fields.get("mesos_slave_id").getValue();
+
+            String trueSlaveId;
+            try {
+                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            assertEquals(
+                trueSlaveId,
+                esMesosSlaveId.trim()
+            );
+        });
     }
 
     @Test
