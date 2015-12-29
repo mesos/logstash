@@ -1,10 +1,22 @@
 # Logstash Mesos Framework
 
 A [Mesos](http://mesos.apache.org/) framework for running [Logstash][logstash] in your cluster.
-You can configure logging for all your other frameworks and have Logstash parse and send
-your logs to ElasticSearch.
+When you send a log event to a Mesos slave,
+it will be parsed by Logstash and sent to central locations of your choice,
+such as an ElasticSearch instance.
 
-This framework will try to launch a Logstash process per Mesos slave.
+TODO why do we want a Logstash instance on every slave? Not clear.
+
+This framework tries to launch a Logstash process on every Mesos slave.
+Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
+and the offer has enough resources to run Logstash.
+This does not guarantee the presence of Logstash on every slave,
+but we have reason to believe that most clusters will gain high allocation (TODO why?).
+This means this framework is suitable for non-critical logging of events which may be dropped,
+such as resource usage statistics.
+We currently advise using other systems for business-critical event logging,
+such as PCI DSS events.
+
 
 # Roadmap
 
@@ -40,11 +52,31 @@ This framework will try to launch a Logstash process per Mesos slave.
 
 ## Requirements
 
-* An Mesos cluster at version 0.22.1 or above.
+* A Mesos cluster at version 0.22.1 or above. We use features from 0.22:
+
+  TODO why does our executor or scheduler Docker image have Mesos installed?
+  We shouldn't actually need Mesos in the image; Mesos runs externally ...
+  What does the `mesos` package provide?
+  Does it provide the Mesos Java API library that we use?
+  What is that library?
+  org.apache.mesos
+  What package provides this? How is it on the classpath?
+  
+      dependencies {
+          compile "org.apache.mesos:mesos:${mesosVer}"
+  
+  What does this mean? What is `compile`?
+  I think it means we use this: https://bintray.com/bintray/jcenter/org.apache.mesos%3Amesos/0.25.0/view#files/org/apache/mesos/mesos/0.25.0
+  This includes the Mesos API jar
+  TODO why do we install Mesos at version 0.25.0?
+
 * That Mesos cluster must have the `docker` containerizer enabled.
+
 * A Docker host must be running on every Mesos slave on port 2376.
+
 * Each Docker host must have access to the `mesos/logstash-executor` image.
-  We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/]. 
+  We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/].
+
 * The `mesos/logstash-scheduler` image.
 
 
