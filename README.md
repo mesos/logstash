@@ -74,6 +74,9 @@ such as PCI DSS events.
 
 * A Docker host must be running on every Mesos slave on port 2376.
 
+* That Docker host must have an API version compatible with our Docker client,
+  which is currently at version 1.20.
+
 * Each Docker host must have access to the `mesos/logstash-executor` image.
   We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/].
 
