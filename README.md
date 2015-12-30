@@ -22,35 +22,27 @@ such as PCI DSS events.
 
 ## Requirements
 
-* A Mesos cluster at version 0.22.1 or above. We use features from 0.22:
-
-  TODO why does our executor or scheduler Docker image have Mesos installed?
-  We shouldn't actually need Mesos in the image; Mesos runs externally ...
-  What does the `mesos` package provide?
-  Does it provide the Mesos Java API library that we use?
-  What is that library?
-  org.apache.mesos
-  What package provides this? How is it on the classpath?
-  
-      dependencies {
-          compile "org.apache.mesos:mesos:${mesosVer}"
-  
-  What does this mean? What is `compile`?
-  I think it means we use this: https://bintray.com/bintray/jcenter/org.apache.mesos%3Amesos/0.25.0/view#files/org/apache/mesos/mesos/0.25.0
-  This includes the Mesos API jar
-  TODO why do we install Mesos at version 0.25.0?
+* A Mesos cluster at version 0.22.1 or above.
+  Our scheduler and executors use version 0.25.0 of the Mesos API.
 
 * That Mesos cluster must have the `docker` containerizer enabled.
 
-* A Docker host must be running on every Mesos slave on port 2376.
+* A Docker server must be running on every Mesos slave on port 2376,
+  to be used by the `docker` containerizer.
 
-* That Docker host must have an API version compatible with our Docker client,
-  which is currently at version 1.20.
-
-* Each Docker host must have access to the `mesos/logstash-executor` image.
-  We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/].
+* Every Docker server must have an API version compatible with our Docker client,
+  which is currently at API version 1.20.
+  This is satisfied by Docker server version 1.8.0 and above.
 
 * The `mesos/logstash-scheduler` image.
+  We maintain [releases of `mesos/logstash-scheduler` on Docker Hub][https://hub.docker.com/r/mesos/logstash-scheduler/],
+  but they may not be up-to-date with this repository.
+  To build the latest version, see [Building the Docker images](#building).
+
+* Each Docker host must have access to the `mesos/logstash-executor` image,
+  at the same version as your chosen `mesos/logstash-scheduler` image.
+  We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/].
+  To build the latest version, see [Building the Docker images](#building).
 
 
 ## Running directly on a native Mesos cluster
@@ -233,7 +225,7 @@ DELETE /api/configs/{framework-name}
 Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
 
 
-# Building
+# <a name="building"></a> Building the scheduler and executor Docker images
 
 To build mesos-logstash, first install these dependencies:
 
