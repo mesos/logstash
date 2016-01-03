@@ -5,10 +5,14 @@ import org.apache.mesos.logstash.common.LogstashProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -62,22 +66,25 @@ public class LogstashService {
 
         Process process;
         try {
-            process = Runtime.getRuntime().exec(
-                    new String[]{
-                            "/opt/logstash/bin/logstash",
-                            "--log", "/var/log/logstash.log",
-                            "-e", serialize(logstashConfiguration)
-                    },
-                    new String[]{
-                            "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
-                            "HOME=/root"
-                    }
-            );
+            String[] command = {
+                    "/opt/logstash/bin/logstash",
+                    "--log", "/var/log/logstash.log",
+                    "-e", serialize(logstashConfiguration)
+            };
+            String[] env = {
+                    "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
+                    "HOME=/root"
+            };
+            LOGGER.info("Starting subprocess: " + String.join(" ", env) + " " + String.join(" ", command));
+            process = Runtime.getRuntime().exec(command, env);
         } catch (IOException e) {
             throw new RuntimeException("Failed to start Logstash", e);
         }
 
         try {
+            printStream((s) -> { LOGGER.info("Logstash stdout: ", s); }, process.getInputStream());
+            printStream((s) -> { LOGGER.warn("Logstash stderr: ", s); }, process.getErrorStream());
+
             process.waitFor();
             LOGGER.warn("Logstash quit with exit={}", process.exitValue());
         } catch (InterruptedException e) {
@@ -89,5 +96,22 @@ public class LogstashService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read STDERR of Logstash");
         }
+    }
+
+    private static void printStream(Consumer<String> linePrinter, InputStream inputStream) {
+        (new Thread() {
+            public void run() {
+                try {
+                    InputStreamReader isr = new InputStreamReader(inputStream);
+                    BufferedReader br = new BufferedReader(isr);
+                    String line=null;
+                    while ((line = br.readLine()) != null) {
+                        linePrinter.accept(line);
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }).start();
     }
 }
