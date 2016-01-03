@@ -24,6 +24,7 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
@@ -146,7 +147,7 @@ public class DeploymentSystemTest {
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
-        dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback());
+        dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
         final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
@@ -161,7 +162,16 @@ public class DeploymentSystemTest {
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-
+        });
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            try {
+                elasticsearchClient.get().prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            } catch (IndexMissingException e) {
+                return false;
+            }
+            return true;
+        });
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
 
             String esMessage = fields.get("message").getValue();
@@ -179,6 +189,7 @@ public class DeploymentSystemTest {
                 trueSlaveId,
                 esMesosSlaveId.trim()
             );
+            return true;
         });
     }
 
