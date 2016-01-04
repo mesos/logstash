@@ -72,8 +72,8 @@ public class LogstashService {
         }
 
         try {
-            printStream((s) -> { LOGGER.info("Logstash stdout: ", s); }, process.getInputStream());
-            printStream((s) -> { LOGGER.warn("Logstash stderr: ", s); }, process.getErrorStream());
+            inputStreamForEach((s) -> LOGGER.info("Logstash stdout: ", s), process.getInputStream());
+            inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: ", s), process.getErrorStream());
 
             process.waitFor();
             LOGGER.warn("Logstash quit with exit={}", process.exitValue());
@@ -88,20 +88,7 @@ public class LogstashService {
         }
     }
 
-    private static void printStream(Consumer<String> linePrinter, InputStream inputStream) {
-        (new Thread() {
-            public void run() {
-                try {
-                    InputStreamReader isr = new InputStreamReader(inputStream);
-                    BufferedReader br = new BufferedReader(isr);
-                    String line=null;
-                    while ((line = br.readLine()) != null) {
-                        linePrinter.accept(line);
-                    }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }).start();
+    private static void inputStreamForEach(Consumer<String> consumer, InputStream inputStream) {
+        new Thread(() -> new BufferedReader(new InputStreamReader(inputStream)).lines().forEach(consumer)).start();
     }
 }
