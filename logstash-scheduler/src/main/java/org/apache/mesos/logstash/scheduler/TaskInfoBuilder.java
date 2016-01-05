@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.scheduler;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.LogstashConfig;
@@ -15,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 public class TaskInfoBuilder {

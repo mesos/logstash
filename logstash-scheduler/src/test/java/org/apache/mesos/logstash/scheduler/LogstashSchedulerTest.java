@@ -31,8 +31,6 @@ public class LogstashSchedulerTest {
     @Mock
     SchedulerDriver driver;
 
-    Configuration configuration = new Configuration();
-
     Features features = new Features();
     LogstashConfig logstashConfig = new LogstashConfig();
 

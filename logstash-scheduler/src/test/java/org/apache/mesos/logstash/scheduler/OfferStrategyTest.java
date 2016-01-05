@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
