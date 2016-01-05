@@ -4,8 +4,6 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.cluster.ClusterMonitor;
-import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
@@ -13,18 +11,15 @@ import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import javax.inject.Provider;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -43,9 +38,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     LiveState liveState;
 
     @Inject
-    Configuration configuration;
-
-    @Inject
     SerializableState serializableState;
 
     @Inject
@@ -59,9 +51,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     TaskInfoBuilder taskInfoBuilder;
 
     private SchedulerDriver driver;
-
-    @Inject
-    ClusterMonitor clusterMonitor;
 
     private Observable statusUpdateWatchers = new StatusUpdateObservable();
 
@@ -79,8 +68,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @PostConstruct
     public void start() {
-        configManager.setOnConfigUpdate(this::updateExecutorConfig);
-
         String webUiURL = createWebuiUrl(frameworkConfig.getWebserverPort());
 
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
@@ -141,32 +128,21 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         LOGGER.info("Framework registered as: {}", frameworkId);
 
-        statusUpdateWatchers.addObserver(clusterMonitor);
-
         Protos.Request request = Protos.Request.newBuilder()
             .addAllResources(taskInfoBuilder.getResourcesList())
             .build();
 
         List<Protos.Request> requests = Collections.singletonList(request);
         schedulerDriver.requestResources(requests);
-
-        reconcileTasks();
     }
 
     @Override
     public void reregistered(SchedulerDriver schedulerDriver, MasterInfo masterInfo) {
         LOGGER.info("Re-registered with master. ip={}", masterInfo.getId());
-        reconcileTasks();
     }
 
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
-        if(clusterMonitor.isReconciling()) {
-            LOGGER.debug("Still in the reconciliation phase, can't accept resource offers.");
-            offers.forEach(offer -> driver.declineOffer(offer.getId()));
-            return;
-        }
-
         offers.forEach(offer -> {
             if (shouldAcceptOffer(offer)) {
 
@@ -180,11 +156,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
                         singletonList(offer.getId()),
                         singletonList(taskInfo));
 
-                clusterMonitor.monitorTask(taskInfo); // Add task to cluster monitor
-
-                // Store a fingerprint so we can figure out when the configuration has changed
-//                clusterState.getStatus(taskInfo.getTaskId()).setConfigurationFingerprint(configuration.getFingerprint());
-
+                clusterState.addTask(taskInfo);
             } else {
 
                 schedulerDriver.declineOffer(offer.getId());
@@ -199,52 +171,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             status.getTaskId().getValue(),
             status.getState(),
             status.getMessage());
-
-        statusUpdateWatchers.notifyObservers(status);
-
-        if (isRunningState(status)) {
-            // Send the executor the newest configuration.
-
-            LSTaskStatus lsTaskStatus = clusterState.getStatus(status.getTaskId());
-
-            if(lsTaskStatus.getConfigurationFingerprint().equals(configuration.getFingerprint())) {
-                SchedulerMessage message = SchedulerMessage.newBuilder()
-                        .setType(NEW_CONFIG)
-                        .addAllConfigs(configManager.getLatestConfig())
-                        .build();
-                // TODO refactor into own statusUpdateWatcher
-                sendMessage(lsTaskStatus.getTaskInfo().getExecutor().getExecutorId(), lsTaskStatus.getTaskInfo().getSlaveId(), message);
-            }
-            else {
-                driver.killTask(status.getTaskId());
-            }
-        }
-
-        schedulerDriver.reviveOffers();
-    }
-
-    public void updateExecutorConfig(List<LogstashProtos.LogstashConfig> configs) {
-
-        if (clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
-            return; // we will update the config as soon as we get a status update
-        }
-
-        SchedulerMessage message = SchedulerMessage.newBuilder()
-            .addAllConfigs(configs)
-            .setType(NEW_CONFIG)
-            .build();
-
-        LOGGER.debug("Sending new config to all executors.");
-
-        clusterMonitor.getRunningTasks().forEach(e ->
-            sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message));
-    }
-
-    private void sendMessage(ExecutorID executorId, SlaveID slaveId,
-        SchedulerMessage schedulerMessage) {
-
-        LOGGER.debug("Sending message to executor {}", schedulerMessage);
-        driver.sendFrameworkMessage(executorId, slaveId, schedulerMessage.toByteArray());
     }
 
     @Override
@@ -279,34 +205,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         return s.replace("  ", " ").replace("{\n", "{").replace("\n}", " }").replace("\n", ", ");
     }
 
-    public void requestExecutorStats() {
-
-        if (clusterMonitor == null || clusterMonitor.getExecutionPhase() == ExecutionPhase.RECONCILING_TASKS){
-            LOGGER.debug("Supress requesting executor stats, because we're still setting up...");
-            return;
-
-        }
-
-        SchedulerMessage message = SchedulerMessage.newBuilder()
-            .setType(SchedulerMessage.SchedulerMessageType.REQUEST_STATS)
-            .build();
-
-        List<TaskInfo> runningTasks = clusterMonitor.getRunningTasks();
-
-        if(runningTasks.isEmpty()) {
-            LOGGER.warn("No tasks to request stats from");
-        }
-        else {
-            runningTasks.forEach(e -> {
-                try {
-                    sendMessage(e.getExecutor().getExecutorId(), e.getSlaveId(), message);
-                } catch (Exception ex) {
-                    LOGGER.error("Can not send message: {}", ex);
-                }
-            });
-        }
-    }
-
     @Override
     public void disconnected(SchedulerDriver schedulerDriver) {
         LOGGER.warn("Scheduler driver disconnected.");
@@ -337,11 +235,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private boolean isRunningState(TaskStatus taskStatus) {
         return taskStatus.getState().equals(TaskState.TASK_RUNNING);
-    }
-
-
-    private void reconcileTasks() {
-        clusterMonitor.startReconciling(driver);
     }
 
 

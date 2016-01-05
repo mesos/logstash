@@ -2,7 +2,6 @@ package org.apache.mesos.logstash.scheduler;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.config.ConfigManager;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.FrameworkConfig;
@@ -113,11 +112,6 @@ public class LogstashSchedulerSpringTest {
         @Bean
         public StatePath statePath() {
             return Mockito.mock(StatePath.class);
-        }
-
-        @Bean
-        public ClusterMonitor clusterMonitor() {
-            return Mockito.mock(ClusterMonitor.class);
         }
 
         @Bean

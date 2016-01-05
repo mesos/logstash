@@ -50,7 +50,6 @@ public class LogstashSchedulerTest {
 
     @Before
     public void setup(){
-        scheduler.configuration = configuration;
         scheduler.frameworkConfig = frameworkConfig;
         scheduler.logstashConfig = logstashConfig;
         scheduler.features = features;
