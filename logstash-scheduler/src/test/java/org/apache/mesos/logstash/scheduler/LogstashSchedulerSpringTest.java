@@ -110,11 +110,6 @@ public class LogstashSchedulerSpringTest {
         }
 
         @Bean
-        public StatePath statePath() {
-            return Mockito.mock(StatePath.class);
-        }
-
-        @Bean
         public ClusterState clusterState() {
             return Mockito.mock(ClusterState.class);
         }

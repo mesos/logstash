@@ -26,8 +26,6 @@ public class ClusterState {
     SerializableState state;
     @Inject
     FrameworkState frameworkState;
-    @Inject
-    StatePath statePath;
 
     /**
      * Get a list of all tasks with state
@@ -127,8 +125,7 @@ public class ClusterState {
     private void setTaskInfoList(List<TaskInfo> taskInfoList) {
         LOGGER.debug("Writing executor state list: " + logTaskList(taskInfoList));
         try {
-            statePath.mkdir(getKey());
-            state.set(getKey(), taskInfoList);
+            SerializableZookeeperState.mkdirAndSet(getKey(), taskInfoList, state);
         } catch (IOException ex) {
             LOGGER.error("Could not write list of executor states to zookeeper: ", ex);
         }

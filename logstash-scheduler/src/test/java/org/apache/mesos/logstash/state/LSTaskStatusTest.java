@@ -22,13 +22,12 @@ public class LSTaskStatusTest {
     private Protos.TaskInfo taskInfo;
     private LSTaskStatus status;
     private Protos.TaskStatus taskStatus;
-    private StatePath statePath;
 
     @Before
     public void before() {
         frameworkID = Protos.FrameworkID.newBuilder().setValue("FrameworkId").build();
         taskInfo = ProtoTestUtil.getDefaultTaskInfo();
-        status = new LSTaskStatus(state, frameworkID, taskInfo, statePath);
+        status = new LSTaskStatus(state, frameworkID, taskInfo);
         taskStatus = status.getDefaultStatus();
     }
 
@@ -46,22 +45,22 @@ public class LSTaskStatusTest {
 
     @Test(expected = InvalidParameterException.class)
     public void shouldExceptIfStateIsNull() {
-        new LSTaskStatus(null, frameworkID, taskInfo, statePath);
+        new LSTaskStatus(null, frameworkID, taskInfo, pathUtils);
     }
 
     @Test(expected = InvalidParameterException.class)
     public void shouldExceptIfFrameworkIDIsNull() {
-        new LSTaskStatus(state, null, taskInfo, statePath);
+        new LSTaskStatus(state, null, taskInfo, pathUtils);
     }
 
     @Test(expected = InvalidParameterException.class)
     public void shouldExceptIfFrameworkIDIsEmpty() {
-        new LSTaskStatus(state, Protos.FrameworkID.newBuilder().setValue("").build(), taskInfo, statePath);
+        new LSTaskStatus(state, Protos.FrameworkID.newBuilder().setValue("").build(), taskInfo, pathUtils);
     }
 
     @Test
     public void shouldAllowNullTaskInfo() {
-        new LSTaskStatus(state, frameworkID, null, statePath);
+        new LSTaskStatus(state, frameworkID, null, pathUtils);
     }
 
     @Test

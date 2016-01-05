@@ -23,8 +23,6 @@ public class FrameworkState {
 
     @Inject
     SerializableState state;
-    @Inject
-    StatePath statePath;
 
     /**
      * Return empty if no frameworkId found.
@@ -41,8 +39,7 @@ public class FrameworkState {
 
     public void setFrameworkId(Protos.FrameworkID frameworkId) {
         try {
-            statePath.mkdir(FRAMEWORKID_KEY);
-            state.set(FRAMEWORKID_KEY, frameworkId);
+            SerializableZookeeperState.mkdirAndSet(FRAMEWORKID_KEY, frameworkId, state);
         } catch (IOException e) {
             LOGGER.error("Unable to store framework ID in zookeeper", e);
         }
@@ -62,8 +59,7 @@ public class FrameworkState {
             .setType(NEW_CONFIG)
             .build();
         try {
-            statePath.mkdir(LATEST_CONFIG_KEY);
-            state.set(LATEST_CONFIG_KEY, message);
+            SerializableZookeeperState.mkdirAndSet(LATEST_CONFIG_KEY, message, state);
         } catch (IOException e){
             LOGGER.error("Unable to store logstash configurations in zookeeper", e);
         }

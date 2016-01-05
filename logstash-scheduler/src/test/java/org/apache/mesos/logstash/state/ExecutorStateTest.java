@@ -41,7 +41,7 @@ public class ExecutorStateTest {
                 .setSlaveId(slaveID)
                 .setName("Test")
                 .build();
-        LSTaskStatus executorState = new LSTaskStatus(state, frameworkID, taskInfo, mock(StatePath.class));
+        LSTaskStatus executorState = new LSTaskStatus(state, frameworkID, taskInfo);
 
         executorState.setStatus(taskStatus);
         verify(state, times(1)).set(anyString(), any(Protos.TaskStatus.class));
