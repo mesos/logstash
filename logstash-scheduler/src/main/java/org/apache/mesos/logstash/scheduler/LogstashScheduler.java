@@ -38,9 +38,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     LiveState liveState;
 
     @Inject
-    SerializableState serializableState;
-
-    @Inject
     Features features;
     @Inject
     FrameworkConfig frameworkConfig;
