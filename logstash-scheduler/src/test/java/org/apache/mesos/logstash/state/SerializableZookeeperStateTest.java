@@ -35,7 +35,7 @@ public class SerializableZookeeperStateTest {
         variable = mock(Variable.class);
         when(variable.value()).thenReturn(writeVariable(SERIALIZABLE_OBJECT));
         future = CompletableFuture.completedFuture(variable);
-        serializableState = new SerializableZookeeperState(state);
+        serializableState = new SerializableZookeeperState();
         when(state.fetch(anyString())).thenReturn(future);
         when(state.store(any(Variable.class))).thenReturn(future);
     }

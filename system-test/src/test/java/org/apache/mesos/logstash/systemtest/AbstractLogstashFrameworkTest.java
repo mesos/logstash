@@ -66,11 +66,10 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-        Configuration configuration = new Application().getLogstashConfiguration();
 //        configuration.setDisableFailover(true); // we remove our framework completely
 //        configuration.setVolumeString("/tmp");
 
-        configManager = new ConfigManager(configuration);
+        configManager = new ConfigManager();
         configManager.start();
 
         System.out.println("**************** RECONCILIATION_DONE CONTAINERS ON TEST START *******************");

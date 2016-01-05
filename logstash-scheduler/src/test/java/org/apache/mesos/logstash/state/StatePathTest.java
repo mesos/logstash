@@ -16,7 +16,7 @@ public class StatePathTest {
 
     @Before
     public void before() throws ExecutionException, InterruptedException {
-        statePath = new StatePath(new TestSerializableStateImpl());
+        statePath = new StatePath();
     }
 
     @Test

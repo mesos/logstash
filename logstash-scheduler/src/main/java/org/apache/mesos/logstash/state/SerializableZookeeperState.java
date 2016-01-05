@@ -1,7 +1,9 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.state.Variable;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.*;
 import java.security.InvalidParameterException;
 import java.util.concurrent.ExecutionException;
@@ -9,12 +11,10 @@ import java.util.concurrent.ExecutionException;
 /**
  * Writes serializable data to zookeeper
  */
+@Component
 public class SerializableZookeeperState implements SerializableState {
+    @Inject
     private org.apache.mesos.state.State zkState;
-
-    public SerializableZookeeperState(org.apache.mesos.state.State zkState) {
-        this.zkState = zkState;
-    }
 
     /**
      * Get serializable object from store

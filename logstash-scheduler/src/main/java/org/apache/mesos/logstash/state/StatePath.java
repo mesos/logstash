@@ -1,7 +1,9 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.security.InvalidParameterException;
@@ -9,12 +11,12 @@ import java.security.InvalidParameterException;
 /**
  * Path utilities
  */
+@Component
 public class StatePath {
     private static final Logger LOGGER = Logger.getLogger(StatePath.class);
-    private SerializableState zkState;
-    public StatePath(SerializableState zkState) {
-        this.zkState = zkState;
-    }
+
+    @Inject
+    SerializableState zkState;
 
     /**
      * Creates the zNode if it does not exist. Will create parent directories.
@@ -37,11 +39,6 @@ public class StatePath {
     }
 
     public Boolean exists(String key) throws IOException {
-        Boolean exists = true;
-        Object value = zkState.get(key);
-        if (value == null) {
-            exists = false;
-        }
-        return exists;
+        return zkState.get(key) != null;
     }
 }

@@ -3,7 +3,9 @@ package org.apache.mesos.logstash.state;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 
@@ -12,19 +14,17 @@ import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.S
 /**
  * Model of framework state
  */
+@Component
 public class FrameworkState {
     private static final Logger LOGGER = Logger.getLogger(FrameworkState.class);
     private static final String FRAMEWORKID_KEY = "frameworkId";
     public static final Protos.FrameworkID EMPTY_ID = Protos.FrameworkID.newBuilder().setValue("").build();
     private static final String LATEST_CONFIG_KEY = "latestConfig";
 
-    private final SerializableState state;
-    private final StatePath statePath;
-
-    public FrameworkState(SerializableState state) {
-        this.state = state;
-        statePath = new StatePath(state);
-    }
+    @Inject
+    SerializableState state;
+    @Inject
+    StatePath statePath;
 
     /**
      * Return empty if no frameworkId found.

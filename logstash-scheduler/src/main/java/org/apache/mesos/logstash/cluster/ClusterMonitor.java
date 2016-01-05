@@ -5,12 +5,14 @@ import org.apache.mesos.Protos.TaskInfo;
 import org.apache.mesos.Protos.TaskStatus;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.state.ClusterState;
-import org.apache.mesos.logstash.state.LSTaskStatus;
-import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.config.FrameworkConfig;
+import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,26 +21,36 @@ import java.util.stream.Collectors;
  * Contains all cluster information. Monitors state of cluster elements and is responsible for
  * task reconciliation.
  */
-public class ClusterMonitor implements Observer {
+@Component
+public class ClusterMonitor implements Observer, InitializingBean {
     private static final Logger LOGGER =  LoggerFactory.getLogger(ClusterMonitor.class);
-    private final Configuration configuration;
-    private final ClusterState clusterState;
-    private final LiveState liveState;
+
+    @Inject
+    private ClusterState clusterState;
+
+    @Inject
+    FrameworkState frameworkState;
+
+    @Inject
+    LiveState liveState;
+
     ReconcileSchedule reconcileSchedule = new ReconcileSchedule();
     private ExecutionPhase executionPhase = ExecutionPhase.RECONCILING_TASKS; // default
 
+    @Inject
+    SerializableState serializableState;
+
+    @Inject
+    StatePath statePath;
+
+    @Inject
+    FrameworkConfig frameworkConfig;
+
     private ReconciliationMonitor reconciliationMonitor = new ReconciliationMonitor(new ArrayList<>());
 
-    public ClusterMonitor(Configuration configuration,
-        ClusterState clusterState, LiveState liveState) {
-        if (configuration == null || clusterState == null || liveState == null) {
-            throw new InvalidParameterException("Constructor parameters cannot be null.");
-        }
-        this.configuration = configuration;
-        this.clusterState = clusterState;
-        this.liveState = liveState;
-        List<TaskInfo> taskListCopy = new ArrayList<>(clusterState.getTaskList());
-        taskListCopy.forEach(this::monitorTask); // Get all previous executors and start monitoring them.
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        clusterState.getTaskList().forEach(this::monitorTask); // Get all previous executors and start monitoring them.
     }
 
     public synchronized ExecutionPhase getExecutionPhase() {
@@ -52,40 +64,31 @@ public class ClusterMonitor implements Observer {
     public void monitorTask(TaskInfo task) {
         addNewTaskToCluster(task);
     }
-    public ClusterState getClusterState() {
-        return clusterState;
-    }
 
     private LSTaskStatus addNewTaskToCluster(TaskInfo taskInfo) {
-        LSTaskStatus taskStatus = new LSTaskStatus(configuration.getState(), configuration.getFrameworkId(), taskInfo);
+        LSTaskStatus taskStatus = new LSTaskStatus(serializableState, frameworkState.getFrameworkID(), taskInfo, statePath);
         taskStatus.setStatus(taskStatus.getDefaultStatus()); // This is a new task, so set default state until we get an update
         clusterState.addTask(taskInfo);
         return taskStatus;
     }
 
     public synchronized List<TaskInfo> getRunningTasks(){
-        ArrayList<TaskInfo> runningTasks = new ArrayList<>();
-
-        List<TaskInfo> taskInfoList = getClusterState().getTaskList();
-
-        for (TaskInfo taskInfo: taskInfoList){
-            LSTaskStatus executorState = getClusterState().getStatus(taskInfo.getTaskId());
-            if (executorState.isRunning()){
-                runningTasks.add(executorState.getTaskInfo());
-            }
-        }
-        return runningTasks;
+        return clusterState.getTaskList().stream()
+                .map(taskInfo -> clusterState.getStatus(taskInfo.getTaskId()))
+                .filter(LSTaskStatus::isRunning)
+                .map(LSTaskStatus::getTaskInfo)
+                .collect(Collectors.toList());
     }
 
 
     private void updateTask(TaskStatus status) {
         try {
             // Update cluster state, if necessary
-            if (getClusterState().exists(status.getTaskId())) {
+            if (clusterState.exists(status.getTaskId())) {
 
 
                 LOGGER.debug("Updating task status for {} ", status);
-                LSTaskStatus executorState = getClusterState().getStatus(status.getTaskId());
+                LSTaskStatus executorState = clusterState.getStatus(status.getTaskId());
                 // Update state of Executor
                 executorState.setStatus(status);
 
@@ -167,7 +170,7 @@ public class ClusterMonitor implements Observer {
     }
 
     static class ReconcileSchedule {
-        public void schedule(TimerTask task, int startInSek){
+        public void schedule(TimerTask task, long startInSek){
             Timer timer = new Timer();
             timer.schedule(task, startInSek);
         }
@@ -189,8 +192,8 @@ public class ClusterMonitor implements Observer {
             this.driver = driver;
         }
 
-        public int getTimeout() {
-            return configuration.getReconcilationTimeoutMillis() * (1 + count);
+        public long getTimeout() {
+            return frameworkConfig.getReconcilationTimeoutMillis() * (1 + count);
         }
 
         public void start() {
@@ -216,7 +219,7 @@ public class ClusterMonitor implements Observer {
                 LOGGER.info(
                     "Max retries to reconcile tasks exceeded. Removing all tasks to which we haven't received a status update.");
 
-                List<TaskInfo> taskInfos = new ArrayList<>(getClusterState().getTaskList());
+                List<TaskInfo> taskInfos = new ArrayList<>(clusterState.getTaskList());
                 Set<String> runningTaskIds = liveState.getNonTerminalTasks().stream().map(
                         t -> t.getTaskId().getValue()).collect(Collectors.toSet());
 
@@ -224,7 +227,7 @@ public class ClusterMonitor implements Observer {
                         .filter(task -> task != null && !runningTaskIds.contains(task.getTaskId().getValue()))
                         .forEach(task -> {
                             LOGGER.info("Removing task id: {}", task);
-                            getClusterState().removeTask(task);
+                            clusterState.removeTask(task);
                         });
 
                 stopReconciling();

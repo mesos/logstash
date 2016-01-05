@@ -41,7 +41,7 @@ public class LogstashSchedulerTest {
     @Mock
     ConfigManager configManager;
 
-    FrameworkState frameworkState = new FrameworkState(new TestSerializableStateImpl());
+    FrameworkState frameworkState = new FrameworkState();
 
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
@@ -50,8 +50,6 @@ public class LogstashSchedulerTest {
 
     @Before
     public void setup(){
-        configuration.setFrameworkState(frameworkState);
-
         scheduler.configuration = configuration;
         scheduler.frameworkConfig = frameworkConfig;
         scheduler.logstashConfig = logstashConfig;
@@ -80,7 +78,7 @@ public class LogstashSchedulerTest {
         assertEquals(frameworkInfo.hasCheckpoint(), true);
         assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) frameworkConfig.getFailoverTimeout());
         assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + frameworkConfig.getWebserverPort());
-        assertEquals(frameworkInfo.getId().getValue(), configuration.getFrameworkId().getValue());
+        assertEquals(frameworkInfo.getId().getValue(), frameworkState.getFrameworkID().getValue());
 
         verify(driver).start();
     }

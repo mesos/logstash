@@ -7,28 +7,31 @@ import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.config.Configuration;
 import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.scheduler.Task;
-import org.apache.mesos.logstash.state.ClusterState;
-import org.apache.mesos.logstash.state.FrameworkState;
-import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.TestSerializableStateImpl;
+import org.apache.mesos.logstash.state.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import javax.inject.Inject;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.TimerTask;
 import java.util.stream.Collectors;
 
+import static java.util.Arrays.asList;
 import static org.apache.mesos.Protos.TaskState.TASK_LOST;
 import static org.apache.mesos.Protos.TaskState.TASK_RUNNING;
 import static org.apache.mesos.logstash.util.ProtoTestUtil.createTaskInfo;
 import static org.apache.mesos.logstash.util.ProtoTestUtil.createTaskStatus;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -42,11 +45,18 @@ public class ClusterMonitorTest {
     private static final String SOME_SLAVE_ID = "SOME_SLAVE_ID";
     private static final String SOME_TASK_ID_1 = "SOME_TASK_ID_1";
     private static final String SOME_TASK_ID_2 = "SOME_TASK_ID_2";
-    private ClusterMonitor clusterMonitor;
-    private Configuration configuration;
-    private FrameworkConfig frameworkConfig;
+    @InjectMocks
+    private ClusterMonitor clusterMonitor = new ClusterMonitor();
+
+    private FrameworkConfig frameworkConfig = new FrameworkConfig();
+
+    @Mock
     private ClusterState clusterState;
+    @Mock
     private LiveState liveState;
+
+    @Mock
+    StatePath statePath;
 
     @Mock
     private ClusterMonitor.ReconcileSchedule reconcileScheduleMock;
@@ -60,40 +70,36 @@ public class ClusterMonitorTest {
     @Captor
     private ArgumentCaptor<Collection<TaskStatus>> taskStatusArgumentCaptor;
 
+    @Mock
+    private FrameworkState frameworkState;
+
+    @Mock
+    SerializableState state;
+
     @Before
     public void setup() {
-        configuration = new Configuration();
-        frameworkConfig = new FrameworkConfig();
         frameworkConfig.setFrameworkName("SOME_FRAMEWORK_NAME");
-        liveState = new LiveState();
+        clusterMonitor.frameworkConfig = frameworkConfig;
 
-        TestSerializableStateImpl state = new TestSerializableStateImpl();
-        FrameworkState frameworkState = new FrameworkState(state);
-        frameworkState.setFrameworkId(createFrameworkId(SOME_FRAMEWORK_ID));
-        configuration.setFrameworkState(frameworkState);
-        configuration.setState(state);
-
-        clusterState = new ClusterState(state, frameworkState);
+//        FrameworkState frameworkState = new FrameworkState(state);
+//        frameworkState.setFrameworkId(createFrameworkId(SOME_FRAMEWORK_ID));
+//        configuration.setState(state);
     }
 
     @Test
     public void testGetExecutionPhase_initiallyShouldBeInReconciliation() throws Exception {
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
-
-        assertEquals(ExecutionPhase.RECONCILING_TASKS,
-            clusterMonitor.getExecutionPhase());
+        assertEquals(ExecutionPhase.RECONCILING_TASKS, clusterMonitor.getExecutionPhase());
     }
 
     @Test
     public void testGetRunningTasks_withNoPersistedTask_shouldReturnEmptyList() throws Exception {
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
         assertEquals(0, clusterMonitor.getRunningTasks().size());
     }
 
     @Test
     public void testUpdateTask_withUnknownRunningTask_shouldDoNothingBecauseItIsUnknown()
         throws Exception {
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
 
         clusterMonitor.update(null, createTaskStatus(TASK_RUNNING,
             SOME_TASK_ID_1, SOME_SLAVE_ID));
@@ -113,7 +119,7 @@ public class ClusterMonitorTest {
         TaskStatus taskStatus_unknownTask = createTaskStatus(TASK_RUNNING,
             SOME_TASK_ID_2, SOME_SLAVE_ID);
 
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.update(null, taskStatus);
         clusterMonitor.update(null, taskStatus_unknownTask);
 
@@ -137,7 +143,7 @@ public class ClusterMonitorTest {
 
         clusterState.addTask(taskInfo1);
         clusterState.addTask(taskInfo2);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
 
         clusterMonitor.update(null, taskStatus1);
         clusterMonitor.update(null, taskStatus2);
@@ -148,26 +154,31 @@ public class ClusterMonitorTest {
     }
 
     @Test
-    public void testUpdateTask_withStillNonTerminal_shouldJustUpdateTask()
-        throws Exception {
-        clusterState.addTask(
-            createTaskInfo(SOME_TASK_ID_1, SOME_EXECUTOR_ID, SOME_SLAVE_ID));
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+    public void testUpdateTask_withStillNonTerminal_shouldJustUpdateTask() throws Exception {
+        TaskInfo taskInfo = createTaskInfo(SOME_TASK_ID_1, SOME_EXECUTOR_ID, SOME_SLAVE_ID);
+
+        when(clusterState.getTaskList()).thenReturn(Collections.singletonList(taskInfo));
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
+        clusterMonitor.afterPropertiesSet();
+
+        LSTaskStatus executorState = mock(LSTaskStatus.class);
+
+        when(clusterState.getStatus(taskInfo.getTaskId())).thenReturn(executorState);
+        when(executorState.isRunning()).thenReturn(true);
+        when(executorState.getTaskInfo()).thenReturn(taskInfo);
 
         String message = "SOME INTERESTING MESSAGE - EVEN IF WE DO NOT USE THE MESSAGE FIELD...";
-        clusterMonitor.update(null, createTaskStatus(TASK_RUNNING,
-            SOME_TASK_ID_1, SOME_SLAVE_ID,
-            message));
+        clusterMonitor.update(null, createTaskStatus(TASK_RUNNING, SOME_TASK_ID_1, SOME_SLAVE_ID, message));
 
-        assertEquals(1, clusterMonitor.getRunningTasks().size());
-        assertEquals(SOME_TASK_ID_1,
-            clusterMonitor.getRunningTasks().get(0).getTaskId().getValue());
+        List<TaskInfo> runningTasks = clusterMonitor.getRunningTasks();
+        assertEquals(1, runningTasks.size());
+        assertEquals(SOME_TASK_ID_1, runningTasks.get(0).getTaskId().getValue());
     }
 
     @Test
     public void testStartReconciling_withoutAnyPersitedTasks_shouldFinishReconciliation()
         throws Exception {
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
         clusterMonitor.startReconciling(driver);
@@ -184,7 +195,7 @@ public class ClusterMonitorTest {
 
         clusterState.addTask(taskInfo1);
         clusterState.addTask(taskInfo2);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
         clusterMonitor.startReconciling(driver);
@@ -206,13 +217,12 @@ public class ClusterMonitorTest {
         TaskInfo taskInfo1 = createTaskInfo(SOME_TASK_ID_1, SOME_EXECUTOR_ID, SOME_SLAVE_ID);
 
         clusterState.addTask(taskInfo1);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
         clusterMonitor.startReconciling(driver);
 
-        verify(reconcileScheduleMock, times(1)).schedule(any(TimerTask.class),
-            eq(configuration.getReconcilationTimeoutMillis()));
+        verify(reconcileScheduleMock, times(1)).schedule(any(TimerTask.class), eq(1));
     }
 
     @Test
@@ -223,7 +233,7 @@ public class ClusterMonitorTest {
 
         clusterState.addTask(taskInfo1);
         clusterState.addTask(taskInfo2);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
         clusterMonitor.startReconciling(driver);
@@ -259,7 +269,7 @@ public class ClusterMonitorTest {
 
         clusterState.addTask(taskInfo1);
         clusterState.addTask(taskInfo2);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
         clusterMonitor.startReconciling(driver);
@@ -307,24 +317,23 @@ public class ClusterMonitorTest {
     }
 
     @Test
-    public void testStartReconciling_withAllPersistedTasksGetReconciledAfterSomeRetriesLater_shouldFinishReconciliation()
-        throws Exception {
+    public void testStartReconciling_withAllPersistedTasksGetReconciledAfterSomeRetriesLater_shouldFinishReconciliation() throws Exception {
         TaskInfo taskInfo1 = createTaskInfo(SOME_TASK_ID_1, SOME_EXECUTOR_ID, SOME_SLAVE_ID);
         TaskInfo taskInfo2 = createTaskInfo(SOME_TASK_ID_2, SOME_EXECUTOR_ID, SOME_SLAVE_ID);
-        TaskStatus taskStatus1 = createTaskStatus(TASK_RUNNING, SOME_TASK_ID_1, SOME_SLAVE_ID);
-        TaskStatus taskStatus2 = createTaskStatus(TASK_RUNNING, SOME_TASK_ID_2, SOME_SLAVE_ID);
 
-        clusterState.addTask(taskInfo1);
-        clusterState.addTask(taskInfo2);
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        when(clusterState.getTaskList()).thenReturn(asList(taskInfo1, taskInfo2));
+        when(clusterState.getStatus(taskInfo1.getTaskId())).thenReturn()
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
+        clusterMonitor.afterPropertiesSet();
+
         clusterMonitor.reconcileSchedule = reconcileScheduleMock;
 
+        when(clusterState.getTaskIdList()).thenReturn(asList(taskInfo1.getTaskId(), taskInfo2.getTaskId()));
         clusterMonitor.startReconciling(driver);
-        clusterMonitor.update(null, taskStatus1); // simulate a status update
+        clusterMonitor.update(null, createTaskStatus(TASK_RUNNING, SOME_TASK_ID_1, SOME_SLAVE_ID)); // simulate a status update
 
         // manually call the timer task
-        verify(reconcileScheduleMock, times(1)).schedule(timerTaskArgumentCaptor.capture(),
-            anyInt());
+        verify(reconcileScheduleMock).schedule(timerTaskArgumentCaptor.capture(), anyInt());
         reset(driver);
         reset(reconcileScheduleMock);
         timerTaskArgumentCaptor.getValue().run();
@@ -341,7 +350,7 @@ public class ClusterMonitorTest {
             containsInAnyOrder(SOME_TASK_ID_2));
 
 
-        clusterMonitor.update(null, taskStatus2); // simulate a status update
+        clusterMonitor.update(null, createTaskStatus(TASK_RUNNING, SOME_TASK_ID_2, SOME_SLAVE_ID)); // simulate a status update
 
         verify(reconcileScheduleMock, times(1)).schedule(timerTaskArgumentCaptor.capture(),
             anyInt());
@@ -363,7 +372,7 @@ public class ClusterMonitorTest {
         TaskInfo taskInfo1 = createTaskInfo(SOME_TASK_ID_1, SOME_EXECUTOR_ID, SOME_SLAVE_ID);
         clusterState.addTask(taskInfo1);
 
-        clusterMonitor = new ClusterMonitor(configuration, clusterState, liveState);
+        clusterMonitor = new ClusterMonitor();
         assertEquals(ExecutionPhase.RECONCILING_TASKS, clusterMonitor.getExecutionPhase());
 
         clusterMonitor.stopReconciling();

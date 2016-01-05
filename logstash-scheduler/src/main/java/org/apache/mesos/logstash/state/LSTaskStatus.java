@@ -24,7 +24,8 @@ public class LSTaskStatus {
     private final TaskInfo taskInfo;
 
     private final StatePath statePath;
-    public LSTaskStatus(SerializableState state, FrameworkID frameworkID, TaskInfo taskInfo) {
+
+    public LSTaskStatus(SerializableState state, FrameworkID frameworkID, TaskInfo taskInfo, StatePath statePath) {
         if (state == null) {
             throw new InvalidParameterException("State cannot be null");
         } else if (frameworkID == null || frameworkID.getValue().isEmpty()) {
@@ -33,7 +34,7 @@ public class LSTaskStatus {
         this.state = state;
         this.frameworkID = frameworkID;
         this.taskInfo = taskInfo;
-        statePath = new StatePath(state);
+        this.statePath = statePath;
     }
 
     public void setConfigurationFingerprint(String fingerprint) {

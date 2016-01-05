@@ -4,6 +4,7 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.SlaveID;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.apache.mesos.logstash.scheduler.Task;
+import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,14 +17,12 @@ import static java.util.stream.Collectors.toSet;
  * Represents the scheduler's live state
  * Is used to show live data in the UI.
  */
+@Component
 public class LiveState {
 
     private final Map<SlaveID, Task> tasks;
 
-    private final Map<SlaveID, String> hostNames;
-
     public LiveState() {
-        hostNames = Collections.synchronizedMap(new HashMap<SlaveID, String>());
         tasks = Collections.synchronizedMap(new HashMap<>());
     }
 
