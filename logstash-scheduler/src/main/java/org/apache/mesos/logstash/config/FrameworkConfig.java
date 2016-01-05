@@ -44,15 +44,6 @@ public class FrameworkConfig {
         this.frameworkName = frameworkName;
     }
 
-
-    public int getWebserverPort() {
-        return webserverPort;
-    }
-
-    public void setWebserverPort(int webserverPort) {
-        this.webserverPort = webserverPort;
-    }
-
     public double getFailoverTimeout() {
         return failoverTimeout;
     }

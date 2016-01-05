@@ -46,12 +46,6 @@ public class Application {
         app.run(args);
     }
 
-    @Bean
-    public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
-        return new JettyEmbeddedServletContainerFactory(
-            frameworkConfig.getWebserverPort());
-    }
-
     private void checkSystemProperties(String zkUrl) {
         if (StringUtils.isEmpty(zkUrl)) {
             System.out.println(

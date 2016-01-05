@@ -52,8 +52,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     private SchedulerDriver driver;
 
-    private Observable statusUpdateWatchers = new StatusUpdateObservable();
-
     @Inject
     MesosSchedulerDriverFactory mesosSchedulerDriverFactory;
 
@@ -68,24 +66,13 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @PostConstruct
     public void start() {
-        String webUiURL = createWebuiUrl(frameworkConfig.getWebserverPort());
-
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
             .setUser(logstashConfig.getUser())
             .setRole(logstashConfig.getRole())
             .setCheckpoint(true)
-            .setFailoverTimeout(frameworkConfig.getFailoverTimeout());
-
-        if (webUiURL != null) {
-            frameworkBuilder.setWebuiUrl(createWebuiUrl(frameworkConfig.getWebserverPort()));
-        }
-
-        FrameworkID frameworkID = frameworkState.getFrameworkID();
-        if (!StringUtils.isEmpty(frameworkID.getValue())) {
-            LOGGER.info("Found previous framework id: {}", frameworkID);
-            frameworkBuilder.setId(frameworkID);
-        }
+            .setFailoverTimeout(frameworkConfig.getFailoverTimeout())
+            .setId(frameworkState.getFrameworkID());
 
         LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
