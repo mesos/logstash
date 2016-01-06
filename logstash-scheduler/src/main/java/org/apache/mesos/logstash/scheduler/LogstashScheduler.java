@@ -35,9 +35,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private final Collection<FrameworkMessageListener> listeners = synchronizedCollection(new ArrayList<>());
 
     @Inject
-    SerializableState serializableState;
-
-    @Inject
     Features features;
     @Inject
     FrameworkConfig frameworkConfig;
