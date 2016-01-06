@@ -148,7 +148,7 @@ public class DeploymentSystemTest {
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback());
         final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(2, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
             final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
