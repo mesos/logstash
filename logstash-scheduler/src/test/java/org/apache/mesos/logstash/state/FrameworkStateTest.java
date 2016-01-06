@@ -2,6 +2,10 @@ package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.Protos;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
 
@@ -13,11 +17,15 @@ import static org.mockito.Mockito.*;
 /**
  * Tests
  */
+@RunWith(MockitoJUnitRunner.class)
 public class FrameworkStateTest {
 
     public static final Protos.FrameworkID FRAMEWORK_ID = Protos.FrameworkID.newBuilder().setValue("FrameworkID").build();
-    public final SerializableState state = mock(SerializableState.class);
-    private final FrameworkState frameworkState = new FrameworkState();
+    @Mock
+    SerializableState state;
+
+    @InjectMocks
+    FrameworkState frameworkState = new FrameworkState();
 
     @Test
     public void testSetFrameworkID() throws IOException {

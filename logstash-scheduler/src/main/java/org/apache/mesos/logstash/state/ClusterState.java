@@ -49,7 +49,7 @@ public class ClusterState {
      */
     public LSTaskStatus getStatus(TaskID taskID) throws InvalidParameterException {
         TaskInfo taskInfo = getTask(taskID);
-        return new LSTaskStatus(state, frameworkState.getFrameworkID(), taskInfo, statePath);
+        return new LSTaskStatus(state, frameworkState.getFrameworkID(), taskInfo);
     }
 
     public void addTask(TaskInfo taskInfo) {

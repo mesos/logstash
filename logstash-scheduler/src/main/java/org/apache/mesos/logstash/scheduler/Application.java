@@ -68,11 +68,6 @@ public class Application {
         return mesosZKFormatter.format(zkUrl);
     }
 
-    @Bean(initMethod = "start", destroyMethod = "stop")
-    public SchedulerDriver driver(LogstashScheduler scheduler, Protos.FrameworkInfo framework, String master) {
-        return new MesosSchedulerDriver(scheduler, framework, master);
-    }
-
     @Bean
     public State zkState(FrameworkConfig frameworkConfig) {
         String frameworkName = frameworkConfig.getFrameworkName();

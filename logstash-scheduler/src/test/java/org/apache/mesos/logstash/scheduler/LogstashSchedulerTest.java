@@ -4,7 +4,7 @@ import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.FrameworkState;
-import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.SerializableState;
 import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,9 +13,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import javax.inject.Inject;
-import java.net.InetAddress;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -39,7 +36,11 @@ public class LogstashSchedulerTest {
     @Mock
     ConfigManager configManager;
 
-    FrameworkState frameworkState = new FrameworkState();
+    @Mock
+    SerializableState serializableState;
+
+    @Mock
+    FrameworkState frameworkState;
 
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
@@ -47,7 +48,7 @@ public class LogstashSchedulerTest {
     LogstashScheduler scheduler;
 
     @Before
-    public void setup(){
+    public void setup() throws Exception {
         scheduler.frameworkConfig = frameworkConfig;
         scheduler.logstashConfig = logstashConfig;
         scheduler.features = features;
@@ -59,11 +60,12 @@ public class LogstashSchedulerTest {
     public void hasInjected() throws Exception {
         assertNotNull(configManager);
         assertSame(configManager, scheduler.configManager);
-
     }
 
     @Test
     public void onStartShouldCreateAndStartFramework() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
+
         scheduler.start();
 
         verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
@@ -81,27 +83,29 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStartShouldCreateFramework_withNoPersistedFrameworkID() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId(""));
         scheduler.start();
 
         verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getId().getValue(), "");
+        assertEquals("", frameworkInfo.getId().getValue());
     }
 
     @Test
     public void onStartShouldCreateFramework_withPersistedFrameworkID() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
 
         verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getId().getValue(), "FOO");
+        assertEquals("test", frameworkInfo.getId().getValue());
     }
 
     @Test
     public void onStopShouldDeRegisterConfigManagerOnConfigUpdate() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
         scheduler.stop();
 
@@ -111,6 +115,7 @@ public class LogstashSchedulerTest {
     @Test
     public void onStopShouldWithFailoverIfConfiguredAsFailoverEnabled() throws Exception {
         features.setFailover(true);
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
         scheduler.stop();
 
@@ -119,7 +124,7 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldStop() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         features.setFailover(false);
         scheduler.start();
         scheduler.stop();
@@ -129,12 +134,12 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldRemovePersistedFrameworkID() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
         features.setFailover(false);
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId(""));
         scheduler.start();
         scheduler.stop();
 
-        assertEquals(frameworkState.getFrameworkID().getValue(), "");
+        assertEquals("", frameworkState.getFrameworkID().getValue());
     }
 
 
