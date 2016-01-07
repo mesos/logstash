@@ -27,6 +27,7 @@ public class Configuration {
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
+    private boolean useIpAddress = false;
     private Optional<String> elasticsearchDomainAndPort = Optional.empty();
 
     public void setVolumeString(String volumeString) {
@@ -186,4 +187,12 @@ public class Configuration {
     public void setElasticsearchDomainAndPort(Optional<String> elasticsearchDomainAndPort) {
         this.elasticsearchDomainAndPort = elasticsearchDomainAndPort;
     }
+
+    public boolean isUseIpAddress() {
+        return useIpAddress;
+    }
+    public void setUseIpAddress(boolean useIpAddress) {
+        this.useIpAddress = useIpAddress;
+    }
+
 }

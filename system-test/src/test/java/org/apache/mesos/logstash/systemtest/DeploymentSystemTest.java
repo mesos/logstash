@@ -39,8 +39,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 /**
@@ -86,6 +84,16 @@ public class DeploymentSystemTest {
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        cluster.addAndStartContainer(container);
+
+        waitForFramework();
+    }
+
+    @Test
+    public void testSysLogDeployment() throws JsonParseException, UnirestException, JsonMappingException {
+        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
+        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        container.enableSyslog();
         cluster.addAndStartContainer(container);
 
         waitForFramework();

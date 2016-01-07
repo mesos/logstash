@@ -113,4 +113,9 @@ public class LogstashSystemProperties {
     public boolean isDisableFailover() {
         return getBoolean("mesos.logstash.disableFailover", false);
     }
+
+    public boolean isUseIpAddress() {
+        return getBoolean("mesos.logstash.useIpAddress", false);
+    }
+
 }

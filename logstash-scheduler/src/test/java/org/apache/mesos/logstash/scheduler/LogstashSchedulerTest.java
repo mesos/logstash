@@ -65,15 +65,15 @@ public class LogstashSchedulerTest {
         scheduler.start();
 
         verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+                frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getName(), configuration.getFrameworkName());
         assertEquals(frameworkInfo.getUser(), configuration.getLogStashUser());
         assertEquals(frameworkInfo.getRole(), configuration.getLogStashRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
-        assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) configuration.getFailoverTimeout());
-        assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + configuration.getWebServerPort());
+        assertEquals((int) frameworkInfo.getFailoverTimeout(), (int) configuration.getFailoverTimeout());
+        assertEquals("http://" + InetAddress.getLocalHost().getHostName() + ":" + configuration.getWebServerPort(), frameworkInfo.getWebuiUrl());
         assertEquals(frameworkInfo.getId().getValue(), configuration.getFrameworkId().getValue());
 
         verify(driver, times(1)).start();

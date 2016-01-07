@@ -65,6 +65,7 @@ public class Application {
         conf.setZkTimout(logstashSystemProperties.getZkTimeout());
         conf.setWebServerPort(logstashSystemProperties.getWebServerPort());
         conf.setElasticsearchDomainAndPort(logstashSystemProperties.getElasticsearchDomainAndPort());
+        conf.setUseIpAddress( logstashSystemProperties.isUseIpAddress() );
 
         return conf;
     }

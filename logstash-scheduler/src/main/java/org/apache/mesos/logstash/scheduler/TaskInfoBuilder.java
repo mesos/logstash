@@ -34,9 +34,11 @@ public class TaskInfoBuilder {
             .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
         if (features.isSyslog()) {
+            // TODO: should we ensure port 514 is in the offer
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
         }
         if (features.isCollectd()) {
+            // TODO: should we ensure port 5000 is in the offer
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"));
         }
 
