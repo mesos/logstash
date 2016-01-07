@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -71,8 +72,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     }
 
 
-
-
     @PostConstruct
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
@@ -87,7 +86,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             .setFailoverTimeout(configuration.getFailoverTimeout());
 
         if (webUiURL != null) {
-            frameworkBuilder.setWebuiUrl(createWebuiUrl(configuration.getWebServerPort()));
+            frameworkBuilder.setWebuiUrl(webUiURL);
         }
 
         FrameworkID frameworkID = configuration.getFrameworkId();
@@ -101,7 +100,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
             configuration.getZookeeperUrl());
 
-        driver.start();
+        Status status = driver.start();
+
+        LOGGER.info("Driver is started: {}", status);
+
     }
 
 
@@ -353,8 +355,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     private String createWebuiUrl(int webServerPort) {
         String webUiUrl = null;
         try {
-            String hostName = InetAddress.getLocalHost().getHostName();
-            webUiUrl = "http:\\/\\/" + hostName + ":" + webServerPort;
+            InetAddress host = InetAddress.getLocalHost();
+            InetSocketAddress address = new InetSocketAddress( host, webServerPort);
+            String webHost = configuration.isUseIpAddress() ? address.getAddress().getHostAddress() : address.getAddress().getHostName();
+            webUiUrl = "http://" + webHost + ":" + address.getPort();
         } catch (UnknownHostException e) {
             LOGGER.warn("Can not determine host name", e);
         }
