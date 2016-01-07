@@ -2,28 +2,30 @@ package org.apache.mesos.logstash.scheduler;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
-import org.apache.mesos.logstash.config.Configuration;
+import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
+import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
+@Component
 public class TaskInfoBuilder {
 
-    private final Configuration configuration;
-    private final Clock clock;
-    private final Features features;
-
-    public TaskInfoBuilder(Configuration configuration, Features features) {
-        this.configuration = configuration;
-        this.features = features;
-        this.clock = new Clock();
-    }
+    @Inject
+    private Clock clock;
+    @Inject
+    private Features features;
+    @Inject
+    private ExecutorConfig executorConfig;
+    @Inject
+    private LogstashConfig logstashConfig;
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
@@ -42,11 +44,10 @@ public class TaskInfoBuilder {
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
             .setType(Protos.ContainerInfo.Type.DOCKER)
-            .addAllVolumes(getVolumes())
             .setDocker(dockerExecutor.build());
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
-            configuration);
+                executorConfig, logstashConfig);
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
             .setName(LogstashConstants.NODE_NAME + " executor")
@@ -69,7 +70,7 @@ public class TaskInfoBuilder {
             );
         }
         //TODO: repeat for collectd
-        configuration.getElasticsearchDomainAndPort().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
+        logstashConfig.getElasticsearchUrl().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
         LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
         return Protos.TaskInfo.newBuilder()
@@ -82,31 +83,16 @@ public class TaskInfoBuilder {
             .build();
     }
 
-    private List<Protos.Volume> getVolumes() {
-        return configuration.getVolumes().stream().map(s ->
-                        Protos.Volume.newBuilder()
-                                .setHostPath(s)
-                                .setContainerPath(generateVolumeContainerPath(s))
-                                .setMode(Protos.Volume.Mode.RO)
-                                .build()
-        ).collect(Collectors.toList());
-    }
-
-    private static String generateVolumeContainerPath(String hostPath) {
-        return Paths.get(LogstashConstants.VOLUME_MOUNT_DIR, hostPath).toString();
-    }
-
-
     public List<Protos.Resource> getResourcesList() {
 
-        int memNeeded = configuration.getExecutorHeapSize() + configuration.getLogstashHeapSize() + configuration.getExecutorOverheadMem();
+        int memNeeded = executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem();
 
         return Arrays.asList(
             Protos.Resource.newBuilder()
                 .setName("cpus")
                 .setType(Protos.Value.Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder()
-                    .setValue(configuration.getExecutorCpus()).build())
+                    .setValue(executorConfig.getCpus()).build())
                 .build(),
             Protos.Resource.newBuilder()
                 .setName("mem")

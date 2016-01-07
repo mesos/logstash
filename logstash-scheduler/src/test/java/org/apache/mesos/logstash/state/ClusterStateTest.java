@@ -22,10 +22,12 @@ import static org.mockito.Mockito.*;
 public class ClusterStateTest {
     private SerializableState state = mock(SerializableState.class);
     private FrameworkState frameworkState = mock(FrameworkState.class);
-    private ClusterState clusterState = new ClusterState(state, frameworkState);
+    private ClusterState clusterState = new ClusterState();
 
     @Before
     public void before() throws IOException {
+        clusterState.state = state;
+        clusterState.frameworkState = frameworkState;
         Protos.FrameworkID frameworkID = Protos.FrameworkID.newBuilder().setValue("FrameworkID").build();
         when(frameworkState.getFrameworkID()).thenReturn(frameworkID);
         when(state.get(anyString())).thenReturn(new ArrayList<Protos.TaskInfo>());
