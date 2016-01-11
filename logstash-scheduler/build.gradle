@@ -40,6 +40,8 @@ dependencies {
     compile "org.webjars.bower:stomp-websocket:$stompWebsocketVer"
     compile "org.webjars:sockjs-client:$sockjsClientVer"
     compile "org.webjars:highcharts:$highchartsVer"
+
+    testCompile("org.springframework:spring-test:4.1.7.RELEASE")
 }
 
 jar {

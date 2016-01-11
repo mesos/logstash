@@ -6,9 +6,11 @@ import org.apache.mesos.logstash.state.FrameworkState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -18,19 +20,14 @@ import java.util.function.Consumer;
 public class ConfigManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigManager.class);
 
-    private final Map<String, LogstashProtos.LogstashConfig> configCache;
+    private final Map<String, LogstashProtos.LogstashConfig> configCache = Collections.synchronizedMap(new HashMap<>());
+
+    @Inject
     private FrameworkState frameworkState;
 
-    private boolean isRunning;
+    private boolean isRunning = false;
 
     private Consumer<List<LogstashProtos.LogstashConfig>> onConfigUpdate;
-
-    @Autowired
-    public ConfigManager(Configuration configuration) {
-        this.frameworkState = configuration.getFrameworkState();
-        this.isRunning = false;
-        configCache = Collections.synchronizedMap(new HashMap<>());
-    }
 
     @PostConstruct
     public void start()

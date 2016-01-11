@@ -4,6 +4,10 @@ import org.apache.mesos.state.State;
 import org.apache.mesos.state.Variable;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,20 +26,21 @@ import static org.mockito.Mockito.*;
  * Tests
  */
 @SuppressWarnings({"PMD.TooManyMethods"})
+@RunWith(MockitoJUnitRunner.class)
 public class SerializableZookeeperStateTest {
     public static final String SERIALIZABLE_OBJECT = "Serializable object";
-    private State state;
-    private Future<Variable> future;
-    private SerializableState serializableState;
-    private Variable variable;
+    @Mock
+    State state;
+    @Mock
+    Variable variable = mock(Variable.class);
+
+    @InjectMocks
+    SerializableState serializableState = new SerializableZookeeperState();
 
     @Before
     public void before() throws IOException {
-        state = mock(State.class);
-        variable = mock(Variable.class);
         when(variable.value()).thenReturn(writeVariable(SERIALIZABLE_OBJECT));
-        future = CompletableFuture.completedFuture(variable);
-        serializableState = new SerializableZookeeperState(state);
+        Future<Variable> future = CompletableFuture.completedFuture(variable);
         when(state.fetch(anyString())).thenReturn(future);
         when(state.store(any(Variable.class))).thenReturn(future);
     }
@@ -117,8 +122,7 @@ public class SerializableZookeeperStateTest {
     @Test(expected = InvalidParameterException.class)
     public void shouldExceptionIfKeyDoesntExist() throws IOException {
         when(variable.value()).thenReturn("".getBytes(Charset.forName("UTF-8")));
-        future = CompletableFuture.completedFuture(variable);
-        when(state.fetch(anyString())).thenReturn(future);
+        when(state.fetch(anyString())).thenReturn(CompletableFuture.completedFuture(variable));
         serializableState.delete("test");
     }
 
