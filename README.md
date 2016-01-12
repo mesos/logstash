@@ -20,6 +20,7 @@ but we believe that most clusters will gain high allocation (TODO why?).
 
 # Running
 
+
 ## Requirements
 
 * A Mesos cluster at version 0.22.1 or above.
@@ -45,11 +46,64 @@ but we believe that most clusters will gain high allocation (TODO why?).
   To build the latest version, see [Building the Docker images](#building).
 
 
-## Running directly on a native Mesos cluster
+## Running directly
 
-TODO
+After satisfying the above requirements,
+start the Logstash framework by starting a Docker container from your `mesos/logstash-scheduler` image,
+like this:
 
-When running the scheduler directly (i.e from the command line or as a marathon app) you can use the corresponding java system properties.
+```bash
+> docker run mesos/logstash-scheduler \
+    --zk-url=zk://123.0.0.12:5181/logstash \
+    --zk-timeout=20000 \
+    --framework-name=logstash \
+    --webserver-port=10000 \
+    --failover-timeout=60 \
+    --role='*' \
+    --user=root \
+    --logstash.heap-size=64 \
+    --logstash.elasticsearch-url=elasticsearch.service.consul:1234 \
+    --executor.cpus=0.5 \
+    --executor.heap-size=128 \
+    --enable.failover=false \
+    --enable.collectd=true \
+    --enable.syslog=true \
+    --enable.file=true \
+    --file.path='/var/log/*,/home/jhf/example.log'
+```
+
+To reconfigure the Logstash framework, you must tear it down and start a new one.
+
+We support providing configuration options with command-line arguments and environment variables.
+This means the following two `docker` commands are equivalent:
+
+```bash
+# Using command-line arguments
+docker run mesos/logstash-scheduler --zk-url=zk://123.0.0.12:5181/logstash
+
+# Using environment variables
+docker run -e ZK_URL=zk://123.0.0.12:5181/logstash mesos/logstash-scheduler
+```
+
+Here is the full list of configuration options:
+
+| Command-line argument            | Environment variable           | Default    | What it does                                                                                                               |
+| -------------------------------- | ------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `--zk-url=U`                     | `ZK_URL=U`                     | Required   | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
+| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`    | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
+| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash` | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
+| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
+| `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
+| `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
+| `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
+| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U` FIXME this is not a URL!    |
+| `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
+| `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
+| `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | `true`     | If `F` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F`   |
+| `--enable.collectd=C`            | `ENABLE_COLLECTD=C`            | `false`    | If `C` is `true`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                           |
+| `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | `false`    | If `S` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                  |
+| `--enable.file=F`                | `ENABLE_FILE=F`                | `false`    | If `F` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                     |
+| `--file.path=P`                  | `FILE_PATH=P`                  | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
 ## Running as Marathon app
@@ -57,7 +111,7 @@ When running the scheduler directly (i.e from the command line or as a marathon 
 To run the logstash framework as a Marathon app use the following app template (save e.g. as logstash.json):
 Update the JAVA_OPTS attribute with your Zookeeper servers.
 
-```
+```json
 {
   "id": "/logstash",
   "cpus": 1,
@@ -90,17 +144,17 @@ This shows how the DCOS parameters are translated to system properties.
 To run the logstash framework as a DCOS app:
 
 Add our logstash repository to DCOS:
-```
+```bash
 dcos config append package.sources "https://github.com/triforkse/universe/archive/version-1.x.zip"
 ```
 
 update DCOS:
-```
+```bash
 dcos package update
 ```
 
 and install the package
-```
+```bash
 dcos package install --options=logstash-options.json logstash
 ```
 
@@ -115,66 +169,6 @@ Note: **Uninstalling the logstash DCOS package will shutdown the framework! See 
 
 When reinstalling, you must manually go into your zookeeper ui and remove the path `/logstash/frameworkId`.
 This is so that the reinstalled app will be able to register without losing the logstash docker and slave configurations.
-
-
-# Configuration
-
-The Logstash framework is configured at the time that the scheduler is started.
-To reconfigure the Logstash framework, you must tear it down and start a new one.
-
-Each configuration option can be passed in a large number of ways:
-
-1. Command-line arguments, e.g. `java -jar logstash-mesos-scheduler.jar --logstash.heap-size=64`
-2. Environment variables, e.g. `LOGSTASH_HEAP_SIZE=64 java -jar logstash-mesos-scheduler.jar`
-3. A properties file, e.g. `echo 'logstash.heap-size=64' > ./application.properties && java -jar logstash-mesos-scheduler.jar` 
-4. ...
-
-| Command-line argument            | Environment variable           | Default    | What it does                                                                                                               |
-| -------------------------------- | ------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `--zk-url=U`                     | `ZK_URL=U`                     | Required   | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
-| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`    | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
-| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash` | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
-| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
-| `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
-| `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
-| `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
-| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U` FIXME this is not a URL!    |
-| `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
-| `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
-| `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | `true`     | If `F` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F`   |
-| `--enable.collectd=C`            | `ENABLE_COLLECTD=C`            | `false`    | If `C` is `true`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                           |
-| `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | `false`    | If `S` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                  |
-| `--enable.file=F`                | `ENABLE_FILE=F`                | `false`    | If `F` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                     |
-| `--file.path=P`                  | `FILE_PATH=P`                  | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
-
-Here is an example configuration:
-
-```
-> java -jar logstash-mesos-scheduler.jar \
-    --zk-url=zk://123.0.0.12:5181/logstash \
-    --zk-timeout=20000 \
-    --framework-name=logstash \
-    --webserver-port=10000 \
-    --failover-timeout=60 \
-    --role='*' \
-    --user=root \
-    --logstash.heap-size=64 \
-    --logstash.elasticsearch-url=elasticsearch.service.consul:1234 \
-    --executor.cpus=0.5 \
-    --executor.heap-size=128 \
-    --enable.failover=false \
-    --enable.collectd=true \
-    --enable.syslog=true \
-    --enable.file=true \
-    --file.path='/var/log/*,/home/jhf/example.log'
-```
-
-Typically, you will launch the Logstash scheduler via the Docker image.
-You can pass the same arguments above to your `docker run` command:
-
-```
-> docker run mesos/logstash-scheduler --zk-url=zk://123.0.0.12:5181/logstash --zk-timeout=20000 ...
-```
 
 
 # HTTP API
@@ -228,7 +222,7 @@ To build mesos-logstash, first install these dependencies:
 
 Then run this command from this directory:
 
-```
+```bash
 ./gradlew --info clean compileJava
 ```
 
@@ -251,7 +245,7 @@ To run the tests (including system tests) you will also need:
       For example, if you are using `docker-machine`, and your machine is called `dev`,
       you can run in bash:
       
-      ```
+      ```bash
       eval $(docker-machine env dev)
       ```
 
@@ -261,7 +255,7 @@ To run the tests (including system tests) you will also need:
 
       This command:
       
-      ```
+      ```bash
       sudo route -n add 172.17.0.0/16 $(docker-machine ip dev)
       ```
       
@@ -270,7 +264,7 @@ To run the tests (including system tests) you will also need:
 
 Then, to run the all tests:
 
-```
+```bash
 ./gradlew -a --info build
 ```
 
