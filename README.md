@@ -156,7 +156,10 @@ Note: Currently there is no indication whether you monitoring file from the slav
 
 # Configuration
 
-The Logstash framework is configured at the time that the scheduler is started. Each configuration option can be passed in a large number of ways:
+The Logstash framework is configured at the time that the scheduler is started.
+To reconfigure the Logstash framework, you must tear it down and start a new one.
+
+Each configuration option can be passed in a large number of ways:
 
 1. Command-line arguments, e.g. `java -jar logstash-mesos-scheduler.jar --logstash.heap-size=64`
 2. Environment variables, e.g. `LOGSTASH_HEAP_SIZE=64 java -jar logstash-mesos-scheduler.jar`
@@ -202,6 +205,13 @@ Here is an example configuration:
     --enable.syslog=true \
     --enable.file=true \
     --file.path='/var/log/*,/home/jhf/example.log'
+```
+
+Typically, you will launch the Logstash scheduler via the Docker image.
+You can pass the same arguments above to your `docker run` command:
+
+```
+> docker run mesos/logstash-scheduler --zk-url=zk://123.0.0.12:5181/logstash --zk-timeout=20000 ...
 ```
 
 
