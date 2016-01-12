@@ -117,43 +117,6 @@ When reinstalling, you must manually go into your zookeeper ui and remove the pa
 This is so that the reinstalled app will be able to register without losing the logstash docker and slave configurations.
 
 
-## <a name="gui"></a> GUI
-
-The GUI allows you to monitor the health of the cluster, see what is currently streaming and which
-nodes have executors deployed.
-
-The GUI is available whenever the scheduler is running. It can be accessed using HTTP through port `9092` on the
-mesos slave where the scheduler is running.
-
-### Dashboard
-
-![Dashboard](docs/screenshot_dashboard.png)
-
-The `Running Logstash Executors` shows the number of slaves where the framework (executors) is running on.
-Usually that should match your number of slaves.
-
-The `Observing Docker Containers` shows the number of docker containers logstash is actually observing log files from.
-E.g. you've configured a docker configuration for two frameworks. And these framework are running let's say 4 and 5 docker containers 
-somewhere in the cluster then 4+5=9 observing docker containers should be displayed.
- 
-### Nodes
-
-![Nodes](docs/screenshot_nodes.png)
-
-Here you see some detailed information about the slaves where the logstash framework is running on.
-Slaves hostnames and some Mesos specfic information like TaskID and ExecutorID are shown.
-
-Further you see all docker running containers discovered by the logstash framework and their image names.
-That doesn't mean that logstash is currently observing log files from each docker container shown. 
-Whether the logstash framework is observing log files from within these containers is indicated by a 
-green bubble (see at the screenshot above). A gray bubble means that no files are monitored from within the container.
-
-The status at the top right corner gives you a hint whether your logstash configuration could be successfully applied. 
-If it's not `healthy` you should test your logstash configuration. 
-
-Note: Currently there is no indication whether you monitoring file from the slave itself.     
-
-
 # Configuration
 
 The Logstash framework is configured at the time that the scheduler is started.
@@ -171,7 +134,6 @@ Each configuration option can be passed in a large number of ways:
 | `--zk-url=U`                     | `ZK_URL=U`                     | Required   | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
 | `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`    | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
 | `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash` | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
-| `--webserver-port=P`             | `WEBSERVER_PORT=P`             | `9092`     | The scheduler will listen on TCP port `P` FIXME and host what on it? Not clear from code                                   |
 | `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
 | `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
 | `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
@@ -215,12 +177,9 @@ You can pass the same arguments above to your `docker run` command:
 ```
 
 
-# REST API
+# HTTP API
 
-Along with the GUI there is a RESTful API available. Currently is is only enabled if you also run the
-GUI.
-
-The available endpoints are:
+There is an HTTP API. The available endpoints are:
 
 ```
 GET /api/configs
@@ -259,7 +218,7 @@ DELETE /api/configs/{framework-name}
 Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
 
 
-# <a name="building"></a> Building the scheduler and executor Docker images
+# <a name="building"></a>Building the scheduler and executor Docker images
 
 To build mesos-logstash, first install these dependencies:
 
@@ -314,6 +273,7 @@ Then, to run the all tests:
 ./gradlew -a --info build
 ```
 
+
 # Limitations
 
 Log files will be streamed into local files within the logstash-mesos container.
@@ -322,6 +282,7 @@ which is hard to estimate beforehand, since it depends on the number of availabl
 
 The intention is to do a best guess when allocating resources from Mesos (Work in Progress).
 
+
 ## Security
 
 There is no mechanism which ensures that the logstash output might overlap with other
@@ -329,6 +290,7 @@ logstash configurations. In other words: logstash might observe one framework
 and output to the same destination it's using for another framework. 
 
 # Sponsors
+
 
 This project is sponsored by `Cisco Cloud Services`. Thank you for contributing to the Open Source
 community!
