@@ -35,13 +35,13 @@ but we believe that most clusters will gain high allocation (TODO why?).
   This is satisfied by Docker server version 1.8.0 and above.
 
 * The `mesos/logstash-scheduler` image.
-  We maintain [releases of `mesos/logstash-scheduler` on Docker Hub][https://hub.docker.com/r/mesos/logstash-scheduler/],
+  We maintain [releases of `mesos/logstash-scheduler` on Docker Hub](https://hub.docker.com/r/mesos/logstash-scheduler/),
   but they may not be up-to-date with this repository.
   To build the latest version, see [Building the Docker images](#building).
 
 * Each Docker host must have access to the `mesos/logstash-executor` image,
   at the same version as your chosen `mesos/logstash-scheduler` image.
-  We maintain [releases of `mesos/logstash-executor` on Docker Hub][https://hub.docker.com/r/mesos/logstash-executor/].
+  We maintain [releases of `mesos/logstash-executor` on Docker Hub](https://hub.docker.com/r/mesos/logstash-executor/).
   To build the latest version, see [Building the Docker images](#building).
 
 
