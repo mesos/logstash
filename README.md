@@ -6,16 +6,16 @@ it will be parsed by Logstash and sent to central log locations.
 There are many ways to log an event, such as [syslog](https://en.wikipedia.org/wiki/Syslog) or writing to a log file.
 Programs can simply log to `localhost` or a local file,
 so you do not have to configure them to talk to an external Logstash endpoint.
+This framework is suitable for non-critical logging of events which may be dropped,
+such as resource usage statistics.
+We currently advise using other systems for business-critical event logging,
+such as PCI DSS events.
 
 This framework tries to launch a Logstash process on every Mesos slave.
 Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
 and the offer has enough resources to run Logstash.
 This does not guarantee the presence of Logstash on every slave,
 but we believe that most clusters will gain high allocation (TODO why?).
-This means this framework is suitable for non-critical logging of events which may be dropped,
-such as resource usage statistics.
-We currently advise using other systems for business-critical event logging,
-such as PCI DSS events.
 
 
 # Running
