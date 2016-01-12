@@ -173,7 +173,7 @@ The Logstash framework is configured at the time that the scheduler is started. 
 | `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
 | `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
 | `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
-| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U`                             |
+| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U` FIXME this is not a URL!    |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
 | `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | `true`     | If `F` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F`   |
@@ -181,6 +181,28 @@ The Logstash framework is configured at the time that the scheduler is started. 
 | `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | `false`    | If `S` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                  |
 | `--enable.file=F`                | `ENABLE_FILE=F`                | `false`    | If `F` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                     |
 | `--file.path=P`                  | `FILE_PATH=P`                  | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
+
+Here is an example configuration:
+
+```
+> java -jar logstash-mesos-scheduler.jar \
+    --zk-url=zk://123.0.0.12:5181/logstash \
+    --zk-timeout=20000 \
+    --framework-name=logstash \
+    --webserver-port=10000 \
+    --failover-timeout=60 \
+    --role='*' \
+    --user=root \
+    --logstash.heap-size=64 \
+    --logstash.elasticsearch-url=elasticsearch.service.consul:1234 \
+    --executor.cpus=0.5 \
+    --executor.heap-size=128 \
+    --enable.failover=false \
+    --enable.collectd=true \
+    --enable.syslog=true \
+    --enable.file=true \
+    --file.path='/var/log/*,/home/jhf/example.log'
+```
 
 
 # REST API
