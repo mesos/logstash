@@ -213,26 +213,14 @@ Updates an existing framework config. Please make sure that framework-name is pr
 Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
 
 
-# <a name="building"></a>Building the scheduler and executor Docker images
+# <a name="building"></a>Building the artifacts
 
-To build mesos-logstash, first install these dependencies:
+The Logstash framework consists of two artifacts:
+the `mesos/logstash-scheduler` and `mesos/logstash-executor` images.
+To build the images, first install these dependencies:
 
-- Java Development Kit installed (Java 8)
+- Java Development Kit (Java 8)
 - bash
-
-Then run this command from this directory:
-
-```bash
-./gradlew --info clean compileJava
-```
-
-This will build the artifact: `./logstash-scheduler/build/libs/logstash-mesos-scheduler-X.Y.Z.jar`
-
-
-## Run the Tests
-
-To run the tests (including system tests) you will also need:
-
 - A Docker daemon. This can be either
 
   - locally, or
@@ -262,10 +250,24 @@ To run the tests (including system tests) you will also need:
       sets up a route that allows packets to be routed from your scheduler (running locally on your
       computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
-Then, to run the all tests:
+Then run the following command from this directory,
+which will build a Java `.jar` for the scheduler and the executor,
+wrap them in Docker images,
+and run the test suite on them:
+
 
 ```bash
-./gradlew -a --info build
+./gradlew --info clean build
+```
+
+To test you have the two images:
+
+```
+> docker images
+REPOSITORY                  TAG                        IMAGE ID            CREATED             VIRTUAL SIZE
+mesos/logstash-scheduler    latest                     3230c945e0f1        2 seconds ago       498.2 MB
+mesos/logstash-executor     latest                     cdbc9d56ef73        2 seconds ago       589.7 MB
+...
 ```
 
 
