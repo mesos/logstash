@@ -176,9 +176,11 @@ The Logstash framework is configured at the time that the scheduler is started. 
 | `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U`                             |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
-| `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | true       | If `F` is `"true"`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F` |
-| `--enable.collectd=C`            | `ENABLE_COLLECTD=C`            | false      | If `C` is `"true"`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                         |
-| `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | false      | If `S` is `"true"`, Logstash will listen for syslog events on TCP port 514 on all executors                                |
+| `--enable.failover=F`            | `ENABLE_FAILOVER=F`            | `true`     | If `F` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `F`   |
+| `--enable.collectd=C`            | `ENABLE_COLLECTD=C`            | `false`    | If `C` is `true`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                           |
+| `--enable.syslog=S`              | `ENABLE_SYSLOG=S`              | `false`    | If `S` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                  |
+| `--enable.file=F`                | `ENABLE_FILE=F`                | `false`    | If `F` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                     |
+| `--file.path=P`                  | `FILE_PATH=P`                  | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
 # REST API
