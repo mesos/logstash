@@ -17,6 +17,7 @@ message LogstashConfig {
 message LogstashConfiguration {
   optional LogstashPluginInputSyslog logstashPluginInputSyslog = 1;
   optional LogstashPluginInputCollectd logstashPluginInputCollectd = 3;
+  optional LogstashPluginInputFile logstashPluginInputFile = 4;
   optional LogstashPluginOutputElasticsearch logstashPluginOutputElasticsearch = 2;
 }
 
@@ -27,6 +28,10 @@ message LogstashPluginInputSyslog {
 
 message LogstashPluginInputCollectd {
   required uint64 port = 1;
+}
+
+message LogstashPluginInputFile {
+  repeated string path = 1;
 }
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html

@@ -5,6 +5,8 @@ import org.springframework.stereotype.Component;
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Min;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 @ConfigurationProperties(prefix = "executor")
@@ -16,6 +18,8 @@ public class ExecutorConfig {
     private int heapSize = 64;
 
     private int overheadMem = 50;
+
+    private List<String> filePath = Collections.singletonList("/var/log/messages");
 
     public double getCpus() {
         return cpus;
@@ -39,5 +43,13 @@ public class ExecutorConfig {
 
     public void setOverheadMem(int overheadMem) {
         this.overheadMem = overheadMem;
+    }
+
+    public List<String> getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(List<String> filePath) {
+        this.filePath = filePath;
     }
 }
