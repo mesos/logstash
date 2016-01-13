@@ -40,7 +40,7 @@ This framework will try to launch a logstash-process per slave.
 
 ## Requirements
 
-Mesos 0.22.1 (or compatible).
+Mesos 0.25.0
 
 ### Access to Docker Host
 
