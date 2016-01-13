@@ -1,15 +1,19 @@
 package org.apache.mesos.logstash.config;
 
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.NetworkUtils;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.SerializableState;
 
+import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class Configuration {
+
+    public static final String LOGSTASH_EXECUTOR_JAR = "logstash-mesos-executor.jar";
 
     private String zookeeperUrl = null;
     private SerializableState state = null;
@@ -26,6 +30,10 @@ public class Configuration {
     private int reconcilationTimeoutSek = 60 * 1;
     private int executorOverheadMem = 50;
     private int webServerPort = 9092;
+    private boolean frameworkUseDocker;
+    private InetSocketAddress frameworkFileServerAddress;
+    private String javaHome;
+    private Boolean isUseIpAddress = true;
 
     public void setVolumeString(String volumeString) {
         this.volumeString = volumeString;
@@ -175,5 +183,29 @@ public class Configuration {
 
     public void setWebServerPort(int webServerPort) {
         this.webServerPort = webServerPort;
+    }
+
+    public boolean isFrameworkUseDocker() {
+        return frameworkUseDocker;
+    }
+
+    public void setFrameworkFileServerAddress(InetSocketAddress frameworkFileServerAddress) {
+        this.frameworkFileServerAddress = frameworkFileServerAddress;
+    }
+
+    public String getFrameworkFileServerAddress() {
+        String result = "";
+        if (frameworkFileServerAddress != null) {
+            return new NetworkUtils().addressToString(frameworkFileServerAddress, getIsUseIpAddress());
+        }
+        return result;
+    }
+
+    public String getJavaHome() {
+        return javaHome;
+    }
+
+    public Boolean getIsUseIpAddress() {
+        return isUseIpAddress;
     }
 }

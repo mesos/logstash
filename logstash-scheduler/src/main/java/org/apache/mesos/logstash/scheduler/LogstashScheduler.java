@@ -4,6 +4,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
+import org.apache.mesos.logstash.NetworkUtils;
+import org.apache.mesos.logstash.SimpleFileServer;
 import org.apache.mesos.logstash.cluster.ClusterMonitor;
 import org.apache.mesos.logstash.cluster.ClusterMonitor.ExecutionPhase;
 import org.apache.mesos.logstash.common.LogstashProtos;
@@ -73,6 +75,12 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @PostConstruct
     public void start() {
         configManager.setOnConfigUpdate(this::updateExecutorConfig);
+
+        if (!configuration.isFrameworkUseDocker()) {
+            final SimpleFileServer simpleFileServer = new SimpleFileServer(new NetworkUtils(), Configuration.LOGSTASH_EXECUTOR_JAR);
+            simpleFileServer.run();
+            configuration.setFrameworkFileServerAddress(simpleFileServer.getAddress());
+        }
 
         String webUiURL = createWebuiUrl(configuration.getWebServerPort());
 
