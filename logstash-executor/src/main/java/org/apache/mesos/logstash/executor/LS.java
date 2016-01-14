@@ -3,9 +3,7 @@ package org.apache.mesos.logstash.executor;
 import com.google.common.collect.Sets;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -218,7 +216,7 @@ public class LS {
         if (name.length() == 0) {
             throw new RuntimeException("Name cannot be empty string");
         }
-        else if (!firstCharAllowedChars.contains(new Integer((int) name.charAt(0)))) {
+        else if (!firstCharAllowedChars.contains((int) name.charAt(0))) {
             throw new RuntimeException("Name cannot start with character: " + name.charAt(0));
         }
         else if (!allowedChars.containsAll(toCharSet(name.substring(1)))) {

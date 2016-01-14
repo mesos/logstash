@@ -42,8 +42,8 @@ public class LogstashService {
 
 
         return LS.config(
-                LS.section("input",  inputPlugins.toArray(new LS.Plugin[0])),
-                LS.section("output", outputPlugins.toArray(new LS.Plugin[0]))
+                LS.section("input",  inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
+                LS.section("output", outputPlugins.toArray(new LS.Plugin[outputPlugins.size()]))
         ).serialize();
     }
 
