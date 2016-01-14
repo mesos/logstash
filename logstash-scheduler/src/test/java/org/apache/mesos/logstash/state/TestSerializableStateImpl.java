@@ -1,5 +1,7 @@
 package org.apache.mesos.logstash.state;
 
+import org.springframework.stereotype.Component;
+
 import java.io.NotSerializableException;
 import java.security.InvalidParameterException;
 import java.util.HashMap;
@@ -9,8 +11,9 @@ import java.util.Map;
  * Dummy storage class to replace zookeeper.
  */
 @SuppressWarnings("unchecked")
+@Component
 public class TestSerializableStateImpl implements SerializableState {
-    Map<String, Object> map = new HashMap<String, Object>();
+    Map<String, Object> map = new HashMap<>();
 
     @Override
     public <T> T get(String key) throws NotSerializableException {

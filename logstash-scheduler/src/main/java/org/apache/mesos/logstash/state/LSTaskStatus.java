@@ -23,7 +23,6 @@ public class LSTaskStatus {
 
     private final TaskInfo taskInfo;
 
-    private final StatePath statePath;
     public LSTaskStatus(SerializableState state, FrameworkID frameworkID, TaskInfo taskInfo) {
         if (state == null) {
             throw new InvalidParameterException("State cannot be null");
@@ -33,14 +32,12 @@ public class LSTaskStatus {
         this.state = state;
         this.frameworkID = frameworkID;
         this.taskInfo = taskInfo;
-        statePath = new StatePath(state);
     }
 
     public void setConfigurationFingerprint(String fingerprint) {
         try {
             LOGGER.debug("Writing configuration fingerprint to zk: [" + fingerprint + "] " + taskInfo.getTaskId().getValue());
-            statePath.mkdir(getKey(FINGERPRINT_KEY));
-            state.set(getKey(FINGERPRINT_KEY), fingerprint);
+            SerializableZookeeperState.mkdirAndSet(getKey(FINGERPRINT_KEY), fingerprint, state);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to write configuration fingerprint to zookeeper", e);
         }
@@ -57,8 +54,7 @@ public class LSTaskStatus {
     public void setStatus(TaskStatus status) throws IllegalStateException {
         try {
             LOGGER.debug("Writing task status to zk: [" + status.getState() + "] " + status.getTaskId().getValue());
-            statePath.mkdir(getKey(STATE_KEY));
-            state.set(getKey(STATE_KEY), status);
+            SerializableZookeeperState.mkdirAndSet(getKey(STATE_KEY), status, state);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to write task status to zookeeper", e);
         }
