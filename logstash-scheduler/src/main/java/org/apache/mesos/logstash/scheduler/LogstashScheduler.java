@@ -38,8 +38,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     Features features;
     @Inject
     FrameworkConfig frameworkConfig;
-    @Inject
-    LogstashConfig logstashConfig;
 
     @Inject
     TaskInfoBuilder taskInfoBuilder;
@@ -62,8 +60,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
-            .setUser(logstashConfig.getUser())
-            .setRole(logstashConfig.getRole())
+            .setUser(frameworkConfig.getUser())
+            .setRole(frameworkConfig.getRole())
             .setCheckpoint(true)
             .setFailoverTimeout(frameworkConfig.getFailoverTimeout())
             .setId(frameworkState.getFrameworkID());
