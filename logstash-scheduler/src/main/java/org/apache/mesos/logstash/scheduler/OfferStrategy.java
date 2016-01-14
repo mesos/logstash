@@ -1,8 +1,8 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.commons.lang.math.LongRange;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
@@ -27,14 +27,16 @@ public class OfferStrategy {
     @Inject
     private LogstashConfig logstashConfig;
 
-    private List<Integer> neededPorts = asList(5000); // TODO: 25/11/2015 Configurable
-
     private List<OfferRule> acceptanceRules = asList(
             new OfferRule("Host already running task", this::isHostAlreadyRunningTask),
             new OfferRule("Offer did not have enough CPU resources", this::isNotEnoughCPU),
             new OfferRule("Offer did not have enough RAM resources", this::isNotEnoughRAM),
-            new OfferRule("Offer did not have ports available", this::isNotWithNeededPorts)
+            new OfferRule("Offer did not have ports available", (clusterState, offer) -> !containsTwoPorts(offer.getResourcesList()))
     );
+
+    private boolean containsTwoPorts(List<Protos.Resource> resources) {
+        return Resources.selectTwoPortsFromRange(resources).size() == 2;
+    }
 
     public OfferResult evaluate(ClusterState clusterState, Protos.Offer offer) {
         final Optional<OfferRule> decline = acceptanceRules.stream().filter(offerRule -> offerRule.rule.accepts(clusterState, offer)).limit(1).findFirst();
@@ -68,7 +70,7 @@ public class OfferStrategy {
     }
 
     private boolean isHostAlreadyRunningTask(ClusterState clusterState, Protos.Offer offer) {
-        return clusterState.getTaskList().stream().anyMatch(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()));
+        return clusterState.getTaskList().stream().anyMatch(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()) && taskInfo.getName().equals(LogstashConstants.TASK_NAME));
     }
 
     private boolean hasEnoughOfResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
@@ -89,19 +91,6 @@ public class OfferStrategy {
         return !hasEnoughOfResourceType(offer.getResourcesList(), "mem", executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem());
     }
 
-    private boolean isNotWithNeededPorts(ClusterState clusterState, Protos.Offer offer) {
-        return !neededPorts.stream()
-                .allMatch(
-                        port -> offer.getResourcesList().stream()
-                                .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
-                                .anyMatch(resource -> portIsInRanges(port, resource.getRanges()))
-                );
-
-    }
-
-    private boolean portIsInRanges(int port, Protos.Value.Ranges ranges) {
-        return ranges.getRangeList().stream().anyMatch(range -> new LongRange(range.getBegin(), range.getEnd()).containsLong(port));
-    }
     /**
      * Rule and reason container object
      */

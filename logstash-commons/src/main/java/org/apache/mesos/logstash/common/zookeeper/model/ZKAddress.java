@@ -25,7 +25,6 @@ public class ZKAddress {
     private String address;
     private String port;
     private String zkNode;
-    private Map<Integer, String> matcherMap = new HashMap<>(5);
 
     /**
      * Represents a single zookeeper address.
@@ -37,6 +36,7 @@ public class ZKAddress {
         if (!matcher.matches()) {
             throw new ZKAddressException(address);
         }
+        Map<Integer, String> matcherMap = new HashMap<>(5);
         for (int i = 0; i < matcher.groupCount() + 1; i++) {
             matcherMap.put(i, matcher.group(i));
         }

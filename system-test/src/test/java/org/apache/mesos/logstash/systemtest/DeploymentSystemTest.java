@@ -135,12 +135,11 @@ public class DeploymentSystemTest {
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, elasticsearchInstance.getIpAddress() + ":" + 9200));
-        scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
 
-        final String sysLogPort = "514";
+        final String sysLogPort = "10514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();

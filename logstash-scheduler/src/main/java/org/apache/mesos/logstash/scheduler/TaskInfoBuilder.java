@@ -1,15 +1,19 @@
 package org.apache.mesos.logstash.scheduler;
+
 import org.apache.mesos.Protos;
+import org.apache.mesos.Protos.Value.Type;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
+import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,23 +27,36 @@ public class TaskInfoBuilder {
     @Inject
     private Features features;
     @Inject
+    private FrameworkConfig frameworkConfig;
+    @Inject
     private ExecutorConfig executorConfig;
     @Inject
     private LogstashConfig logstashConfig;
 
+    @SuppressWarnings("unchecked")
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
-
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
             .newBuilder()
             .setForcePullImage(false)
             .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
             .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
+        List<Integer> blackList = new ArrayList<>();
         if (features.isSyslog()) {
-            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
+            if (frameworkConfig.getSyslogPort() != null) {
+                dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(frameworkConfig.getSyslogPort()).setContainerPort(frameworkConfig.getSyslogPort()).setProtocol("udp"));
+            } else {
+                int syslogPort = selectPortFromRange(offer.getResourcesList(), blackList);
+                dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(syslogPort).setContainerPort(syslogPort).setProtocol("udp"));
+                blackList.add(syslogPort);
+            }
         }
         if (features.isCollectd()) {
-            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"));
+            if (frameworkConfig.getCollectdPort() != null) {
+                dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(frameworkConfig.getCollectdPort()).setContainerPort(frameworkConfig.getCollectdPort()).setProtocol("udp"));
+            }
+            int syslogPort = selectPortFromRange(offer.getResourcesList(), blackList);
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(syslogPort).setContainerPort(syslogPort).setProtocol("udp"));
         }
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
@@ -91,44 +108,40 @@ public class TaskInfoBuilder {
             .build();
     }
 
-    public List<Protos.Resource> getResourcesList() {
+    public int selectPortFromRange(List<Protos.Resource> offeredResources, List<Integer> blackList) {
+        for (Protos.Resource offeredResource : offeredResources) {
+            if (offeredResource.getType().equals(Type.RANGES)) {
+                int port = (int) offeredResource.getRanges().getRange(0).getBegin();
+                if (blackList.contains(port)) {
+                    continue;
+                }
+                return port;
+            }
+        }
+        return 0;
+    }
 
+    public List<Protos.Resource> getResourcesList() {
         int memNeeded = executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem();
 
         return asList(
             Protos.Resource.newBuilder()
                 .setName("cpus")
-                .setType(Protos.Value.Type.SCALAR)
+                .setType(Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder()
                     .setValue(executorConfig.getCpus()).build())
                 .build(),
             Protos.Resource.newBuilder()
                 .setName("mem")
-                .setType(Protos.Value.Type.SCALAR)
+                .setType(Type.SCALAR)
                 .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
-                .build(),
-            Protos.Resource.newBuilder()
-                .setName("ports")
-                .setType(Protos.Value.Type.RANGES).setRanges(mapSelectedPortRanges()).build()
+                .build()
         );
-    }
-
-    private Protos.Value.Ranges.Builder mapSelectedPortRanges() {
-        Protos.Value.Ranges.Builder rangesBuilder = Protos.Value.Ranges.newBuilder();
-        if (features.isSyslog()) {
-            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514));
-        }
-        if (features.isCollectd()) {
-            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(5000).setEnd(5000));
-        }
-        return rangesBuilder;
     }
 
     private String formatTaskId(Protos.Offer offer) {
         String date = new SimpleDateFormat(LogstashConstants.TASK_DATE_FORMAT).format(clock.now());
         return LogstashConstants.FRAMEWORK_NAME + "_" + offer.getHostname() + "_" + date;
     }
-
-
 
 }

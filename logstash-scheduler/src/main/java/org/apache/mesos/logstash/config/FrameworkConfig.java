@@ -23,6 +23,10 @@ public class FrameworkConfig {
     private String role = "*";
     private String user = "root";
 
+    private Integer syslogPort;
+
+    private Integer collectdPort;
+
     public String getZkUrl() {
         return zkUrl;
     }
@@ -77,5 +81,28 @@ public class FrameworkConfig {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public Integer getCollectdPort() {
+        return collectdPort;
+    }
+
+    public void setCollectdPort(Integer collectdPort) {
+        this.collectdPort = collectdPort;
+    }
+
+    public Integer getSyslogPort() {
+        return syslogPort;
+    }
+
+    public void setSyslogPort(Integer syslogPort) {
+        this.syslogPort = syslogPort;
+    }
+
+    public int getNumberOfPorts() {
+        int numberOfPorts = 0;
+        numberOfPorts += (collectdPort != null ? 1 : 0);
+        numberOfPorts += (syslogPort != null ? 1 : 0);
+        return numberOfPorts;
     }
 }

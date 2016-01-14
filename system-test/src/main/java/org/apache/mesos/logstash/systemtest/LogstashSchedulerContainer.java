@@ -25,9 +25,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     public static final String SCHEDULER_NAME = "logstash-scheduler";
 
     private String zookeeperIpAddress;
-    private final int apiPort = 9092;
     private Optional<String> elasticsearchDomainAndPort = Optional.empty();
-    private boolean withSyslog = false;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
         super(dockerClient);
@@ -70,19 +68,19 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--failover-enabled=false",
                 elasticsearchDomainAndPort.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
-                "--logstash.heap-size=128",
-                withSyslog ? "--enable.syslog=true" : null
+                "--enable.collectd=true",
+                "--collectdPort=5000",
+                "--enable.syslog=true",
+                "--syslogPort=10541",
+                "--logstash.heap-size=128"
         ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
 
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withEnv("JAVA_OPTS=" + getJavaOpts().stream().collect(Collectors.joining(" ")))
-                .withExposedPorts(ExposedPort.tcp(apiPort))
+                .withExposedPorts(ExposedPort.tcp(9092))
                 .withCmd(cmd);
     }
 
-    public void enableSyslog() {
-        withSyslog = true;
-    }
 }
