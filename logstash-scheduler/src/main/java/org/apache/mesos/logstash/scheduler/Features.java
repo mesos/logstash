@@ -10,6 +10,7 @@ public class Features {
     private boolean failover = true;
     private boolean collectd;
     private boolean syslog;
+    private boolean file;
 
     public boolean isFailover() {
         return failover;
@@ -33,5 +34,13 @@ public class Features {
 
     public void setSyslog(boolean syslog) {
         this.syslog = syslog;
+    }
+
+    public boolean isFile() {
+        return file;
+    }
+
+    public void setFile(boolean file) {
+        this.file = file;
     }
 }

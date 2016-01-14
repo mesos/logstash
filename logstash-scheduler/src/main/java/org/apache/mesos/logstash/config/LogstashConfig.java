@@ -8,7 +8,7 @@ import java.util.Optional;
 @Component
 @ConfigurationProperties(prefix = "logstash")
 public class LogstashConfig {
-    private int heapSize = 32;
+    private int heapSize = 64;
     private Optional<String> elasticsearchUrl = Optional.empty();
     private String role = "*";
     private String user = "root";
