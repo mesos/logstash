@@ -222,6 +222,9 @@ mesos/logstash-executor     latest                     cdbc9d56ef73        2 sec
 
 # Limitations
 
+
+## Disk space limitations
+
 Log files will be streamed into local files within the `logstash-mesos` container.
 This requires disk space
 which is hard to estimate beforehand, since it depends on the number of available log files.
