@@ -101,6 +101,8 @@ Here is the full list of configuration options:
 | `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
 | `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
 | `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
+| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent     | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
+| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent     | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
 | `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
 | `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U` FIXME this is not a URL!    |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
