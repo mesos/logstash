@@ -1,35 +1,37 @@
 package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.mesos.MesosSchedulerDriver;
+import org.apache.mesos.Protos;
+import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosStateZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.parser.ZKAddressParser;
-import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.config.LogstashSystemProperties;
-import org.apache.mesos.logstash.state.LiveState;
-import org.apache.mesos.logstash.state.SerializableState;
-import org.apache.mesos.logstash.state.SerializableZookeeperState;
+import org.apache.mesos.logstash.config.FrameworkConfig;
+import org.apache.mesos.state.State;
 import org.apache.mesos.state.ZooKeeperState;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-@SpringBootApplication
+@Configuration
+@EnableAutoConfiguration
 @ComponentScan(basePackages = {"org.apache.mesos.logstash"})
 @EnableConfigurationProperties
 public class Application {
     @Inject
     Features features;
-
-    private LogstashSystemProperties logstashSystemProperties = new LogstashSystemProperties();
+    @Inject
+    FrameworkConfig frameworkConfig;
 
     public static void main(String[] args) throws IOException {
         Application app = new Application();
@@ -37,61 +39,23 @@ public class Application {
     }
 
     private void run(String[] args) {
-        LogstashSystemProperties settings = new LogstashSystemProperties();
-        checkSystemProperties(settings);
+//        checkSystemProperties(zkUrl);
 
         SpringApplication app = new SpringApplication(Application.class);
         app.setShowBanner(false);
-        app.setWebEnvironment(settings.getWebServerEnabled());
         app.run(args);
     }
 
-    @Bean
-    public Configuration getLogstashConfiguration() {
-
-        Configuration conf = new Configuration();
-
-        conf.setVolumeString(logstashSystemProperties.getVolumes());
-        conf.setState(getState(logstashSystemProperties));
-        conf.setZookeeperUrl(getMesosZKURL(logstashSystemProperties.getZookeeperServerProperty()));
-        conf.setMesosPrincipal(logstashSystemProperties.getMesosPrincipal());
-        conf.setMesosSecret(logstashSystemProperties.getMesosSecret());
-        conf.setExecutorCpus(logstashSystemProperties.getExecutorCpus());
-        conf.setExecutorHeapSize(logstashSystemProperties.getExecutorHeapSize());
-        conf.setLogstashHeapSize(logstashSystemProperties.getLogstashHeapSize());
-        conf.setFailoverTimeout(logstashSystemProperties.getFailoverTimeout());
-        conf.setDisableFailover(logstashSystemProperties.isDisableFailover());
-        conf.setFrameworkName(logstashSystemProperties.getFrameworkName());
-        conf.setLogStashRole(logstashSystemProperties.getLogstashRole());
-        conf.setLogStashUser(logstashSystemProperties.getLogstashUser());
-        conf.setZkTimout(logstashSystemProperties.getZkTimeout());
-        conf.setWebServerPort(logstashSystemProperties.getWebServerPort());
-        conf.setElasticsearchDomainAndPort(logstashSystemProperties.getElasticsearchDomainAndPort());
-
-        return conf;
-    }
-
-    @Bean
-    public LiveState getSchedulerStatus() {
-        return new LiveState();
-    }
-
-    @Bean
-    public JettyEmbeddedServletContainerFactory jettyEmbeddedServletContainerFactory() {
-        return new JettyEmbeddedServletContainerFactory(
-            logstashSystemProperties.getWebServerPort());
-    }
-
-    private void checkSystemProperties(LogstashSystemProperties settings) {
-        if (StringUtils.isEmpty(settings.getZookeeperServerProperty())) {
+    private void checkSystemProperties(String zkUrl) {
+        if (StringUtils.isEmpty(zkUrl)) {
             System.out.println(
                 "No zookeeper configuration given. Please provide \"mesos.zk\" system property.");
             System.exit(2);
         }
 
         // will throw an IllegalArgumentException if the URI is not parseable
-        getMesosZKURL(settings.getZookeeperServerProperty());
-        getMesosStateZKURL(settings.getZookeeperServerProperty());
+        getMesosZKURL(zkUrl);
+        getMesosStateZKURL(zkUrl);
     }
 
     private String getMesosStateZKURL(String zkUrl) {
@@ -104,17 +68,17 @@ public class Application {
         return mesosZKFormatter.format(zkUrl);
     }
 
-    private SerializableState getState(LogstashSystemProperties settings) {
-        String zkUrl = settings.getZookeeperServerProperty();
-        String frameworkName = settings.getFrameworkName();
-        if (!frameworkName.startsWith("/")){
+    @Bean
+    public State zkState(FrameworkConfig frameworkConfig) {
+        String frameworkName = frameworkConfig.getFrameworkName();
+        if (!frameworkName.startsWith("/")) {
             frameworkName = "/" + frameworkName; // znode must start with a slash
         }
-        org.apache.mesos.state.State state = new ZooKeeperState(
-            getMesosStateZKURL(zkUrl),
-            settings.getZkTimeout(),
-            TimeUnit.MILLISECONDS,
-            frameworkName);
-        return new SerializableZookeeperState(state);
+        return new ZooKeeperState(
+                getMesosStateZKURL(frameworkConfig.getZkUrl()),
+                frameworkConfig.getZkTimeout(),
+                TimeUnit.MILLISECONDS,
+                frameworkName);
+
     }
 }

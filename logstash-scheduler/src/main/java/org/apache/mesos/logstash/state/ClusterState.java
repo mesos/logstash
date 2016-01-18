@@ -1,9 +1,10 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.log4j.Logger;
-import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskInfo;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.security.InvalidParameterException;
@@ -17,18 +18,14 @@ import static org.apache.mesos.Protos.TaskID;
 /**
  * Model of cluster state. User is able to add, remove and monitor task status.
  */
+@Component
 public class ClusterState {
     public static final Logger LOGGER = Logger.getLogger(ClusterState.class);
     public static final String STATE_LIST = "stateList";
-    private final SerializableState state;
-    private final FrameworkState frameworkState;
-    private final StatePath statePath;
-
-    public ClusterState(SerializableState state, FrameworkState frameworkState) {
-        this.state = state;
-        this.frameworkState = frameworkState;
-        statePath = new StatePath(state);
-    }
+    @Inject
+    SerializableState state;
+    @Inject
+    FrameworkState frameworkState;
 
     /**
      * Get a list of all tasks with state
@@ -128,8 +125,7 @@ public class ClusterState {
     private void setTaskInfoList(List<TaskInfo> taskInfoList) {
         LOGGER.debug("Writing executor state list: " + logTaskList(taskInfoList));
         try {
-            statePath.mkdir(getKey());
-            state.set(getKey(), taskInfoList);
+            SerializableZookeeperState.mkdirAndSet(getKey(), taskInfoList, state);
         } catch (IOException ex) {
             LOGGER.error("Could not write list of executor states to zookeeper: ", ex);
         }

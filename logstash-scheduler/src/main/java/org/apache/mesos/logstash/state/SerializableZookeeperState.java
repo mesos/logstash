@@ -1,7 +1,9 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.mesos.state.Variable;
+import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.io.*;
 import java.security.InvalidParameterException;
 import java.util.concurrent.ExecutionException;
@@ -9,12 +11,10 @@ import java.util.concurrent.ExecutionException;
 /**
  * Writes serializable data to zookeeper
  */
+@Component
 public class SerializableZookeeperState implements SerializableState {
+    @Inject
     private org.apache.mesos.state.State zkState;
-
-    public SerializableZookeeperState(org.apache.mesos.state.State zkState) {
-        this.zkState = zkState;
-    }
 
     /**
      * Get serializable object from store
@@ -94,5 +94,42 @@ public class SerializableZookeeperState implements SerializableState {
         } catch (InterruptedException | ExecutionException e) {
             throw new IOException("Unable to delete key:" + key);
         }
+    }
+
+    /**
+     * Creates the zNode if it does not exist. Will create parent directories.
+     *
+     * @param key the zNode path
+     */
+    private static void mkdir(String key, SerializableState serializableState) throws IOException {
+        key = key.replace(" ", "");  // FIXME what the hell is this for? Surely this is buggy
+        if (key.endsWith("/") && !key.equals("/")) {
+            throw new InvalidParameterException("Trailing slash not allowed in zookeeper path");
+        }
+        String[] split = key.split("/");
+        StringBuilder builder = new StringBuilder();
+        for (String s : split) {
+            builder.append(s);
+            if (!s.isEmpty() && serializableState.get(builder.toString()) == null) {
+                serializableState.set(builder.toString(), null);
+            }
+            builder.append("/");
+        }
+    }
+
+    /**
+     *
+     * Fixes a quirk of ZooKeeper behavior.
+     * Use instead of `set` if you do not know that the node already exists.
+     *
+     * @param key
+     * @param value
+     * @param serializableState
+     * @param <T>
+     * @throws IOException
+     */
+    public static <T> void mkdirAndSet(String key, T value, SerializableState serializableState) throws IOException {
+        mkdir(key, serializableState);
+        serializableState.set(key, value);
     }
 }

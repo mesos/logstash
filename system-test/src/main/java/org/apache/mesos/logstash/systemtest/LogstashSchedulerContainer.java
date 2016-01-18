@@ -4,7 +4,7 @@ import com.containersol.minimesos.container.AbstractContainer;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.ExposedPort;
-import org.springframework.util.StringUtils;
+import org.elasticsearch.common.lang3.StringUtils;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
@@ -43,13 +43,8 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private List<String> getJavaOpts() {
         return mergeWithOptionals(
                 asList(
-                        "-Dmesos.logstash.web.port=" + apiPort,
                         "-Dmesos.logstash.framework.name=logstash",
-                        "-Dmesos.logstash.disableFailover=true",
-                        "-Dmesos.logstash.logstash.heap.size=128",
-                        "-Dmesos.logstash.executor.heap.size=64",
-                        "-Dmesos.logstash.volumes=/var/log/mesos",
-                        "-Dmesos.zk=zk://" + zookeeperIpAddress + ":2181/mesos"
+                        "-Dmesos.logstash.volumes=/var/log/mesos"
                 ),
                 elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
         );
@@ -70,12 +65,21 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     @Override
     protected CreateContainerCmd dockerCommand() {
+        final String cmd = asList(
+                "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
+                "--failover-enabled=false",
+                elasticsearchDomainAndPort.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
+                "--executor.heap-size=64",
+                "--logstash.heap-size=128",
+                withSyslog ? "--enable.syslog=true" : null
+        ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
+
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
-                .withEnv("JAVA_OPTS=" + StringUtils.collectionToDelimitedString(getJavaOpts(), " "))
+                .withEnv("JAVA_OPTS=" + getJavaOpts().stream().collect(Collectors.joining(" ")))
                 .withExposedPorts(ExposedPort.tcp(apiPort))
-                .withCmd(withSyslog ? "--enable.syslog=true" : "");
+                .withCmd(cmd);
     }
 
     public void enableSyslog() {

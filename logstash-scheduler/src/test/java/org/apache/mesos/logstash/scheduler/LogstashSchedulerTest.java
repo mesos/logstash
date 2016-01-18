@@ -2,18 +2,17 @@ package org.apache.mesos.logstash.scheduler;
 
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.cluster.ClusterMonitor;
-import org.apache.mesos.logstash.config.ConfigManager;
-import org.apache.mesos.logstash.config.Configuration;
-import org.apache.mesos.logstash.state.ClusterState;
+import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.FrameworkState;
-import org.apache.mesos.logstash.state.LiveState;
+import org.apache.mesos.logstash.state.SerializableState;
 import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
-
-import java.net.InetAddress;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -21,98 +20,101 @@ import static org.mockito.Mockito.*;
 /**
  * Tests Scheduler API.
  */
+@RunWith(MockitoJUnitRunner.class)
 public class LogstashSchedulerTest {
-
-    LogstashScheduler scheduler;
-
-
+    @Mock
     MesosSchedulerDriverFactory driverFactory;
 
-
+    @Mock
     SchedulerDriver driver;
 
-    private Configuration configuration;
-    private ConfigManager configManager;
-    private FrameworkState frameworkState ;
+    Features features = new Features();
+    LogstashConfig logstashConfig = new LogstashConfig();
 
-    final ClusterMonitor clusterMonitor = mock(ClusterMonitor.class);
-    final ClusterState clusterState = mock(ClusterState.class);
-    final TaskInfoBuilder taskInfoBuilder = mock(TaskInfoBuilder.class);
+    private FrameworkConfig frameworkConfig = new FrameworkConfig();
 
+    @Mock
+    ConfigManager configManager;
+
+    @Mock
+    SerializableState serializableState;
+
+    @Mock
+    FrameworkState frameworkState;
 
     ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
+    @InjectMocks
+    LogstashScheduler scheduler;
+
     @Before
-    public void setup(){
-        LiveState liveState = new LiveState();
-
-        configuration = new Configuration();
-        frameworkState = new FrameworkState(new TestSerializableStateImpl());
-        configuration.setFrameworkState(frameworkState);
-
-        // mocks
-        configManager = mock(ConfigManager.class);
-        driverFactory = mock(MesosSchedulerDriverFactory.class);
-        driver = mock(SchedulerDriver.class);
-
-        scheduler = new LogstashScheduler(liveState, configuration, configManager, driverFactory, mock(OfferStrategy.class), mock(Features.class));
+    public void setup() throws Exception {
+        scheduler.frameworkConfig = frameworkConfig;
+        scheduler.features = features;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
     }
 
     @Test
+    public void hasInjected() throws Exception {
+        assertNotNull(configManager);
+        assertSame(configManager, scheduler.configManager);
+    }
+
+    @Test
     public void onStartShouldCreateAndStartFramework() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
+
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getName(), configuration.getFrameworkName());
-        assertEquals(frameworkInfo.getUser(), configuration.getLogStashUser());
-        assertEquals(frameworkInfo.getRole(), configuration.getLogStashRole());
+        assertEquals(frameworkInfo.getName(), frameworkConfig.getFrameworkName());
+        assertEquals("root", frameworkInfo.getUser());
+        assertEquals("*", frameworkInfo.getRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
-        assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) configuration.getFailoverTimeout());
-        assertEquals(frameworkInfo.getWebuiUrl(),"http:\\/\\/" + InetAddress.getLocalHost().getHostName() + ":" + configuration.getWebServerPort());
-        assertEquals(frameworkInfo.getId().getValue(), configuration.getFrameworkId().getValue());
+        assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) frameworkConfig.getFailoverTimeout());
+        assertEquals(frameworkInfo.getId().getValue(), frameworkState.getFrameworkID().getValue());
 
-        verify(driver, times(1)).start();
+        verify(driver).start();
     }
 
     @Test
     public void onStartShouldCreateFramework_withNoPersistedFrameworkID() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId(""));
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getId().getValue(), "");
+        assertEquals("", frameworkInfo.getId().getValue());
     }
 
     @Test
     public void onStartShouldCreateFramework_withPersistedFrameworkID() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
 
-        verify(driverFactory, times(1)).createMesosDriver(eq(scheduler),
-            frameworkInfoArgumentCaptor.capture(), eq(configuration.getZookeeperUrl()));
+        verify(driverFactory).createMesosDriver(eq(scheduler), frameworkInfoArgumentCaptor.capture(), eq(frameworkConfig.getZkUrl()));
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
-        assertEquals(frameworkInfo.getId().getValue(), "FOO");
+        assertEquals("test", frameworkInfo.getId().getValue());
     }
 
     @Test
     public void onStopShouldDeRegisterConfigManagerOnConfigUpdate() throws Exception {
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
         scheduler.stop();
 
-        verify(configManager,times(1)).setOnConfigUpdate(null);
+        verify(configManager).setOnConfigUpdate(null);
     }
 
     @Test
     public void onStopShouldWithFailoverIfConfiguredAsFailoverEnabled() throws Exception {
-        configuration.setDisableFailover(false);
+        features.setFailover(true);
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
         scheduler.stop();
 
@@ -121,8 +123,8 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldStop() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
-        configuration.setDisableFailover(true);
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
+        features.setFailover(false);
         scheduler.start();
         scheduler.stop();
 
@@ -131,12 +133,12 @@ public class LogstashSchedulerTest {
 
     @Test
     public void onStopWithFailoverIfConfiguredAsFailoverDisabled_shouldRemovePersistedFrameworkID() throws Exception {
-        frameworkState.setFrameworkId(createFrameworkId("FOO"));
-        configuration.setDisableFailover(true);
+        features.setFailover(false);
+        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId(""));
         scheduler.start();
         scheduler.stop();
 
-        assertEquals(frameworkState.getFrameworkID().getValue(), "");
+        assertEquals("", frameworkState.getFrameworkID().getValue());
     }
 
 
