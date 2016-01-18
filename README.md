@@ -174,7 +174,7 @@ To build the images, first install these dependencies:
 
   - locally, or
   
-  - remotely, e.g. using [Docker-Machine](https://docs.docker.com/machine/)) or boot2docker.
+  - remotely, e.g. using [Docker-Machine](https://docs.docker.com/machine/) or boot2docker.
 
     If choosing this option, you need to do two things before running the tests:
 
