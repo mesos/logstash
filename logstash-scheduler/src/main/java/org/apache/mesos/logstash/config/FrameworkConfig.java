@@ -23,6 +23,9 @@ public class FrameworkConfig {
     private String role = "*";
     private String user = "root";
 
+    private String mesosPrincipal = null;
+    private String mesosSecret = null;
+
     public String getZkUrl() {
         return zkUrl;
     }
@@ -77,5 +80,21 @@ public class FrameworkConfig {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public void setMesosPrincipal(String mesosPrincipal) {
+        this.mesosPrincipal = mesosPrincipal;
+    }
+
+    public String getMesosPrincipal() {
+        return mesosPrincipal;
+    }
+
+    public void setMesosSecret(String mesosSecret) {
+        this.mesosSecret = mesosSecret;
+    }
+
+    public String getMesosSecret() {
+        return mesosSecret;
     }
 }
