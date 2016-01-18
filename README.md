@@ -247,11 +247,11 @@ There is no mechanism which ensures that the Logstash output might overlap with 
 Logstash configurations. In other words: Logstash might observe one framework
 and output to the same destination it's using for another framework. 
 
+
 # Sponsors
 
-
-This project is sponsored by `Cisco Cloud Services`. Thank you for contributing to the Open Source
-community!
+This project is sponsored by [Cisco Cloud Services](http://www.cisco.com/c/en/us/solutions/cloud/overview.html).
+Thank you for contributing to the Open Source community!
 
 
 [logstash]: https://www.elastic.co/products/logstash
