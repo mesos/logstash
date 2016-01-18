@@ -107,8 +107,8 @@ Here is the full list of configuration options:
 
 ## Running as Marathon app
 
-To run the logstash framework as a Marathon app use the following app template (save e.g. as logstash.json):
-Update the JAVA_OPTS attribute with your Zookeeper servers.
+To run the logstash framework as a Marathon app use the following app template (save e.g. as `logstash.json`):
+You can use the `"env"` map to configure the framework with environment variables, as above.
 
 ```json
 {
@@ -124,7 +124,21 @@ Update the JAVA_OPTS attribute with your Zookeeper servers.
     }
   },
   "env": {
-    "JAVA_OPTS": "-Dmesos.logstash.framework.name=logstash_framework -Dmesos.zk=zk://<zkserver:port>,<zkserver:port>/mesos"
+    "ZK_URL": "zk://123.0.0.12:5181/logstash",
+    "ZK_TIMEOUT": "20000",
+    "FRAMEWORK_NAME": "logstash",
+    "FAILOVER_TIMEOUT": "60",
+    "ROLE": "*",
+    "USER": "root",
+    "LOGSTASH_HEAP_SIZE": "64",
+    "LOGSTASH_ELASTICSEARCH_URL": "elasticsearch.service.consul:1234",
+    "EXECUTOR_CPUS": "0.5",
+    "EXECUTOR_HEAP_SIZE": "128",
+    "ENABLE_FAILOVER": "false",
+    "ENABLE_COLLECTD": "true",
+    "ENABLE_SYSLOG": "true",
+    "ENABLE_FILE": "true",
+    "EXECUTOR_FILE_PATH": "/var/log/*,/home/jhf/example.log"
   }
 }
 ```
