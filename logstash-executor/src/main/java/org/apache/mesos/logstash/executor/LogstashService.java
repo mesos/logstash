@@ -29,6 +29,16 @@ public class LogstashService {
                 Optional.ofNullable(logstashConfiguration.getLogstashPluginInputFile()).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
+        List<LS.Plugin> filterPlugins = Arrays.asList(
+            LS.plugin("mutate", LS.map(
+                    LS.kv("add_field", LS.map(
+                            LS.kv("mesos_slave_id", LS.string(logstashConfiguration.getMesosSlaveId()))
+                        )
+                    )
+                )
+            )
+        );
+
         List<LS.Plugin> outputPlugins = optionalValuesToList(
                 Optional.ofNullable(logstashConfiguration.getLogstashPluginOutputElasticsearch()).map(config -> LS.plugin(
                         "elasticsearch",
@@ -40,9 +50,9 @@ public class LogstashService {
                 ))
         );
 
-
         return LS.config(
                 LS.section("input",  inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
+                LS.section("filter", filterPlugins.toArray(new LS.Plugin[filterPlugins.size()])),
                 LS.section("output", outputPlugins.toArray(new LS.Plugin[outputPlugins.size()]))
         ).serialize();
     }

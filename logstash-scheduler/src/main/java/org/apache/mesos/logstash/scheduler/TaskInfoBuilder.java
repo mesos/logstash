@@ -75,11 +75,16 @@ public class TaskInfoBuilder {
         //TODO: repeat for collectd
         logstashConfig.getElasticsearchUrl().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
 
+        logstashConfigBuilder.setMesosSlaveId(offer.getSlaveId().getValue());
+
         if (features.isFile()) {
             logstashConfigBuilder.setLogstashPluginInputFile(
                     LogstashProtos.LogstashPluginInputFile.newBuilder().addAllPath(executorConfig.getFilePath())
             );
         }
+
+        LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
+
 
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)
