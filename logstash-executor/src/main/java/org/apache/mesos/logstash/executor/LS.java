@@ -3,9 +3,7 @@ package org.apache.mesos.logstash.executor;
 import com.google.common.collect.Sets;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -94,7 +92,7 @@ public class LS {
 
         @Override
         public java.lang.String serialize() {
-            return "[ " + intercalate(", ", Arrays.stream(elements).map(Value::serialize).collect(Collectors.toList())) + " ]";
+            return "[ " + Arrays.stream(elements).map(Value::serialize).collect(Collectors.joining(", ")) + " ]";
         }
     }
 
@@ -178,12 +176,8 @@ public class LS {
         return new Bool(b);
     }
 
-    private static java.lang.String intercalate(java.lang.String separator, List<java.lang.String> strings) {
-        return strings.isEmpty() ? "" : strings.subList(1, strings.size()).stream().reduce(strings.get(0), (s1,s2) -> s1 + separator + s2);
-    }
-
     private static java.lang.String unlines(Stream<java.lang.String> lines) {
-        return intercalate("\n", lines.collect(Collectors.toList()));
+        return lines.collect(Collectors.joining("\n"));
     }
 
     private static java.lang.String stringToLogstashString(java.lang.String string) {
@@ -203,7 +197,7 @@ public class LS {
     }
 
     private static Set<Integer> toCharSet(java.lang.String s) {
-        return s.chars().mapToObj(c -> new Integer(c)).collect(Collectors.toSet());
+        return s.chars().mapToObj(Integer::new).collect(Collectors.toSet());
     }
 
     private static java.lang.String charSetToString(Set<Integer> s) {
@@ -222,7 +216,7 @@ public class LS {
         if (name.length() == 0) {
             throw new RuntimeException("Name cannot be empty string");
         }
-        else if (!firstCharAllowedChars.contains(new Integer((int) name.charAt(0)))) {
+        else if (!firstCharAllowedChars.contains((int) name.charAt(0))) {
             throw new RuntimeException("Name cannot start with character: " + name.charAt(0));
         }
         else if (!allowedChars.containsAll(toCharSet(name.substring(1)))) {

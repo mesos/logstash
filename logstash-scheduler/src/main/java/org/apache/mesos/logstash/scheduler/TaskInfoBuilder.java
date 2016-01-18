@@ -9,11 +9,11 @@ import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+
+import static java.util.Arrays.asList;
 
 @Component
 public class TaskInfoBuilder {
@@ -45,6 +45,9 @@ public class TaskInfoBuilder {
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
             .setType(Protos.ContainerInfo.Type.DOCKER)
             .setDocker(dockerExecutor.build());
+        if (features.isFile()) {
+            container.addVolumes(Protos.Volume.newBuilder().setHostPath("/").setContainerPath("/logstashpaths").setMode(Protos.Volume.Mode.RO).build());
+        }
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
                 executorConfig, logstashConfig);
@@ -74,7 +77,14 @@ public class TaskInfoBuilder {
 
         logstashConfigBuilder.setMesosSlaveId(offer.getSlaveId().getValue());
 
+        if (features.isFile()) {
+            logstashConfigBuilder.setLogstashPluginInputFile(
+                    LogstashProtos.LogstashPluginInputFile.newBuilder().addAllPath(executorConfig.getFilePath())
+            );
+        }
+
         LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
+
 
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)
@@ -82,7 +92,7 @@ public class TaskInfoBuilder {
             .setName(LogstashConstants.TASK_NAME)
             .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
             .setSlaveId(offer.getSlaveId())
-            .setData(logstashConfiguration.toByteString())
+            .setData(logstashConfigBuilder.build().toByteString())
             .build();
     }
 
@@ -90,7 +100,7 @@ public class TaskInfoBuilder {
 
         int memNeeded = executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem();
 
-        return Arrays.asList(
+        return asList(
             Protos.Resource.newBuilder()
                 .setName("cpus")
                 .setType(Protos.Value.Type.SCALAR)

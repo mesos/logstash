@@ -25,7 +25,8 @@ public class LogstashService {
     private static String serialize(LogstashProtos.LogstashConfiguration logstashConfiguration) {
         List<LS.Plugin> inputPlugins = optionalValuesToList(
                 Optional.ofNullable(logstashConfiguration.getLogstashPluginInputSyslog()).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
-                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputCollectd()).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(5000 /*TODO: config.getPort()*/)), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map())))))
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputCollectd()).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(5000 /*TODO: config.getPort()*/)), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputFile()).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
         List<LS.Plugin> filterPlugins = Arrays.asList(
@@ -50,9 +51,9 @@ public class LogstashService {
         );
 
         return LS.config(
-                LS.section("input",  inputPlugins.toArray(new LS.Plugin[0])),
-                LS.section("filter", filterPlugins.toArray(new LS.Plugin[0])),
-                LS.section("output", outputPlugins.toArray(new LS.Plugin[0]))
+                LS.section("input",  inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
+                LS.section("filter", filterPlugins.toArray(new LS.Plugin[filterPlugins.size()])),
+                LS.section("output", outputPlugins.toArray(new LS.Plugin[outputPlugins.size()]))
         ).serialize();
     }
 
@@ -82,8 +83,8 @@ public class LogstashService {
         }
 
         try {
-            inputStreamForEach((s) -> LOGGER.info("Logstash stdout: ", s), process.getInputStream());
-            inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: ", s), process.getErrorStream());
+            inputStreamForEach((s) -> LOGGER.info("Logstash stdout: " + s), process.getInputStream());
+            inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: " + s), process.getErrorStream());
 
             process.waitFor();
             LOGGER.warn("Logstash quit with exit={}", process.exitValue());
