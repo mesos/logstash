@@ -114,7 +114,7 @@ Here is the full list of configuration options:
 
 ## Running as Marathon app
 
-To run the logstash framework as a Marathon app use the following app template (save e.g. as `logstash.json`):
+To run the Logstash framework as a Marathon app use the following app template (save e.g. as `logstash.json`):
 You can use the `"env"` map to configure the framework with environment variables, as above.
 
 ```json
@@ -152,7 +152,7 @@ You can use the `"env"` map to configure the framework with environment variable
  
 Please keep in mind that if you start the Logstash app as a Marathon app that this will start a 
 scheduler on one arbitrary slave. The scheduler itself will try to start one (only one) executor 
-on each node. To scale the application from within marathon makes no sense because only one scheduler
+on each node. To scale the application from within Marathon makes no sense because only one scheduler
 per framework is allowed to run and the framework scales itself to all slaves.  
 
 The available DCOS configuration options are documented in [DCOS config.json](https://github.com/triforkse/universe/blob/version-1.x/repo/packages/L/logstash/0/config.json).
@@ -161,9 +161,9 @@ This shows how the DCOS parameters are translated to system properties.
 
 ## Running as DCOS app
 
-To run the logstash framework as a DCOS app:
+To run the Logstash framework as a DCOS app:
 
-Add our logstash repository to DCOS:
+Add our Logstash repository to DCOS:
 ```bash
 dcos config append package.sources "https://github.com/triforkse/universe/archive/version-1.x.zip"
 ```
@@ -182,13 +182,13 @@ the `logstash-options.json`-file in the above example is where you can configure
 logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/tree/master/dcos/logstash-options.json">here</a>.
 See <a href="#fw_configuration">Framework options</a> for an explanation of the available configuration parameters.
  
-Note: **Uninstalling the logstash DCOS package will shutdown the framework! See [Updating to new version](#newversion) how to preserve the your logstash slave and docker configuations.** 
+Note: **Uninstalling the logstash DCOS package will shutdown the framework! See [Updating to new version](#newversion) how to preserve the your Logstash slave and docker configuations.** 
 
 
 ## <a name="newversion"></a>Updating to a newer version (or reinstalling the app)
 
 When reinstalling, you must manually go into your zookeeper ui and remove the path `/logstash/frameworkId`.
-This is so that the reinstalled app will be able to register without losing the logstash docker and slave configurations.
+This is so that the reinstalled app will be able to register without losing the Logstash docker and slave configurations.
 
 
 # HTTP API
@@ -293,7 +293,7 @@ mesos/logstash-executor     latest                     cdbc9d56ef73        2 sec
 
 # Limitations
 
-Log files will be streamed into local files within the logstash-mesos container.
+Log files will be streamed into local files within the `logstash-mesos` container.
 This requires disk space
 which is hard to estimate beforehand, since it depends on the number of available log files.
 
@@ -302,8 +302,8 @@ The intention is to do a best guess when allocating resources from Mesos (Work i
 
 ## Security
 
-There is no mechanism which ensures that the logstash output might overlap with other
-logstash configurations. In other words: logstash might observe one framework
+There is no mechanism which ensures that the Logstash output might overlap with other
+Logstash configurations. In other words: Logstash might observe one framework
 and output to the same destination it's using for another framework. 
 
 # Sponsors
