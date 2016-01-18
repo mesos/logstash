@@ -23,7 +23,7 @@ but we believe that most clusters will gain high allocation (TODO why?).
 
 ## Requirements
 
-* A Mesos cluster at version 0.22.1 or above.
+* A Mesos cluster at version 0.25.0 or above.
   Our scheduler and executors use version 0.25.0 of the Mesos API.
 
 * That Mesos cluster must have the `docker` containerizer enabled.
