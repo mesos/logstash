@@ -69,9 +69,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
-        driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
-            frameworkConfig.getZkUrl());
-        
         if (frameworkConfig.getMesosPrincipal() != null) {
             Protos.Credential.Builder credentialBuilder = Protos.Credential.newBuilder();
             frameworkBuilder.setPrincipal(frameworkConfig.getMesosPrincipal());
