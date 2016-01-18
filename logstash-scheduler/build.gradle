@@ -1,5 +1,6 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'spring-boot'
+apply plugin: 'de.undercouch.download'
 
 mainClassName = "org.apache.mesos.logstash.scheduler.Application"
 ext {
@@ -12,6 +13,7 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'de.undercouch:gradle-download-task:2.1.0'
     }
 }
 
@@ -45,6 +47,7 @@ dependencies {
 }
 
 jar {
+    dependsOn 'getLogstashZip'
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
     from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
@@ -59,6 +62,13 @@ jar {
                 'Implementation-Version': project.version
         )
     }
+}
+
+import de.undercouch.gradle.tasks.download.Download
+task getLogstashZip(type: Download) {
+    src "https://download.elastic.co/logstash/logstash/logstash-" + "$logstashVer" + ".zip"
+    dest new File(buildDir, './resources/main/public/logstash.zip')
+    onlyIfNewer true
 }
 
 publishing {
