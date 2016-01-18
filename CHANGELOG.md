@@ -42,4 +42,27 @@
 - ☑ Installation Documentation
 - ☑ Design Documentation
 - ☑ Configuration GUI
-- ☑ REST API for managing Configurations
+- ☑ REST API for managing Configurations. Here is the spec:
+
+  `/api/configs` is a JSON array of configurations.
+  A configuration is a JSON object with the schema:
+
+  ```js
+  {
+      "name": string, // The name of the docker image to match when,
+      "input": string // The Logstash configuration segment for this framework.
+  }
+  ```
+
+  `GET /api/configs` returns the array of configurations.
+
+  `POST /api/configs` creates a new configuration for a framework.
+  The new framework will be available at `/api/configs/{name}`.
+
+  `/api/configs/{framework-name}` is an existing framework config.
+
+  `PUT /api/configs/{framework-name}` updates an existing framework config.
+  Make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`).
+
+  `DELETE /api/configs/{framework-name}` removes the configuration for this framework.
+  Make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`).

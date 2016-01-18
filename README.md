@@ -162,48 +162,6 @@ When reinstalling, you must manually go into your zookeeper ui and remove the pa
 This is so that the reinstalled app will be able to register without losing the Logstash docker and slave configurations.
 
 
-# HTTP API
-
-There is an HTTP API. The available endpoints are:
-
-
-## Resource: `/api/configs`
-
-A JSON array of configurations. A configuration is a JSON object with the schema:
-
-```js
-{
-    "name": string, // The name of the docker image to match when,
-    "input": string // The Logstash configuration segment for this framework.
-}
-```
-
-
-### `GET /api/configs`
-
-Returns the array of configurations.
-
-
-### `POST /api/configs`
-
-Creates a new configuration for a framework.
-
-The new framework will be available at `/api/configs/{name}`.
-
-
-## Resource: `/api/configs/{framework-name}`
-
-
-### `PUT /api/configs/{framework-name}`
-
-Updates an existing framework config. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
-
-
-### `DELETE /api/configs/{framework-name}`
-
-Removes the configuration for this framework. Please make sure that framework-name is proper URL encoded (e.g. in JavaScript see `encodeURIComponent`)
-
-
 # <a name="building"></a>Building the artifacts
 
 The Logstash framework consists of two artifacts:
