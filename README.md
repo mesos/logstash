@@ -229,6 +229,15 @@ which is hard to estimate beforehand, since it depends on the number of availabl
 The intention is to do a best guess when allocating resources from Mesos (Work in Progress).
 
 
+## Full deployment not guaranteed
+
+This framework tries to launch a Logstash process on every Mesos slave.
+Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
+and the offer has enough resources to run Logstash.
+This does not guarantee the presence of Logstash on every slave,
+but we believe that most clusters will gain high allocation (TODO why?).
+
+
 ## Security
 
 There is no mechanism which ensures that the Logstash output might overlap with other
