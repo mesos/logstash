@@ -155,35 +155,6 @@ scheduler on one arbitrary slave. The scheduler itself will try to start one (on
 on each node. To scale the application from within Marathon makes no sense because only one scheduler
 per framework is allowed to run and the framework scales itself to all slaves.  
 
-The available DCOS configuration options are documented in [DCOS config.json](https://github.com/triforkse/universe/blob/version-1.x/repo/packages/L/logstash/0/config.json).
-This shows how the DCOS parameters are translated to system properties.
-
-
-## Running as DCOS app
-
-To run the Logstash framework as a DCOS app:
-
-Add our Logstash repository to DCOS:
-```bash
-dcos config append package.sources "https://github.com/triforkse/universe/archive/version-1.x.zip"
-```
-
-update DCOS:
-```bash
-dcos package update
-```
-
-and install the package
-```bash
-dcos package install --options=logstash-options.json logstash
-```
-
-the `logstash-options.json`-file in the above example is where you can configure
-logstash with your own settings. An example can be found <a href="https://github.com/mesos/logstash/tree/master/dcos/logstash-options.json">here</a>.
-See <a href="#fw_configuration">Framework options</a> for an explanation of the available configuration parameters.
- 
-Note: **Uninstalling the logstash DCOS package will shutdown the framework! See [Updating to new version](#newversion) how to preserve the your Logstash slave and docker configuations.** 
-
 
 ## <a name="newversion"></a>Updating to a newer version (or reinstalling the app)
 
