@@ -24,7 +24,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.indices.IndexMissingException;
 import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
@@ -86,8 +85,8 @@ public class DeploymentSystemTest {
     @Test
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        cluster.addAndStartContainer(container);
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
     }
@@ -123,7 +122,7 @@ public class DeploymentSystemTest {
 
         final int elasticsearchPort = 9300;
 
-        AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
+        final AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
         await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", elasticsearchClusterName).build()).addTransportAddress(new InetSocketTransportAddress(elasticsearchInstance.getIpAddress(), elasticsearchPort));
             try {
@@ -137,7 +136,7 @@ public class DeploymentSystemTest {
         });
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
@@ -163,10 +162,10 @@ public class DeploymentSystemTest {
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-            elasticsearchClient.get().prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
         });
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
 
             String esMessage = fields.get("message").getValue();
             assertEquals(randomLogLine, esMessage.trim());
@@ -190,8 +189,8 @@ public class DeploymentSystemTest {
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        cluster.addAndStartContainer(container);
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
 
