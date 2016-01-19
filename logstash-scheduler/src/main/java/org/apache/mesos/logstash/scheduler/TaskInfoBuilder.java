@@ -1,4 +1,6 @@
 package org.apache.mesos.logstash.scheduler;
+
+import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
@@ -18,6 +20,8 @@ import static java.util.Arrays.asList;
 @Component
 public class TaskInfoBuilder {
 
+    public static final Logger LOGGER = Logger.getLogger(TaskInfoBuilder.class);
+
     @Inject
     private Clock clock;
     @Inject
@@ -28,12 +32,21 @@ public class TaskInfoBuilder {
     private LogstashConfig logstashConfig;
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
+        if (features.isDocker()) {
+            LOGGER.debug("Building Docker task");
+            return buildDockerTask(offer);
+        } else {
+            LOGGER.debug("Building native task");
+            return buildNativeTask(offer);
+        }
+    }
 
+    private Protos.TaskInfo buildDockerTask(Protos.Offer offer) {
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
-            .newBuilder()
-            .setForcePullImage(false)
-            .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
+                .newBuilder()
+                .setForcePullImage(false)
+                .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
+                .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
 
         if (features.isSyslog()) {
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
@@ -43,8 +56,8 @@ public class TaskInfoBuilder {
         }
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
-            .setType(Protos.ContainerInfo.Type.DOCKER)
-            .setDocker(dockerExecutor.build());
+                .setType(Protos.ContainerInfo.Type.DOCKER)
+                .setDocker(dockerExecutor.build());
         if (features.isFile()) {
             container.addVolumes(Protos.Volume.newBuilder().setHostPath("/").setContainerPath("/logstashpaths").setMode(Protos.Volume.Mode.RO).build());
         }
@@ -53,19 +66,40 @@ public class TaskInfoBuilder {
                 executorConfig, logstashConfig);
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-            .setName(LogstashConstants.NODE_NAME + " executor")
-            .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
-            .setContainer(container)
-            .setCommand(Protos.CommandInfo.newBuilder()
-                .addArguments("dummyArgument")
-                .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
-                .setEnvironment(Protos.Environment.newBuilder()
-                    .addAllVariables(executorEnvVars.getList()))
-                .setShell(false))
-            .build();
+                .setName(LogstashConstants.NODE_NAME + " executor")
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
+                .setContainer(container)
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addArguments("dummyArgument")
+                        .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
+                                .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
+                        .setEnvironment(Protos.Environment.newBuilder()
+                                .addAllVariables(executorEnvVars.getList()))
+                        .setShell(false))
+                .build();
+
+        return createTask(offer, executorInfo);
+    }
+
+    private Protos.TaskInfo buildNativeTask(Protos.Offer offer) {
+        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
+                executorConfig, logstashConfig);
+
+        Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
+                .setName(LogstashConstants.NODE_NAME + " executor")
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addArguments("dummyArgument")
+                        .setEnvironment(Protos.Environment.newBuilder()
+                                .addAllVariables(executorEnvVars.getList()))
+                        .setShell(false))
+                .build();
 
 
+        return createTask(offer, executorInfo);
+    }
+
+    private Protos.TaskInfo createTask(Protos.Offer offer, Protos.ExecutorInfo executorInfo) {
         final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
         if (features.isSyslog()) {
             logstashConfigBuilder.setLogstashPluginInputSyslog(
@@ -83,15 +117,14 @@ public class TaskInfoBuilder {
             );
         }
 
-
         return Protos.TaskInfo.newBuilder()
-            .setExecutor(executorInfo)
-            .addAllResources(getResourcesList())
-            .setName(LogstashConstants.TASK_NAME)
-            .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
-            .setSlaveId(offer.getSlaveId())
-            .setData(logstashConfigBuilder.build().toByteString())
-            .build();
+                .setExecutor(executorInfo)
+                .addAllResources(getResourcesList())
+                .setName(LogstashConstants.TASK_NAME)
+                .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
+                .setSlaveId(offer.getSlaveId())
+                .setData(logstashConfigBuilder.build().toByteString())
+                .build();
     }
 
     public List<Protos.Resource> getResourcesList() {
@@ -131,7 +164,5 @@ public class TaskInfoBuilder {
         String date = new SimpleDateFormat(LogstashConstants.TASK_DATE_FORMAT).format(clock.now());
         return LogstashConstants.FRAMEWORK_NAME + "_" + offer.getHostname() + "_" + date;
     }
-
-
 
 }

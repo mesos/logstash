@@ -11,6 +11,15 @@ public class Features {
     private boolean collectd;
     private boolean syslog;
     private boolean file;
+    private boolean docker;
+
+    public boolean isDocker() {
+        return docker;
+    }
+
+    public void setDocker(boolean docker) {
+        this.docker = docker;
+    }
 
     public boolean isFailover() {
         return failover;
