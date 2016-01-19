@@ -26,7 +26,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     private String zookeeperIpAddress;
     private final int apiPort = 9092;
-    private Optional<String> elasticsearchDomainAndPort = Optional.empty();
+    private Optional<String> elasticsearchUrl = Optional.empty();
     private boolean withSyslog = false;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
@@ -34,10 +34,10 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         this.zookeeperIpAddress = zookeeperIpAddress;
     }
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String elasticsearchDomainAndPort) {
+    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String elasticsearchUrl) {
         super(dockerClient);
         this.zookeeperIpAddress = zookeeperIpAddress;
-        this.elasticsearchDomainAndPort = Optional.ofNullable(elasticsearchDomainAndPort);
+        this.elasticsearchUrl = Optional.ofNullable(elasticsearchUrl);
     }
 
     private List<String> getJavaOpts() {
@@ -46,7 +46,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                         "-Dmesos.logstash.framework.name=logstash",
                         "-Dmesos.logstash.volumes=/var/log/mesos"
                 ),
-                elasticsearchDomainAndPort.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
+                elasticsearchUrl.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
         );
     }
 
@@ -68,7 +68,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         final String cmd = asList(
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
                 "--failover-enabled=false",
-                elasticsearchDomainAndPort.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
+                elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
                 "--logstash.heap-size=128",
                 withSyslog ? "--enable.syslog=true" : null
