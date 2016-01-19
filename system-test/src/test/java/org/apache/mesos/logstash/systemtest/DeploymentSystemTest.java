@@ -40,6 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -222,16 +223,16 @@ public class DeploymentSystemTest {
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "localhost:9200"));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "localhost:9200", null));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
 
-        Callable<Stream<Container>> getLogstashExecutors = () -> {
+        Function<String, Stream<Container>> getLogstashExecutorsSince = (String containerId) -> {
             return dockerClient
                     .listContainersCmd()
-                    .withSince(cluster.getSlaves()[0].getContainerId())
+                    .withSince(containerId)
                     .exec()
                     .stream()
                     .filter(container ->
@@ -241,14 +242,14 @@ public class DeploymentSystemTest {
                     );
         };
 
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> getLogstashExecutors.call().count() == 1);
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count() == 1);
 
-        final String logstashExecutorContainerId = getLogstashExecutors.call().findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String logstashExecutorContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
 
         dockerClient.killContainerCmd(logstashExecutorContainerId).exec();
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            long count = getLogstashExecutors.call().count();
+            long count = getLogstashExecutorsSince.apply(logstashExecutorContainerId).count();
             return count == 1;
         });
     }
