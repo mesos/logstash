@@ -61,7 +61,7 @@ like this:
     --role='*' \
     --user=root \
     --logstash.heap-size=64 \
-    --logstash.elasticsearch-url=elasticsearch.service.consul:1234 \
+    --logstash.elasticsearch-url=http://elasticsearch.service.consul:1234 \
     --executor.cpus=0.5 \
     --executor.heap-size=128 \
     --enable.failover=false \
@@ -104,7 +104,7 @@ Here is the full list of configuration options:
 | `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent     | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
 | `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent     | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
 | `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
-| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at domain and port `U` FIXME this is not a URL!    |
+| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
 | `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`     | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |

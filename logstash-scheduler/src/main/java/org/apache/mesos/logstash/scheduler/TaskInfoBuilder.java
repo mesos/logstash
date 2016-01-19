@@ -73,7 +73,7 @@ public class TaskInfoBuilder {
             );
         }
         //TODO: repeat for collectd
-        logstashConfig.getElasticsearchUrl().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
+        logstashConfig.getElasticsearchUrl().ifPresent(url -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setUrl(url.toExternalForm())));
 
         logstashConfigBuilder.setMesosSlaveId(offer.getSlaveId().getValue());
 
@@ -82,8 +82,6 @@ public class TaskInfoBuilder {
                     LogstashProtos.LogstashPluginInputFile.newBuilder().addAllPath(executorConfig.getFilePath())
             );
         }
-
-        LogstashProtos.LogstashConfiguration logstashConfiguration = logstashConfigBuilder.build();
 
 
         return Protos.TaskInfo.newBuilder()
