@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.log4j.Logger;
+import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskInfo;
 import org.springframework.stereotype.Component;
 
@@ -62,8 +63,16 @@ public class ClusterState {
         setTaskInfoList(taskList);
     }
 
+    public void removeTaskBySlaveId(Protos.SlaveID slaveId) {
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getSlaveId().getValue().equals(slaveId.getValue())).collect(Collectors.toList()));
+    }
+
+    public void removeTaskByExecutorId(Protos.ExecutorID executorId) {
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getExecutor().getExecutorId().getValue().equals(executorId.getValue())).collect(Collectors.toList()));
+    }
+
     public void removeTaskById(TaskID taskId) throws InvalidParameterException {
-        setTaskInfoList(getTaskList().stream().filter(info -> info.getTaskId().getValue().equals(taskId.getValue())).collect(Collectors.toList()));
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getTaskId().getValue().equals(taskId.getValue())).collect(Collectors.toList()));
     }
 
     public Boolean exists(TaskID taskId) {
