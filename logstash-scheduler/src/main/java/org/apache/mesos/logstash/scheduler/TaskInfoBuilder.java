@@ -4,6 +4,7 @@ import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
+import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,8 @@ public class TaskInfoBuilder {
     private ExecutorConfig executorConfig;
     @Inject
     private LogstashConfig logstashConfig;
+    @Inject
+    private FrameworkConfig frameworkConfig;
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
@@ -112,6 +115,7 @@ public class TaskInfoBuilder {
                 .build(),
             Protos.Resource.newBuilder()
                 .setName("ports")
+                .setRole(frameworkConfig.getRole())
                 .setType(Protos.Value.Type.RANGES).setRanges(mapSelectedPortRanges()).build()
         );
     }
