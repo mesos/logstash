@@ -88,9 +88,21 @@ public class DeploymentSystemTest {
     }
 
     @Test
-    public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
+    public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
+        LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        schedulerContainer.setDocker(true);
+        scheduler = Optional.of(schedulerContainer);
+        cluster.addAndStartContainer(scheduler.get());
+
+        waitForFramework();
+    }
+
+    @Test
+    public void testDeploymentJar() throws JsonParseException, UnirestException, JsonMappingException {
+        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
+        LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        scheduler = Optional.of(logstashSchedulerContainer);
         cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();

@@ -37,10 +37,14 @@ public class TaskInfoBuilder {
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
         if (features.isDocker()) {
             LOGGER.debug("Building Docker task");
-            return buildDockerTask(offer);
+            Protos.TaskInfo taskInfo = buildDockerTask(offer);
+            LOGGER.debug(taskInfo.toString());
+            return taskInfo;
         } else {
             LOGGER.debug("Building native task");
-            return buildNativeTask(offer);
+            Protos.TaskInfo taskInfo = buildNativeTask(offer);
+            LOGGER.debug(taskInfo.toString());
+            return taskInfo;
         }
     }
 
