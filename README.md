@@ -144,7 +144,7 @@ You can use the `"env"` map to configure the framework with environment variable
     "ROLE": "*",
     "USER": "root",
     "LOGSTASH_HEAP_SIZE": "64",
-    "LOGSTASH_ELASTICSEARCH_URL": "elasticsearch.service.consul:1234",
+    "LOGSTASH_ELASTICSEARCH_URL": "http://elasticsearch.service.consul:1234",
     "EXECUTOR_CPUS": "0.5",
     "EXECUTOR_HEAP_SIZE": "128",
     "ENABLE_FAILOVER": "false",
