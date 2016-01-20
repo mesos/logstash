@@ -15,7 +15,8 @@ This framework tries to launch a Logstash process on every Mesos slave.
 Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
 and the offer has enough resources to run Logstash.
 This does not guarantee the presence of Logstash on every slave,
-but we believe that most clusters will gain high allocation (TODO why?).
+but we believe that most clusters will gain high allocation
+(TODO why: because of reserved resources for the `logstash` role).
 
 
 # Running
@@ -25,6 +26,22 @@ but we believe that most clusters will gain high allocation (TODO why?).
 
 * A Mesos cluster at version 0.25.0 or above.
   Our scheduler and executors use version 0.25.0 of the Mesos API.
+
+* On every Mesos master in the cluster,
+  add `logstash` to the list of roles,
+  e.g. by adding the line `logstash` to the file `/etc/mesos-master/roles`.
+
+* If you are going to enable `syslog` monitoring,
+  add TCP and UDP port `514` to the resources for the `logstash` role,
+  e.g. by adding `ports(logstash):[514-514]`
+  to the list in the file `/etc/mesos-slave/resources`
+  on every Mesos slave in the cluster.
+
+* If you are going to enable `collectd` monitoring,
+  add TCP and UDP port `25826` to the resources for the `logstash` role,
+  e.g. by adding `ports(logstash):[25826-25826]`
+  to the list in the file `/etc/mesos-slave/resources`
+  on every Mesos slave in the cluster.
 
 * That Mesos cluster must have the `docker` containerizer enabled.
 
