@@ -29,10 +29,7 @@ public class TaskInfoBuilder {
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
-        String executorImage = LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
-        if (logstashConfig.getExecutorImage() != null && logstashConfig.getExecutorVersion() != null) {
-            executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
-        }
+        String executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
             .newBuilder()
@@ -64,7 +61,7 @@ public class TaskInfoBuilder {
             .setCommand(Protos.CommandInfo.newBuilder()
                 .addArguments("dummyArgument")
                 .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
+                    .setImage(executorImage).build())
                 .setEnvironment(Protos.Environment.newBuilder()
                     .addAllVariables(executorEnvVars.getList()))
                 .setShell(false))

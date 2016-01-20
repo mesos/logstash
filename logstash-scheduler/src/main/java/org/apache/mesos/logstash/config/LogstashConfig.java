@@ -10,11 +10,14 @@ import java.util.Optional;
 @ConfigurationProperties(prefix = "logstash")
 public class LogstashConfig {
 
+    private static final String DEFAULT_EXECUTOR_IMAGE_NAME = "mesos/logstash-executor";
+    private static final String DEFAULT_EXECUTOR_IMAGE_TAG = "latest";
+
     private int heapSize = 64;
     private Optional<URL> elasticsearchUrl = Optional.empty();
 
-    private String executorImage = null;
-    private String executorVersion = null;
+    private String executorImage = DEFAULT_EXECUTOR_IMAGE_NAME;
+    private String executorVersion = DEFAULT_EXECUTOR_IMAGE_TAG;
 
     public int getHeapSize() {
         return heapSize;
