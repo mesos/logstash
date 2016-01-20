@@ -20,8 +20,8 @@ public class FrameworkConfig {
     private double failoverTimeout = 31449600;
     private long reconcilationTimeoutMillis;
 
-    private String role = "*";
-    private String user = "root";
+    private String mesosRole = "*";
+    private String mesosUser = "root";
 
     private String mesosPrincipal = null;
     private String mesosSecret = null;
@@ -66,20 +66,20 @@ public class FrameworkConfig {
         this.reconcilationTimeoutMillis = reconcilationTimeoutMillis;
     }
 
-    public String getRole() {
-        return role;
+    public String getMesosRole() {
+        return mesosRole;
     }
 
-    public void setRole(String role) {
-        this.role = role;
+    public void setMesosRole(String mesosRole) {
+        this.mesosRole = mesosRole;
     }
 
-    public String getUser() {
-        return user;
+    public String getMesosUser() {
+        return mesosUser;
     }
 
-    public void setUser(String user) {
-        this.user = user;
+    public void setMesosUser(String mesosUser) {
+        this.mesosUser = mesosUser;
     }
 
     public void setMesosPrincipal(String mesosPrincipal) {

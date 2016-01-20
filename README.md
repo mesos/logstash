@@ -58,8 +58,8 @@ like this:
     --zk-timeout=20000 \
     --framework-name=logstash \
     --failover-timeout=60 \
-    --role='*' \
-    --user=root \
+    --mesosRole='*' \
+    --mesosUser=root \
     --logstash.heap-size=64 \
     --logstash.elasticsearch-url=http://elasticsearch.service.consul:1234 \
     --executor.cpus=0.5 \
@@ -99,8 +99,8 @@ Here is the full list of configuration options:
 | `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`    | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
 | `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash` | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
 | `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
-| `--role=R`                       | `ROLE=R`                       | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
-| `--user=U`                       | `USER=U`                       | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
+| `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `*`        | The Logstash framework role will register with Mesos with framework role `U`.                                              |
+| `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
 | `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent     | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
 | `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent     | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
 | `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
@@ -108,7 +108,7 @@ Here is the full list of configuration options:
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
 | `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`     | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
-| `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`    | Iff `B` is `true`, Logstash will listen for collectd events on TCP/UDP port 5000 on all executors                          |
+| `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`    | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
 | `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`    | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
 | `--enable.file=B`                | `ENABLE_FILE=B`                | `false`    | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
 | `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |

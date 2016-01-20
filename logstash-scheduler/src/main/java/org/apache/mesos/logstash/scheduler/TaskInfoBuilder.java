@@ -42,7 +42,7 @@ public class TaskInfoBuilder {
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
         }
         if (features.isCollectd()) {
-            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(5000).setContainerPort(5000).setProtocol("udp"));
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(25826).setContainerPort(25826).setProtocol("udp"));
         }
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
@@ -115,8 +115,10 @@ public class TaskInfoBuilder {
                 .build(),
             Protos.Resource.newBuilder()
                 .setName("ports")
-                .setRole(frameworkConfig.getRole())
-                .setType(Protos.Value.Type.RANGES).setRanges(mapSelectedPortRanges()).build()
+                .setRole(frameworkConfig.getMesosRole())
+                .setType(Protos.Value.Type.RANGES)
+                .setRanges(mapSelectedPortRanges())
+                .build()
         );
     }
 
@@ -126,7 +128,7 @@ public class TaskInfoBuilder {
             rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514));
         }
         if (features.isCollectd()) {
-            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(5000).setEnd(5000));
+            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(25826).setEnd(25826));
         }
         return rangesBuilder;
     }

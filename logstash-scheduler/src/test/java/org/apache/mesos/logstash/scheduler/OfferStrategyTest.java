@@ -83,7 +83,7 @@ public class OfferStrategyTest {
                 baseOfferBuilder("host2")
                         .addResources(cpus(1.0, FRAMEWORK_ROLE))
                         .addResources(mem(512, FRAMEWORK_ROLE))
-                        .addResources(portRange(1, 5000, FRAMEWORK_ROLE))
+                        .addResources(portRange(1, 25826, FRAMEWORK_ROLE))
                         .build());
         assertTrue(result.acceptable);
         assertFalse(result.reason.isPresent());

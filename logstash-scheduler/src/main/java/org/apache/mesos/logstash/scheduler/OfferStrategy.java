@@ -27,7 +27,7 @@ public class OfferStrategy {
     @Inject
     private LogstashConfig logstashConfig;
 
-    private List<Integer> neededPorts = asList(514, 5000); // TODO: 25/11/2015 Configurable
+    private List<Integer> neededPorts = asList(514, 25826); // TODO: 25/11/2015 Configurable
 
     private List<OfferRule> acceptanceRules = asList(
             new OfferRule("Host already running task", this::isHostAlreadyRunningTask),
