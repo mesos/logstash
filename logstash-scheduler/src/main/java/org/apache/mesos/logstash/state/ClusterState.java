@@ -55,19 +55,15 @@ public class ClusterState {
     public void addTask(TaskInfo taskInfo) {
         LOGGER.debug("Adding TaskInfo to cluster for task: " + taskInfo.getTaskId().getValue());
         if (exists(taskInfo.getTaskId())) {
-            removeTask(taskInfo);
+            removeTaskById(taskInfo.getTaskId());
         }
         List<TaskInfo> taskList = getTaskList();
         taskList.add(taskInfo);
         setTaskInfoList(taskList);
     }
 
-    public void removeTask(TaskInfo taskInfo) throws InvalidParameterException {
-        setTaskInfoList(getTaskList().stream().filter(info -> isEqual(info, taskInfo)).collect(Collectors.toList()));
-    }
-
-    private static boolean isEqual(TaskInfo taskInfo1, TaskInfo taskInfo2) {
-        return taskInfo1.getTaskId().getValue().equals(taskInfo2.getTaskId().getValue());
+    public void removeTaskById(TaskID taskId) throws InvalidParameterException {
+        setTaskInfoList(getTaskList().stream().filter(info -> info.getTaskId().getValue().equals(taskId.getValue())).collect(Collectors.toList()));
     }
 
     public Boolean exists(TaskID taskId) {
