@@ -9,7 +9,6 @@ import org.apache.mesos.logstash.state.ClusterState;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +26,8 @@ public class OfferStrategy {
 
     @Inject
     private LogstashConfig logstashConfig;
+
+    private List<Integer> neededPorts = asList(5000); // TODO: 25/11/2015 Configurable
 
     private List<OfferRule> acceptanceRules = asList(
             new OfferRule("Host already running task", this::isHostAlreadyRunningTask),
@@ -89,7 +90,6 @@ public class OfferStrategy {
     }
 
     private boolean isNotWithNeededPorts(ClusterState clusterState, Protos.Offer offer) {
-        List<Integer> neededPorts = new ArrayList<>(); // TODO: BUG #81
         return !neededPorts.stream()
                 .allMatch(
                         port -> offer.getResourcesList().stream()
