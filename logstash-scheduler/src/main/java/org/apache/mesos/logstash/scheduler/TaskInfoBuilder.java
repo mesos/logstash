@@ -29,11 +29,13 @@ public class TaskInfoBuilder {
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
+        String executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
+
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
             .newBuilder()
             .setForcePullImage(false)
             .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
+            .setImage(executorImage);
 
         if (features.isSyslog()) {
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
@@ -59,7 +61,7 @@ public class TaskInfoBuilder {
             .setCommand(Protos.CommandInfo.newBuilder()
                 .addArguments("dummyArgument")
                 .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG).build())
+                    .setImage(executorImage).build())
                 .setEnvironment(Protos.Environment.newBuilder()
                     .addAllVariables(executorEnvVars.getList()))
                 .setShell(false))
