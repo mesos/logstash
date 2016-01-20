@@ -12,6 +12,7 @@ public class Features {
     private boolean syslog;
     private boolean file;
     private boolean docker;
+    private Boolean useIpAddress = false;
 
     public boolean isDocker() {
         return docker;
@@ -52,4 +53,9 @@ public class Features {
     public void setFile(boolean file) {
         this.file = file;
     }
+
+    public Boolean getUseIpAddress() {
+        return useIpAddress;
+    }
+
 }

@@ -6,6 +6,7 @@ import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
+import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,8 @@ public class TaskInfoBuilder {
     private ExecutorConfig executorConfig;
     @Inject
     private LogstashConfig logstashConfig;
+    @Inject
+    private FrameworkConfig frameworkConfig;
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
         if (features.isDocker()) {
@@ -85,16 +88,24 @@ public class TaskInfoBuilder {
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
                 executorConfig, logstashConfig);
 
+        Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
+                .setEnvironment(Protos.Environment.newBuilder().addAllVariables(executorEnvVars.getList()));
+
+        String address = frameworkConfig.getFrameworkFileServerAddress();
+        if (address == null) {
+            throw new NullPointerException("Webserver address is null");
+        }
+        String httpPath = address + "/get/" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
+
+        commandInfoBuilder
+                .setValue(frameworkConfig.getJavaHome() + "java $JAVA_OPTS -jar ./" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR)
+                .addUris(Protos.CommandInfo.URI.newBuilder().setValue(httpPath));
+
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
                 .setName(LogstashConstants.NODE_NAME + " executor")
                 .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
-                .setCommand(Protos.CommandInfo.newBuilder()
-                        .addArguments("dummyArgument")
-                        .setEnvironment(Protos.Environment.newBuilder()
-                                .addAllVariables(executorEnvVars.getList()))
-                        .setShell(false))
+                .setCommand(commandInfoBuilder)
                 .build();
-
 
         return createTask(offer, executorInfo);
     }
@@ -125,6 +136,12 @@ public class TaskInfoBuilder {
                 .setSlaveId(offer.getSlaveId())
                 .setData(logstashConfigBuilder.build().toByteString())
                 .build();
+    }
+
+    private void addIfNotEmpty(List<String> args, String key, String value) {
+        if (!value.isEmpty()) {
+            args.addAll(asList(key, value));
+        }
     }
 
     public List<Protos.Resource> getResourcesList() {
