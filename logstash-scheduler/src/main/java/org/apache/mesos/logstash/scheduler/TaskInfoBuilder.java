@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -99,11 +100,11 @@ public class TaskInfoBuilder {
         if (address == null) {
             throw new NullPointerException("Webserver address is null");
         }
-        String httpPath = address + "/get/" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
+        String executorUri = address + "/" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
 
         commandInfoBuilder
                 .setValue(frameworkConfig.getJavaHome() + "java $JAVA_OPTS -jar ./" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR)
-                .addUris(Protos.CommandInfo.URI.newBuilder().setValue(httpPath));
+                .addAllUris(Collections.singletonList(Protos.CommandInfo.URI.newBuilder().setValue(executorUri).build()));
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
                 .setName(LogstashConstants.NODE_NAME + " executor")

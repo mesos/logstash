@@ -29,6 +29,7 @@ configurations {
 
 dependencies {
     compile project(':logstash-commons')
+    compile project(':logstash-executor')
 
     compile "log4j:log4j:$log4jVer" // TODO (pnw) I saw logback used somewhere else. Check
 
@@ -46,11 +47,18 @@ dependencies {
     testCompile("org.springframework:spring-test:4.1.7.RELEASE")
 }
 
+task copyExecutor(type: Copy) {
+    from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
+    into "$buildDir/resources/main/static"
+    rename { String fileName ->
+        fileName.replace("-${project.version}", "")
+    }
+}
+
 jar {
-    dependsOn 'getLogstashZip'
+    dependsOn 'getLogstashZip', 'copyExecutor'
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
-    from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
 
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
@@ -90,7 +98,7 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 task copyJar(type: Copy) {
-    dependsOn   'bootRepackage'
+    dependsOn   'copyExecutor'
     from        "build/libs/logstash-mesos-scheduler-${project.version}.jar"
     from        "start-scheduler.sh"
     into        'build/docker'

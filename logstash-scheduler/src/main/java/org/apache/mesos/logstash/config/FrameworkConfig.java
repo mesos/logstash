@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.net.InetSocketAddress;
 
 @Component
 @ConfigurationProperties
@@ -26,8 +25,9 @@ public class FrameworkConfig {
     private int zkTimeout = 20000;
 
     private String frameworkName = "logstash";
-    private int webserverPort = 9092;
+
     private double failoverTimeout = 31449600;
+
     private long reconcilationTimeoutMillis;
 
     private String role = "*";
@@ -36,9 +36,7 @@ public class FrameworkConfig {
     private String mesosPrincipal = null;
     private String mesosSecret = null;
 
-    private String javaHome;
-
-    private InetSocketAddress frameworkFileServerAddress;
+    private String javaHome = "";
 
     @Inject
     private Features features;
@@ -47,7 +45,11 @@ public class FrameworkConfig {
     private NetworkUtils networkUtils;
 
     public String getJavaHome() {
-        return javaHome;
+        if (!javaHome.isEmpty()) {
+            return javaHome.replaceAll("java$", "").replaceAll("/$", "") + "/";
+        } else {
+            return "";
+        }
     }
 
     public void setJavaHome(String javaHome) {
@@ -126,19 +128,7 @@ public class FrameworkConfig {
         return mesosSecret;
     }
 
-    public void setFrameworkFileServerAddress(InetSocketAddress addr) {
-        if (addr != null) {
-            frameworkFileServerAddress = addr;
-        } else {
-            LOGGER.error("Could not set webserver address. Was null.");
-        }
-    }
-
     public String getFrameworkFileServerAddress() {
-        String result = "";
-        if (frameworkFileServerAddress != null) {
-            return networkUtils.addressToString(frameworkFileServerAddress, features.getUseIpAddress());
-        }
-        return result;
+        return networkUtils.addressToString(networkUtils.hostSocket(8080), true);
     }
 }
