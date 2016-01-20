@@ -81,6 +81,8 @@ like this:
     --logstash.elasticsearch-url=http://elasticsearch.service.consul:1234 \
     --logstash.executor-image=mesos/logstash-executor \
     --logstash.executor-version=latest \
+    --logstash.syslog-port=514 \
+    --logstash.collectd-port=25826 \
     --executor.cpus=0.5 \
     --executor.heap-size=128 \
     --enable.failover=false \
@@ -113,7 +115,7 @@ We recommend using command-line arguments for options which clash with common en
 Here is the full list of configuration options:
 
 | Command-line argument            | Environment variable           | Default                   | What it does                                                                                                               |
-| -------------------------------- | ------------------------------ | ----------                | -------------------------------------------------------------------------------------------------------------------------- |
+| -------------------------------- | ------------------------------ | --------------------------| -------------------------------------------------------------------------------------------------------------------------- |
 | `--zk-url=U`                     | `ZK_URL=U`                     | Required                  | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
 | `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`                   | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
 | `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash`                | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
@@ -125,7 +127,9 @@ Here is the full list of configuration options:
 | `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`                      | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
 | `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
 | `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The framework executor will use docker image with this name to start LogStash on Mesos Agent                               | 
-| `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The framework executor will use this version of docker image to start LogStash on Mesos Agent                              | 
+| `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The framework executor will use this version of docker image to start LogStash on Mesos Agent                              |
+| `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Listen for syslog messages on port 514. Must be enabled with `--enable.syslog=true`                                        |
+| `--logstash.collectd-port=I`     | `LOGSTASH_COLLECTD_PORT=I`     | `25826`                   | Listsen for collectd events on port 25826. Must be enabled with `--enable.collectd=true`                                   |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`                     | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`                      | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
 | `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`                    | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |

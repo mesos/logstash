@@ -41,10 +41,10 @@ public class TaskInfoBuilder {
             .setImage(executorImage);
 
         if (features.isSyslog()) {
-            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(logstashConfig.getSyslogPort()).setContainerPort(logstashConfig.getSyslogPort()).setProtocol("udp"));
         }
         if (features.isCollectd()) {
-            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(25826).setContainerPort(25826).setProtocol("udp"));
+            dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(logstashConfig.getCollectdPort()).setContainerPort(logstashConfig.getCollectdPort()).setProtocol("udp"));
         }
 
         Protos.ContainerInfo.Builder container = Protos.ContainerInfo.newBuilder()
@@ -74,7 +74,12 @@ public class TaskInfoBuilder {
         final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
         if (features.isSyslog()) {
             logstashConfigBuilder.setLogstashPluginInputSyslog(
-                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(514) // FIXME take from config
+                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(logstashConfig.getSyslogPort())
+            );
+        }
+        if (features.isCollectd()) {
+            logstashConfigBuilder.setLogstashPluginInputCollectd(
+                    LogstashProtos.LogstashPluginInputCollectd.newBuilder().setPort(logstashConfig.getCollectdPort())
             );
         }
         //TODO: repeat for collectd
@@ -127,10 +132,10 @@ public class TaskInfoBuilder {
     private Protos.Value.Ranges.Builder mapSelectedPortRanges() {
         Protos.Value.Ranges.Builder rangesBuilder = Protos.Value.Ranges.newBuilder();
         if (features.isSyslog()) {
-            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(514).setEnd(514));
+            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(logstashConfig.getSyslogPort()).setEnd(logstashConfig.getSyslogPort()));
         }
         if (features.isCollectd()) {
-            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(25826).setEnd(25826));
+            rangesBuilder.addRange(Protos.Value.Range.newBuilder().setBegin(logstashConfig.getCollectdPort()).setEnd(logstashConfig.getCollectdPort()));
         }
         return rangesBuilder;
     }
