@@ -20,7 +20,7 @@ public class FrameworkConfig {
     private double failoverTimeout = 31449600;
     private long reconcilationTimeoutMillis;
 
-    private String mesosRole = "*";
+    private String mesosRole = "logstash";
     private String mesosUser = "root";
 
     private String mesosPrincipal = null;

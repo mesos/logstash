@@ -67,7 +67,6 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     protected CreateContainerCmd dockerCommand() {
         final String cmd = asList(
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
-                "--mesos-role=logstash",
                 "--failover-enabled=false",
                 elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",

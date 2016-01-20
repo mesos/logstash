@@ -29,7 +29,6 @@ public class LogstashSchedulerTest {
     SchedulerDriver driver;
 
     Features features = new Features();
-    LogstashConfig logstashConfig = new LogstashConfig();
 
     private FrameworkConfig frameworkConfig = new FrameworkConfig();
 
@@ -72,7 +71,7 @@ public class LogstashSchedulerTest {
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getName(), frameworkConfig.getFrameworkName());
         assertEquals("root", frameworkInfo.getUser());
-        assertEquals("*", frameworkInfo.getRole());
+        assertEquals("logstash", frameworkInfo.getRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
         assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) frameworkConfig.getFailoverTimeout());
         assertEquals(frameworkInfo.getId().getValue(), frameworkState.getFrameworkID().getValue());
