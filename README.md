@@ -79,6 +79,8 @@ like this:
     --mesos-user=root \
     --logstash.heap-size=64 \
     --logstash.elasticsearch-url=http://elasticsearch.service.consul:1234 \
+    --logstash.executor-image=mesos/logstash-executor \
+    --logstash.executor-version=latest \
     --executor.cpus=0.5 \
     --executor.heap-size=128 \
     --enable.failover=false \
@@ -110,25 +112,27 @@ We recommend using command-line arguments for options which clash with common en
 
 Here is the full list of configuration options:
 
-| Command-line argument            | Environment variable           | Default    | What it does                                                                                                               |
-| -------------------------------- | ------------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `--zk-url=U`                     | `ZK_URL=U`                     | Required   | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
-| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`    | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
-| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash` | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
-| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600` | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
-| `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash` | The Logstash framework role will register with Mesos with framework role `U`.                                              |
-| `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`     | Logstash tasks will be launched with Unix user `U`                                                                         |
-| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent     | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
-| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent     | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
-| `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`       | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
-| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent     | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
-| `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`      | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
-| `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`       | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
-| `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`     | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
-| `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`    | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
-| `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`    | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
-| `--enable.file=B`                | `ENABLE_FILE=B`                | `false`    | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
-| `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty) | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
+| Command-line argument            | Environment variable           | Default                   | What it does                                                                                                               |
+| -------------------------------- | ------------------------------ | ----------                | -------------------------------------------------------------------------------------------------------------------------- |
+| `--zk-url=U`                     | `ZK_URL=U`                     | Required                  | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
+| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`                   | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
+| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash`                | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
+| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600`                | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
+| `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash`                | The Logstash framework role will register with Mesos with framework role `U`.                                              |
+| `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`                    | Logstash tasks will be launched with Unix user `U`                                                                         |
+| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent                    | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
+| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent                    | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
+| `--logstash.heap-size=N`         | `LOGSTASH_HEAP_SIZE=N`         | `32`                      | The Logstash program will be started with `LS_HEAP_SIZE=N` FIXME what does this actually do                                |
+| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
+| `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The framework executor will use docker image with this name to start LogStash on Mesos Agent                               | 
+| `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The framework executor will use this version of docker image to start LogStash on Mesos Agent                              | 
+| `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`                     | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
+| `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`                      | The memory allocation pool for the Logstash executor will be limited to `H` megabytes                                      |
+| `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`                    | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
+| `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`                   | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
+| `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`                   | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
+| `--enable.file=B`                | `ENABLE_FILE=B`                | `false`                   | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
+| `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty)                | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
 ## Running as Marathon app
@@ -157,7 +161,7 @@ You can use the `"env"` map to configure the framework with environment variable
     "MESOS_ROLE": "logstash",
     "NESOS_USER": "root",
     "LOGSTASH_HEAP_SIZE": "64",
-    "LOGSTASH_ELASTICSEARCH_URL": "elasticsearch.service.consul:1234",
+    "LOGSTASH_ELASTICSEARCH_URL": "http://elasticsearch.service.consul:1234",
     "EXECUTOR_CPUS": "0.5",
     "EXECUTOR_HEAP_SIZE": "128",
     "ENABLE_FAILOVER": "false",
