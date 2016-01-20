@@ -9,8 +9,12 @@ import java.util.Optional;
 @Component
 @ConfigurationProperties(prefix = "logstash")
 public class LogstashConfig {
+
     private int heapSize = 64;
     private Optional<URL> elasticsearchUrl = Optional.empty();
+
+    private String executorImage = null;
+    private String executorVersion = null;
 
     public int getHeapSize() {
         return heapSize;
@@ -26,5 +30,21 @@ public class LogstashConfig {
 
     public void setElasticsearchUrl(Optional<URL> elasticsearchUrl) {
         this.elasticsearchUrl = elasticsearchUrl;
+    }
+
+    public String getExecutorImage() {
+        return executorImage;
+    }
+
+    public void setExecutorImage(String executorImage) {
+        this.executorImage = executorImage;
+    }
+
+    public String getExecutorVersion() {
+        return executorVersion;
+    }
+
+    public void setExecutorVersion(String executorVersion) {
+        this.executorVersion = executorVersion;
     }
 }
