@@ -6,6 +6,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,13 +25,14 @@ import java.util.Map;
  * Utilities to help with networking
  */
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
+@Service
 public class NetworkUtils {
     private static final Logger LOG = Logger.getLogger(NetworkUtils.class);
     public static final String DOCKER_MACHINE_IP = "docker-machine ip";
     public static final String LOCALHOST = "127.0.0.1";
     public static final String DOCKER_MACHINE_NAME = "DOCKER_MACHINE_NAME";
 
-    public static InetAddress hostAddress() {
+    public InetAddress hostAddress() {
         try {
             return InetAddress.getLocalHost();
         } catch (UnknownHostException e) {
@@ -39,11 +41,11 @@ public class NetworkUtils {
         }
     }
 
-    public static InetSocketAddress hostSocket(int port) {
+    public InetSocketAddress hostSocket(int port) {
         return new InetSocketAddress(hostAddress(), port);
     }
 
-    public static String addressToString(InetSocketAddress address, Boolean useIpAddress) {
+    public String addressToString(InetSocketAddress address, Boolean useIpAddress) {
         if (useIpAddress) {
             return "http://" + address.getAddress().getHostAddress() + ":" + address.getPort();
         } else {
@@ -51,7 +53,7 @@ public class NetworkUtils {
         }
     }
 
-    public static String getDockerMachineName(Map<String, String> environment) {
+    public String getDockerMachineName(Map<String, String> environment) {
         String envVar = DOCKER_MACHINE_NAME;
         String dockerMachineName = environment.getOrDefault(envVar, "");
         if (dockerMachineName == null || dockerMachineName.isEmpty()) {
@@ -60,7 +62,7 @@ public class NetworkUtils {
         return dockerMachineName;
     }
 
-    public static String getDockerHostIpAddress(Map<String, String> environment) {
+    public String getDockerHostIpAddress(Map<String, String> environment) {
         String ipAddress = LOCALHOST; // Default of localhost
         String dockerMachineName = getDockerMachineName(environment);
 
@@ -81,7 +83,7 @@ public class NetworkUtils {
         return ipAddress;
     }
 
-    public static Map<String, String> getEnvironment() {
+    public Map<String, String> getEnvironment() {
         Map<String, String> env = Collections.emptyMap();
         try {
             env = EnvironmentUtils.getProcEnvironment();
@@ -91,7 +93,7 @@ public class NetworkUtils {
         return env;
     }
 
-    public static String runCommand(CommandLine commandline) throws IOException {
+    public String runCommand(CommandLine commandline) throws IOException {
         DefaultExecutor exec = new DefaultExecutor();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PumpStreamHandler streamHandler = new PumpStreamHandler(outputStream);
@@ -100,7 +102,7 @@ public class NetworkUtils {
         return outputStream.toString(Charset.defaultCharset().name());
     }
 
-    public static String getDocker0AdapterIPAddress() {
+    public String getDocker0AdapterIPAddress() {
         InetAddress docker0 = getLocalAddress("docker0");
         if (docker0 == null) {
             LOG.error("Could not get address for docker0");
@@ -110,7 +112,7 @@ public class NetworkUtils {
         }
     }
 
-    private static InetAddress getLocalAddress(String adaptorName){
+    private InetAddress getLocalAddress(String adaptorName){
         try {
             Enumeration<NetworkInterface> b = NetworkInterface.getNetworkInterfaces();
             while (b.hasMoreElements()) {

@@ -70,7 +70,8 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--failover-enabled=false",
                 elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
-                "--logstash.heap-size=128",
+                "--logstash.heap-size=256",
+                "--enable.docker=true",
                 withSyslog ? "--enable.syslog=true" : null
         ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
 

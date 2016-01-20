@@ -43,6 +43,9 @@ public class FrameworkConfig {
     @Inject
     private Features features;
 
+    @Inject
+    private NetworkUtils networkUtils;
+
     public String getJavaHome() {
         return javaHome;
     }
@@ -134,7 +137,7 @@ public class FrameworkConfig {
     public String getFrameworkFileServerAddress() {
         String result = "";
         if (frameworkFileServerAddress != null) {
-            return NetworkUtils.addressToString(frameworkFileServerAddress, features.getUseIpAddress());
+            return networkUtils.addressToString(frameworkFileServerAddress, features.getUseIpAddress());
         }
         return result;
     }

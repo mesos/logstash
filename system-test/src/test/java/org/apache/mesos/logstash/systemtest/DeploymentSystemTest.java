@@ -9,6 +9,7 @@ import com.containersol.minimesos.state.State;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
@@ -50,7 +51,7 @@ public class DeploymentSystemTest {
 
     private static DockerClient dockerClient = DockerClientFactory.build();
 
-    private static MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
+    private MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
             .withMaster()
             .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
@@ -65,11 +66,15 @@ public class DeploymentSystemTest {
 
     @After
     public void after() {
-        scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
+        try {
+            scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
                 .filter(container -> Arrays.stream(container.getNames()).anyMatch(name -> name.startsWith("/mesos-")))
                 .map(Container::getId)
                 .peek(s -> System.out.println("Stopping mesos- container: " + s))
                 .forEach(containerId -> dockerClient.stopContainerCmd(containerId).exec()));
+        } catch (NotModifiedException e) {
+            // Container is already stopped
+        }
         cluster.stop();
     }
 

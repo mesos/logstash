@@ -2,6 +2,7 @@ package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.LogstashConstants;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.state.ClusterState;
@@ -91,7 +92,7 @@ public class OfferStrategyTest {
 
     private Protos.TaskInfo createTask(String hostname) throws InvalidProtocolBufferException {
         return Protos.TaskInfo.newBuilder()
-                .setName("Test")
+                .setName(LogstashConstants.TASK_NAME)
                 .setTaskId(Protos.TaskID.newBuilder().setValue("TestId").build())
                 .setSlaveId(Protos.SlaveID.newBuilder().setValue(hostname).build())
                 .build();

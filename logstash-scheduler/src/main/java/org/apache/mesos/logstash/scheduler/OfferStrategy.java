@@ -68,7 +68,7 @@ public class OfferStrategy {
     }
 
     private boolean isHostAlreadyRunningTask(ClusterState clusterState, Protos.Offer offer) {
-        return clusterState.getTaskList().stream().anyMatch(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()));
+        return clusterState.getTaskList().stream().anyMatch(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()) && taskInfo.getName().equals("logstash.task"));
     }
 
     private boolean hasEnoughOfResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
