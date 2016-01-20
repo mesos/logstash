@@ -27,6 +27,8 @@ public class OfferStrategyTest {
     LogstashConfig logstashConfig;
     @Mock
     ClusterState clusterState;
+    @Mock
+    Features features;
 
     @InjectMocks
     OfferStrategy offerStrategy;
@@ -63,6 +65,10 @@ public class OfferStrategyTest {
     @Test
     public void willDeclineOfferIfOfferDoesNotHaveNeededPorts() throws Exception {
         when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
+        when(features.isSyslog()).thenReturn(true);
+        when(logstashConfig.getSyslogPort()).thenReturn(514);
+        when(features.isCollectd()).thenReturn(true);
+        when(logstashConfig.getCollectdPort()).thenReturn(25826);
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(
                 clusterState,
@@ -77,13 +83,34 @@ public class OfferStrategyTest {
     @Test
     public void willAcceptValidOffer() throws Exception {
         when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
+        when(features.isSyslog()).thenReturn(true);
+        when(logstashConfig.getSyslogPort()).thenReturn(514);
+        when(features.isCollectd()).thenReturn(true);
+        when(logstashConfig.getCollectdPort()).thenReturn(25826);
+
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(
                 clusterState,
                 baseOfferBuilder("host2")
                         .addResources(cpus(1.0, FRAMEWORK_ROLE))
                         .addResources(mem(512, FRAMEWORK_ROLE))
-                        .addResources(portRange(1, 5000, FRAMEWORK_ROLE))
+                        .addResources(portRange(1, 25826, FRAMEWORK_ROLE))
+                        .build());
+        assertTrue(result.acceptable);
+        assertFalse(result.reason.isPresent());
+    }
+
+    @Test
+    public void willAcceptValidOfferWhenNoPortsAreNeeded() throws Exception {
+        when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
+        when(features.isSyslog()).thenReturn(false);
+        when(features.isCollectd()).thenReturn(false);
+
+        final OfferStrategy.OfferResult result = offerStrategy.evaluate(
+                clusterState,
+                baseOfferBuilder("host2")
+                        .addResources(cpus(1.0, FRAMEWORK_ROLE))
+                        .addResources(mem(512, FRAMEWORK_ROLE))
                         .build());
         assertTrue(result.acceptable);
         assertFalse(result.reason.isPresent());

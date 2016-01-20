@@ -15,6 +15,8 @@ public class LogstashConfig {
 
     private String executorImage = "mesos/logstash-executor";
     private String executorVersion = "latest";
+    private int syslogPort = 514;
+    private int collectdPort = 25826;
 
     public int getHeapSize() {
         return heapSize;
@@ -46,5 +48,21 @@ public class LogstashConfig {
 
     public void setExecutorVersion(String executorVersion) {
         this.executorVersion = executorVersion;
+    }
+
+    public int getSyslogPort() {
+        return syslogPort;
+    }
+
+    public void setSyslogPort(int syslogPort) {
+        this.syslogPort = syslogPort;
+    }
+
+    public int getCollectdPort() {
+        return collectdPort;
+    }
+
+    public void setCollectdPort(int collectdPort) {
+        this.collectdPort = collectdPort;
     }
 }

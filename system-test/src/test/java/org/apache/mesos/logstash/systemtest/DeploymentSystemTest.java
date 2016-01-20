@@ -52,7 +52,7 @@ public class DeploymentSystemTest {
 
     private static MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
-            .withMaster()
+            .withMaster(zooKeeper -> new LogstashMesosMaster(dockerClient, zooKeeper))
             .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
             .build());
 

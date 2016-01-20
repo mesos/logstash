@@ -1,12 +1,9 @@
 package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
@@ -25,7 +22,6 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
 import com.google.protobuf.ByteString;
-import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.NEW_CONFIG;
 
 @Component
 public class LogstashScheduler implements org.apache.mesos.Scheduler {
@@ -61,8 +57,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
-            .setUser(frameworkConfig.getUser())
-            .setRole(frameworkConfig.getRole())
+            .setUser(frameworkConfig.getMesosUser())
+            .setRole(frameworkConfig.getMesosRole())
             .setCheckpoint(true)
             .setFailoverTimeout(frameworkConfig.getFailoverTimeout())
             .setId(frameworkState.getFrameworkID());
