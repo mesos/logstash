@@ -19,7 +19,6 @@ message LogstashConfiguration {
   optional LogstashPluginInputCollectd logstashPluginInputCollectd = 3;
   optional LogstashPluginInputFile logstashPluginInputFile = 4;
   optional LogstashPluginOutputElasticsearch logstashPluginOutputElasticsearch = 2;
-  required string mesosSlaveId = 5;
 }
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html
@@ -37,8 +36,7 @@ message LogstashPluginInputFile {
 
 // Corresponds to a https://www.elastic.co/guide/en/logstash/current/plugins-outputs-elasticsearch.html
 message LogstashPluginOutputElasticsearch {
-  required string url = 1;
-  optional string index = 2;
+  required string host = 1;
 }
 
 message SchedulerMessage {

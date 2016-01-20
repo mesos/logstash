@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
-import com.google.protobuf.ByteString;
 import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.NEW_CONFIG;
 
 @Component
@@ -39,6 +38,8 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     Features features;
     @Inject
     FrameworkConfig frameworkConfig;
+    @Inject
+    LogstashConfig logstashConfig;
 
     @Inject
     TaskInfoBuilder taskInfoBuilder;
@@ -61,31 +62,17 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
-            .setUser(frameworkConfig.getUser())
-            .setRole(frameworkConfig.getRole())
+            .setUser(logstashConfig.getUser())
+            .setRole(logstashConfig.getRole())
             .setCheckpoint(true)
             .setFailoverTimeout(frameworkConfig.getFailoverTimeout())
             .setId(frameworkState.getFrameworkID());
 
         LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
-        if (frameworkConfig.getMesosPrincipal() != null) {
-            Protos.Credential.Builder credentialBuilder = Protos.Credential.newBuilder();
-            frameworkBuilder.setPrincipal(frameworkConfig.getMesosPrincipal());
-            credentialBuilder.setPrincipal(frameworkConfig.getMesosPrincipal());
-            credentialBuilder.setSecret(ByteString.copyFromUtf8(frameworkConfig.getMesosSecret()));
-            LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
+        driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
+            frameworkConfig.getZkUrl());
 
-            driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
-                    credentialBuilder.build(), frameworkConfig.getZkUrl());
-        }
-        else
-        {
-            LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
-
-            driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
-                    frameworkConfig.getZkUrl());
-        }
         driver.start();
     }
 

@@ -1,7 +1,6 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,14 +9,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -27,66 +22,29 @@ public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
 
-    private static <T> Optional<T> ofConditional(T message, Predicate<T> predicate) {
-        if (message != null && predicate.test(message)) {
-            return Optional.of(message);
-        }
-        return Optional.empty();
-    }
-
     private static String serialize(LogstashProtos.LogstashConfiguration logstashConfiguration) {
-        LOGGER.info("Received " + logstashConfiguration.toString());
-        LOGGER.info("logstashConfiguration.getLogstashPluginOutputElasticsearch() = " + logstashConfiguration.getLogstashPluginOutputElasticsearch().isInitialized());
-
-
         List<LS.Plugin> inputPlugins = optionalValuesToList(
-                ofConditional(logstashConfiguration.getLogstashPluginInputSyslog(), LogstashProtos.LogstashPluginInputSyslog::isInitialized).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputCollectd(), LogstashProtos.LogstashPluginInputCollectd::isInitialized).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(5000 /*TODO: config.getPort()*/)), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
-        );
-
-        List<LS.Plugin> filterPlugins = Arrays.asList(
-            LS.plugin("mutate", LS.map(
-                    LS.kv("add_field", LS.map(
-                            LS.kv("mesos_slave_id", LS.string(logstashConfiguration.getMesosSlaveId()))
-                        )
-                    )
-                )
-            )
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputSyslog()).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputCollectd()).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(5000 /*TODO: config.getPort()*/)), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginInputFile()).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
         List<LS.Plugin> outputPlugins = optionalValuesToList(
-                ofConditional(logstashConfiguration.getLogstashPluginOutputElasticsearch(), LogstashProtos.LogstashPluginOutputElasticsearch::isInitialized).map(config -> {
-                    URL url;
-                    try {
-                        url = new URL(config.getUrl());
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException("Failed to parse Elasticsearch URL: " + config.getUrl(), e);
-                    }
-                    return LS.plugin(
-                            "elasticsearch",
-                            LS.map(
-                                    filterEmpties(
-                                            LS.KV.class,
-                                            Optional.of(LS.kv("host", LS.string(url.getHost()))),
-                                            Optional.of(LS.kv("port", LS.number(url.getPort() > 0 ? url.getPort() : 9200))),
-                                            Optional.of(LS.kv("protocol", LS.string(url.getProtocol()))),
-                                            ofConditional(config.getIndex(), StringUtils::isNotEmpty).map(index -> LS.kv("index", LS.string(index)))
-                                    )
-                            )
-                    );
-                })
+                Optional.ofNullable(logstashConfiguration.getLogstashPluginOutputElasticsearch()).map(config -> LS.plugin(
+                        "elasticsearch",
+                        LS.map(
+                                LS.kv("host", LS.string(config.getHost())),
+                                LS.kv("protocol", LS.string("http")),
+                                LS.kv("index", LS.string("logstash"))  //FIXME this should be configurable. Maybe add -%{+YYYY.MM.dd}
+                        )
+                ))
         );
+
 
         return LS.config(
                 LS.section("input",  inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
-                LS.section("filter", filterPlugins.toArray(new LS.Plugin[filterPlugins.size()])),
                 LS.section("output", outputPlugins.toArray(new LS.Plugin[outputPlugins.size()]))
         ).serialize();
-    }
-
-    private static <T> T[] filterEmpties(Class<T> type, Optional<T>... optionals) {
-        return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).toArray(size -> (T[]) Array.newInstance(type, size));
     }
 
     @SafeVarargs

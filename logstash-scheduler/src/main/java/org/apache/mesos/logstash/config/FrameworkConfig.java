@@ -20,12 +20,6 @@ public class FrameworkConfig {
     private double failoverTimeout = 31449600;
     private long reconcilationTimeoutMillis;
 
-    private String role = "*";
-    private String user = "root";
-
-    private String mesosPrincipal = null;
-    private String mesosSecret = null;
-
     public String getZkUrl() {
         return zkUrl;
     }
@@ -64,37 +58,5 @@ public class FrameworkConfig {
 
     public void setReconcilationTimeoutMillis(long reconcilationTimeoutMillis) {
         this.reconcilationTimeoutMillis = reconcilationTimeoutMillis;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getUser() {
-        return user;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public void setMesosPrincipal(String mesosPrincipal) {
-        this.mesosPrincipal = mesosPrincipal;
-    }
-
-    public String getMesosPrincipal() {
-        return mesosPrincipal;
-    }
-
-    public void setMesosSecret(String mesosSecret) {
-        this.mesosSecret = mesosSecret;
-    }
-
-    public String getMesosSecret() {
-        return mesosSecret;
     }
 }

@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Link;
 import com.github.dockerjava.core.command.PullImageResultCallback;
@@ -24,14 +25,12 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -41,6 +40,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.*;
 
 /**
@@ -85,8 +86,8 @@ public class DeploymentSystemTest {
     @Test
     public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
-        cluster.addAndStartContainer(scheduler.get());
+        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        cluster.addAndStartContainer(container);
 
         waitForFramework();
     }
@@ -122,7 +123,7 @@ public class DeploymentSystemTest {
 
         final int elasticsearchPort = 9300;
 
-        final AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
+        AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
         await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", elasticsearchClusterName).build()).addTransportAddress(new InetSocketTransportAddress(elasticsearchInstance.getIpAddress(), elasticsearchPort));
             try {
@@ -136,7 +137,7 @@ public class DeploymentSystemTest {
         });
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
@@ -147,7 +148,7 @@ public class DeploymentSystemTest {
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
         final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> {
+        await().atMost(2, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
             final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
@@ -162,35 +163,24 @@ public class DeploymentSystemTest {
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            assertEquals(randomLogLine, getFirstMessageInLogstashIndex(elasticsearchClient.get()));
         });
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+    }
 
-            String esMessage = fields.get("message").getValue();
-            assertEquals(randomLogLine, esMessage.trim());
-
-            String esMesosSlaveId = fields.get("mesos_slave_id").getValue();
-
-            String trueSlaveId;
-            try {
-                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-            assertEquals(
-                trueSlaveId,
-                esMesosSlaveId.trim()
-            );
-            return true;
-        });
+    private String getFirstMessageInLogstashIndex(Client elasticsearchClient) {
+        try {
+            String esMessage = elasticsearchClient.prepareSearch("logstash").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").execute().actionGet().getHits().getAt(0).fields().get("message").getValue();
+            return esMessage.trim();
+        } catch (Exception e) {
+            return "NOT FOUND";
+        }
     }
 
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
-        cluster.addAndStartContainer(scheduler.get());
+        LogstashSchedulerContainer container = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
+        cluster.addAndStartContainer(container);
 
         waitForFramework();
 

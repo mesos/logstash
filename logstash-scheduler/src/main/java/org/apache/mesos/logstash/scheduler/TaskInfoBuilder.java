@@ -29,11 +29,16 @@ public class TaskInfoBuilder {
 
     public Protos.TaskInfo buildTask(Protos.Offer offer) {
 
+        String executorImage = LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG;
+        if (logstashConfig.getExecutorImage() != null && logstashConfig.getExecutorVersion() != null) {
+            executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
+        }
+
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
             .newBuilder()
             .setForcePullImage(false)
             .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-            .setImage(LogstashConstants.EXECUTOR_IMAGE_NAME_WITH_TAG);
+            .setImage(executorImage);
 
         if (features.isSyslog()) {
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(514).setContainerPort(514).setProtocol("udp"));
@@ -73,16 +78,13 @@ public class TaskInfoBuilder {
             );
         }
         //TODO: repeat for collectd
-        logstashConfig.getElasticsearchUrl().ifPresent(url -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setUrl(url.toExternalForm())));
-
-        logstashConfigBuilder.setMesosSlaveId(offer.getSlaveId().getValue());
+        logstashConfig.getElasticsearchUrl().ifPresent(hostAndPort -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setHost(hostAndPort)));
 
         if (features.isFile()) {
             logstashConfigBuilder.setLogstashPluginInputFile(
                     LogstashProtos.LogstashPluginInputFile.newBuilder().addAllPath(executorConfig.getFilePath())
             );
         }
-
 
         return Protos.TaskInfo.newBuilder()
             .setExecutor(executorInfo)
