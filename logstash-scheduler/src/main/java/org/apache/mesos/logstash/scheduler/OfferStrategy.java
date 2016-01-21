@@ -55,7 +55,6 @@ public class OfferStrategy {
             return OfferResult.decline(decline.get().declineReason);
         }
 
-        LOGGER.info("Accepted offer: " + offer.getHostname());
         return OfferResult.accept();
     }
 

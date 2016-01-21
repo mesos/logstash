@@ -129,7 +129,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
         frameworkState.setFrameworkId(frameworkId);
 
-        LOGGER.info("Framework registered as: {}", frameworkId);
+        LOGGER.info("Framework registered as: {}", frameworkId.getValue());
 
         Protos.Request request = Protos.Request.newBuilder()
             .addAllResources(taskInfoBuilder.getResourcesList())
@@ -156,7 +156,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
 
             if (result.acceptable) {
-                LOGGER.info("Accepting Offer. offerId={}", offerId);
+                LOGGER.info("Accepting offer offerId={}", offerId);
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
