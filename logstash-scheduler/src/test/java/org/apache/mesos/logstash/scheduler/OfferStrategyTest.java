@@ -11,10 +11,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Optional;
+
 import static java.util.Collections.singletonList;
-import static org.apache.mesos.logstash.scheduler.Resources.cpus;
-import static org.apache.mesos.logstash.scheduler.Resources.mem;
-import static org.apache.mesos.logstash.scheduler.Resources.portRange;
+import static org.apache.mesos.logstash.scheduler.Resources.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
@@ -98,6 +98,24 @@ public class OfferStrategyTest {
                         .build());
         assertTrue(result.acceptable);
         assertFalse(result.reason.isPresent());
+    }
+
+    @Test
+    public void willAcceptValidOfferFromCommonPool() throws Exception {
+        when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
+        when(features.isSyslog()).thenReturn(true);
+        when(logstashConfig.getSyslogPort()).thenReturn(514);
+        when(features.isCollectd()).thenReturn(false);
+
+        final OfferStrategy.OfferResult result = offerStrategy.evaluate(
+                clusterState,
+                baseOfferBuilder("host2")
+                        .addResources(cpus(1.0, "*"))
+                        .addResources(mem(512, "*"))
+                        .addResources(portRange(514, 514, "*"))
+                        .build());
+        assertEquals(Optional.empty(), result.reason);
+        assertTrue(result.acceptable);
     }
 
     @Test
