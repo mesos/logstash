@@ -147,11 +147,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
         offers.forEach(offer -> {
-            if (shouldAcceptOffer(offer)) {
+            final String offerId = offer.getId().getValue();
 
-                LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
-                        offer.getId().getValue(),
-                        offer.getSlaveId());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Received offerId={}: {}", offerId, flattenProtobufString(offer.toString()));
+            }
+
+            final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
+
+            if (result.acceptable) {
+                LOGGER.info("Accepting Offer. offerId={}", offerId);
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
@@ -161,7 +166,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
                 clusterState.addTask(taskInfo);
             } else {
-
+                LOGGER.info("Declined offer with offerId={} with reason={}", offerId, result.reason.orElse("UNKNOWN"));
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
@@ -192,14 +197,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             LOGGER.error("Failed to parse framework message. executorId={}, slaveId={}", executorID,
                 slaveID, e);
         }
-    }
-
-    private boolean shouldAcceptOffer(Offer offer) {
-        final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
-        if (!result.acceptable) {
-            LOGGER.debug("Declined offer: " + flattenProtobufString(offer.toString()) + " reason: " + result.reason.orElse("Unknown"));
-        }
-        return result.acceptable;
     }
 
     private String flattenProtobufString(String s) {
