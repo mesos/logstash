@@ -57,7 +57,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Inject
     private FrameworkState frameworkState;
 
-    @PostConstruct
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
@@ -87,8 +86,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
         }
         driver.start();
     }
-
-
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
@@ -159,7 +156,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
-
         LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
             status.getTaskId().getValue(),
             status.getState(),

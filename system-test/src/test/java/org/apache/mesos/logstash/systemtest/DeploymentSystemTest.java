@@ -29,6 +29,7 @@ import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -98,8 +99,8 @@ public class DeploymentSystemTest {
         waitForFramework();
     }
 
-    @Test
-    public void testDeploymentJar() throws JsonParseException, UnirestException, JsonMappingException {
+    @Ignore
+    public void testDeploymentJar() throws JsonParseException, UnirestException,  JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
         scheduler = Optional.of(logstashSchedulerContainer);
