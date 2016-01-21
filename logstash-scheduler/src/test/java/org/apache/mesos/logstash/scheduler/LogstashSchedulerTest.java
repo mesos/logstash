@@ -71,7 +71,7 @@ public class LogstashSchedulerTest {
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals(frameworkInfo.getName(), frameworkConfig.getFrameworkName());
         assertEquals("root", frameworkInfo.getUser());
-        assertEquals("logstash", frameworkInfo.getRole());
+        assertEquals("*", frameworkInfo.getRole());
         assertEquals(frameworkInfo.hasCheckpoint(), true);
         assertEquals((int)frameworkInfo.getFailoverTimeout(),(int) frameworkConfig.getFailoverTimeout());
         assertEquals(frameworkInfo.getId().getValue(), frameworkState.getFrameworkID().getValue());
