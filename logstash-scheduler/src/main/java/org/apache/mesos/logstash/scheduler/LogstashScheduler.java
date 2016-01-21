@@ -8,6 +8,10 @@ import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -17,6 +21,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -24,7 +29,7 @@ import static org.apache.mesos.Protos.*;
 import com.google.protobuf.ByteString;
 
 @Component
-public class LogstashScheduler implements org.apache.mesos.Scheduler {
+public class LogstashScheduler implements org.apache.mesos.Scheduler, ApplicationListener<EmbeddedServletContainerInitializedEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
     @Inject
@@ -53,7 +58,15 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Inject
     private FrameworkState frameworkState;
 
-    @PostConstruct
+    private final AtomicBoolean appStarted = new AtomicBoolean(false);
+
+    @Override
+    public void onApplicationEvent(EmbeddedServletContainerInitializedEvent event) {
+        if (appStarted.compareAndSet(false, true)) {
+            start();
+        }
+    }
+
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
