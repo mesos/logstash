@@ -26,7 +26,6 @@ dependencies {
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-logging:${springBootVersion}")
-    compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}")
     compile("org.springframework:spring-messaging")
 
