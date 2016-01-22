@@ -142,8 +142,8 @@ subprojects {
 
     dependencies {
         compile "org.apache.mesos:mesos:${mesosVer}"
-        compile "junit:junit:${junitVer}" //TODO: not testCompile?
-        compile "com.jayway.awaitility:awaitility:${awaitilityVer}" //TODO: not testCompile?
+        testCompile "junit:junit:${junitVer}"
+        testCompile "com.jayway.awaitility:awaitility:${awaitilityVer}"
         testCompile "org.mockito:mockito-all:${mockitoVer}"
         compile "commons-lang:commons-lang:$commonsLang2Ver" //TODO: Replace with commons-lang3
     }
