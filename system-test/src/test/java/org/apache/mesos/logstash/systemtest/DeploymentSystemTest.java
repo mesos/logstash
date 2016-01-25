@@ -29,7 +29,6 @@ import org.elasticsearch.search.SearchHitField;
 import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -81,7 +80,7 @@ public class DeploymentSystemTest {
 
     protected State getClusterStateInfo() {
         try {
-            return cluster.getStateInfo();
+            return State.fromJSON(cluster.getStateInfoJSON().toString());
         } catch (Exception e) {
             fail(e.getMessage());
             return null;
@@ -94,17 +93,17 @@ public class DeploymentSystemTest {
         LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
         schedulerContainer.setDocker(true);
         scheduler = Optional.of(schedulerContainer);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
     }
 
-    @Ignore
+    @Test
     public void testDeploymentJar() throws JsonParseException, UnirestException,  JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
         scheduler = Optional.of(logstashSchedulerContainer);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
     }
@@ -136,7 +135,7 @@ public class DeploymentSystemTest {
                 return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
             }
         };
-        cluster.addAndStartContainer(elasticsearchInstance);
+        cluster.addAndStartContainer(elasticsearchInstance, 60);
 
         final int elasticsearchPort = 9300;
 
@@ -156,7 +155,7 @@ public class DeploymentSystemTest {
 
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
 
@@ -208,14 +207,14 @@ public class DeploymentSystemTest {
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress));
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
 
-        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
+        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer()), 60));
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(
-                () -> cluster.getStateInfo().getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
+                () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
         );
 
         // TODO use com.containersol.minimesos.state.Task when it exposes the slave_id property https://github.com/ContainerSolutions/minimesos/issues/168

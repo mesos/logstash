@@ -7,6 +7,8 @@ import com.github.dockerjava.api.DockerClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Main app to run Mesos Logstash with Mini Mesos.
  */
@@ -20,7 +22,7 @@ public class Main {
 
         MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(1, zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper)).withMaster().build());
 
-        cluster.start();
+        cluster.start(5);
 
 /*
         LOGGER.info("Starting scheduler");

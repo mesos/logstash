@@ -1,8 +1,6 @@
 package org.apache.mesos.logstash.config;
 
-import org.apache.log4j.Logger;
 import org.apache.mesos.logstash.common.network.NetworkUtils;
-import org.apache.mesos.logstash.scheduler.Features;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -10,13 +8,15 @@ import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
+// TODO: Add unit test to assert default settings, URIs and commands
+
 @Component
 @ConfigurationProperties
 public class FrameworkConfig {
 
-    public static final Logger LOGGER = Logger.getLogger(FrameworkConfig.class);
+    private static final String LOGSTASH_EXECUTOR_JAR   = "logstash-mesos-executor.jar";
 
-    public static final String LOGSTASH_EXECUTOR_JAR = "logstash-mesos-executor.jar";
+    private static final String LOGSTASH_ZIP = "logstash.zip";
 
     @NotNull
     @Pattern(regexp = "^zk://.+$")
@@ -37,9 +37,6 @@ public class FrameworkConfig {
     private String mesosSecret = null;
 
     private String javaHome = "";
-
-    @Inject
-    private Features features;
 
     @Inject
     private NetworkUtils networkUtils;
@@ -131,4 +128,17 @@ public class FrameworkConfig {
     public String getFrameworkFileServerAddress() {
         return networkUtils.addressToString(networkUtils.hostSocket(8080), true);
     }
+
+    public String getLogstashZipUri() {
+        return getFrameworkFileServerAddress() + "/" + FrameworkConfig.LOGSTASH_ZIP;
+    }
+
+    public String getLogstashExecutorUri() {
+        return getFrameworkFileServerAddress() + "/" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
+    }
+
+    public String getExecutorCommand() {
+        return getJavaHome() + "java $JAVA_OPTS -jar ./" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
+    }
+
 }

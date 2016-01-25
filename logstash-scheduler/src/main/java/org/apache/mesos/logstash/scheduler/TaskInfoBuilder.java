@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -90,21 +90,14 @@ public class TaskInfoBuilder {
     }
 
     private Protos.TaskInfo buildNativeTask(Protos.Offer offer) {
-        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
-                executorConfig, logstashConfig);
-
         Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
-                .setEnvironment(Protos.Environment.newBuilder().addAllVariables(executorEnvVars.getList()));
-
-        String address = frameworkConfig.getFrameworkFileServerAddress();
-        if (address == null) {
-            throw new NullPointerException("Webserver address is null");
-        }
-        String executorUri = address + "/" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR;
-
-        commandInfoBuilder
-                .setValue(frameworkConfig.getJavaHome() + "java $JAVA_OPTS -jar ./" + FrameworkConfig.LOGSTASH_EXECUTOR_JAR)
-                .addAllUris(Collections.singletonList(Protos.CommandInfo.URI.newBuilder().setValue(executorUri).build()));
+                .setEnvironment(Protos.Environment.newBuilder().addAllVariables(
+                        new ExecutorEnvironmentalVariables(executorConfig, logstashConfig).getList()))
+                .setValue(frameworkConfig.getExecutorCommand())
+                .addAllUris(Arrays.asList(
+                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashZipUri()).build(),
+                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashExecutorUri()).build()
+                ));
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
                 .setName(LogstashConstants.NODE_NAME + " executor")
@@ -119,7 +112,7 @@ public class TaskInfoBuilder {
         final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
         if (features.isSyslog()) {
             logstashConfigBuilder.setLogstashPluginInputSyslog(
-                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(514) // FIXME take from config
+                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(514) // TODO take from config
             );
         }
         //TODO: repeat for collectd
@@ -141,12 +134,6 @@ public class TaskInfoBuilder {
                 .setSlaveId(offer.getSlaveId())
                 .setData(logstashConfigBuilder.build().toByteString())
                 .build();
-    }
-
-    private void addIfNotEmpty(List<String> args, String key, String value) {
-        if (!value.isEmpty()) {
-            args.addAll(asList(key, value));
-        }
     }
 
     public List<Protos.Resource> getResourcesList() {

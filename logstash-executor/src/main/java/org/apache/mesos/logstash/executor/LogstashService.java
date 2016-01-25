@@ -27,6 +27,10 @@ public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
 
+    private static final String LOGSTASH_VERSION = "2.1.1";
+
+    public static final String LOGSTASH_PATH = "logstash-" + LOGSTASH_VERSION + "";
+
     private static <T> Optional<T> ofConditional(T message, Predicate<T> predicate) {
         if (message != null && predicate.test(message)) {
             return Optional.of(message);
@@ -100,7 +104,7 @@ public class LogstashService {
         Process process;
         try {
             String[] command = {
-                    "/opt/logstash/bin/logstash",
+                    LOGSTASH_PATH + "/bin/logstash",
                     "--log", "/var/log/logstash.log",
                     "-e", serialize(logstashConfiguration)
             };
