@@ -24,6 +24,8 @@ public class TaskInfoBuilder {
 
     public static final Logger LOGGER = Logger.getLogger(TaskInfoBuilder.class);
 
+    private static final String LOGSTASH_VERSION = "2.1.1";
+
     @Inject
     private Clock clock;
     @Inject
@@ -72,6 +74,7 @@ public class TaskInfoBuilder {
 
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(
                 executorConfig, logstashConfig);
+        executorEnvVars.addToList(ExecutorEnvironmentalVariables.LOGSTASH_PATH, "/opt/logstash/bin/logstash");
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
                 .setName(LogstashConstants.NODE_NAME + " executor")
@@ -90,9 +93,12 @@ public class TaskInfoBuilder {
     }
 
     private Protos.TaskInfo buildNativeTask(Protos.Offer offer) {
+        ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(executorConfig, logstashConfig);
+        executorEnvVars.addToList(ExecutorEnvironmentalVariables.LOGSTASH_PATH, "./logstash-" + LOGSTASH_VERSION + "/bin/logstash");
+
         Protos.CommandInfo.Builder commandInfoBuilder = Protos.CommandInfo.newBuilder()
                 .setEnvironment(Protos.Environment.newBuilder().addAllVariables(
-                        new ExecutorEnvironmentalVariables(executorConfig, logstashConfig).getList()))
+                        executorEnvVars.getList()))
                 .setValue(frameworkConfig.getExecutorCommand())
                 .addAllUris(Arrays.asList(
                     Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashZipUri()).build(),
