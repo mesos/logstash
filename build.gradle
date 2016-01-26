@@ -20,13 +20,6 @@ ext {
     elasticsearchVer = "1.7.3"
     javaxInjectVer = "1";
 
-    // Scheduler
-    reactVer = "0.13.3"
-    reactRouterVer = "0.13.2"
-    stompWebsocketVer = "2.3.4"
-    sockjsClientVer = "1.0.0"
-    highchartsVer = "4.1.6"
-
     // Executor
     slf4jVer = "1.7.13"
     commonsCompressVer = "1.10"
