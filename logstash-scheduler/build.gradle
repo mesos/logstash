@@ -29,12 +29,6 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}")
     compile("org.springframework:spring-messaging")
 
-    compile "org.webjars:react:$reactVer"
-    compile "org.webjars:react-router:$reactRouterVer"
-    compile "org.webjars.bower:stomp-websocket:$stompWebsocketVer"
-    compile "org.webjars:sockjs-client:$sockjsClientVer"
-    compile "org.webjars:highcharts:$highchartsVer"
-
     testCompile("org.springframework:spring-test:4.1.7.RELEASE")
 }
 
