@@ -18,13 +18,13 @@ import static java.util.Arrays.asList;
 /**
  * Container for the Logstash scheduler
  */
-public class LogstashSchedulerContainer extends AbstractContainer {
+class LogstashSchedulerContainer extends AbstractContainer {
 
-    public static final String SCHEDULER_IMAGE = "mesos/logstash-scheduler";
+    private static final String SCHEDULER_IMAGE = "mesos/logstash-scheduler";
 
-    public static final String SCHEDULER_NAME = "logstash-scheduler";
+    private static final String SCHEDULER_NAME = "logstash-scheduler";
 
-    private String zookeeperIpAddress;
+    private final String zookeeperIpAddress;
     private final int apiPort = 9092;
     private Optional<String> elasticsearchUrl = Optional.empty();
     private boolean withSyslog = false;

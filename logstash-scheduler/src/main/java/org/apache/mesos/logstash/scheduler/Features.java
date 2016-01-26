@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @ConfigurationProperties(prefix = "enable")
-public class Features {
+class Features {
 
     private boolean failover = true;
     private boolean collectd;

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 
 @Component
-public class MesosSchedulerDriverFactory {
+class MesosSchedulerDriverFactory {
     public SchedulerDriver createMesosDriver(Scheduler scheduler, Protos.FrameworkInfo frameworkInfo, String zookeeperURL){
        return new MesosSchedulerDriver(scheduler, frameworkInfo, zookeeperURL);
    }

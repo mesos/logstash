@@ -5,7 +5,6 @@ import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.FrameworkState;
 import org.apache.mesos.logstash.state.SerializableState;
-import org.apache.mesos.logstash.state.TestSerializableStateImpl;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,12 +27,9 @@ public class LogstashSchedulerTest {
     @Mock
     SchedulerDriver driver;
 
-    Features features = new Features();
+    private final Features features = new Features();
 
-    private FrameworkConfig frameworkConfig = new FrameworkConfig();
-
-    @Mock
-    ConfigManager configManager;
+    private final FrameworkConfig frameworkConfig = new FrameworkConfig();
 
     @Mock
     SerializableState serializableState;
@@ -41,7 +37,7 @@ public class LogstashSchedulerTest {
     @Mock
     FrameworkState frameworkState;
 
-    ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
+    private final ArgumentCaptor<Protos.FrameworkInfo> frameworkInfoArgumentCaptor = new ArgumentCaptor<>();
 
     @InjectMocks
     LogstashScheduler scheduler;
@@ -52,12 +48,6 @@ public class LogstashSchedulerTest {
         scheduler.features = features;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
-    }
-
-    @Test
-    public void hasInjected() throws Exception {
-        assertNotNull(configManager);
-        assertSame(configManager, scheduler.configManager);
     }
 
     @Test
@@ -99,15 +89,6 @@ public class LogstashSchedulerTest {
 
         Protos.FrameworkInfo frameworkInfo = frameworkInfoArgumentCaptor.getValue();
         assertEquals("test", frameworkInfo.getId().getValue());
-    }
-
-    @Test
-    public void onStopShouldDeRegisterConfigManagerOnConfigUpdate() throws Exception {
-        when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
-        scheduler.start();
-        scheduler.stop();
-
-        verify(configManager).setOnConfigUpdate(null);
     }
 
     @Test

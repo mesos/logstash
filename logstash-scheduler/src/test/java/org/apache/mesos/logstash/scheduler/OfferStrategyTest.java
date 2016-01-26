@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class OfferStrategyTest {
-    public static final String FRAMEWORK_ROLE = "testRole";
+    private static final String FRAMEWORK_ROLE = "testRole";
     @Mock
     ExecutorConfig executorConfig;
     @Mock
@@ -134,7 +134,7 @@ public class OfferStrategyTest {
         assertFalse(result.reason.isPresent());
     }
 
-    private Protos.TaskInfo createTask(String hostname) throws InvalidProtocolBufferException {
+    private Protos.TaskInfo createTask(String hostname) {
         return Protos.TaskInfo.newBuilder()
                 .setName("Test")
                 .setTaskId(Protos.TaskID.newBuilder().setValue("TestId").build())

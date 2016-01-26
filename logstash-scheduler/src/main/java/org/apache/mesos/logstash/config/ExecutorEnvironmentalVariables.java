@@ -11,7 +11,7 @@ import java.util.List;
 public class ExecutorEnvironmentalVariables {
     private static final String native_mesos_library_key = "MESOS_NATIVE_JAVA_LIBRARY";
     private static final String native_mesos_library_path = "/usr/lib/libmesos.so"; // libmesos.so is usually symlinked to the version.
-    public static final String JAVA_OPTS = "JAVA_OPTS";
+    private static final String JAVA_OPTS = "JAVA_OPTS";
     private final List<Protos.Environment.Variable> envList = new ArrayList<>();
 
     /**

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.io.NotSerializableException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,8 +19,8 @@ import static org.apache.mesos.Protos.TaskID;
  */
 @Component
 public class ClusterState {
-    public static final Logger LOGGER = Logger.getLogger(ClusterState.class);
-    public static final String STATE_LIST = "stateList";
+    private static final Logger LOGGER = Logger.getLogger(ClusterState.class);
+    private static final String STATE_LIST = "stateList";
     @Inject
     SerializableState state;
     @Inject
@@ -43,7 +42,7 @@ public class ClusterState {
 
     /**
      * Get the status of a specific task
-     * @param taskID the taskID to retreive the task status for
+     * @param taskID the taskID to retrieve the task status for
      * @return a POJO representing TaskInfo, TaskStatus and FrameworkID packets
      * @throws InvalidParameterException when the taskId does not exist in the Task list.
      */
@@ -94,7 +93,7 @@ public class ClusterState {
 
     /**
      * Get the TaskInfo packet for a specific task.
-     * @param taskID the taskID to retreive the TaskInfo for
+     * @param taskID the taskID to retrieve the TaskInfo for
      * @return a TaskInfo packet
      * @throws InvalidParameterException when the taskId does not exist in the Task list.
      */
@@ -115,11 +114,7 @@ public class ClusterState {
     }
 
     private String logTaskList(List<TaskInfo> taskInfoList) {
-        List<String> res = new ArrayList<>();
-        for (TaskInfo t : taskInfoList) {
-            res.add(t.getTaskId().getValue());
-        }
-        return Arrays.toString(res.toArray());
+        return Arrays.toString(taskInfoList.stream().map(t -> t.getTaskId().getValue()).collect(Collectors.toList()).toArray());
     }
 
     private void setTaskInfoList(List<TaskInfo> taskInfoList) {
@@ -131,11 +126,8 @@ public class ClusterState {
         }
     }
 
-    private String getKey() throws NotSerializableException {
+    private String getKey() {
         return frameworkState.getFrameworkID().getValue() + "/" + STATE_LIST;
     }
 
-    public List<TaskID> getTaskIdList() {
-        return getTaskList().stream().map(TaskInfo::getTaskId).collect(Collectors.toList());
-    }
 }

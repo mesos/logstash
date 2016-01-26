@@ -31,7 +31,7 @@ public class OfferStrategy {
     @Inject
     private Features features;
 
-    private List<OfferRule> acceptanceRules = asList(
+    private final List<OfferRule> acceptanceRules = asList(
             new OfferRule("Host already running task", this::isHostAlreadyRunningTask),
             new OfferRule("Offer did not have enough CPU resources", this::isNotEnoughCPU),
             new OfferRule("Offer did not have enough RAM resources", this::isNotEnoughRAM),
@@ -105,7 +105,7 @@ public class OfferStrategy {
         return !neededPorts().stream()
                 .allMatch(
                         port -> offer.getResourcesList().stream()
-                                .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
+                                .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check whether this can be removed
                                 .anyMatch(resource -> portIsInRanges(port, resource.getRanges()))
                 );
 
@@ -118,8 +118,8 @@ public class OfferStrategy {
      * Rule and reason container object
      */
     private static class OfferRule {
-        String declineReason;
-        Rule rule;
+        final String declineReason;
+        final Rule rule;
 
         public OfferRule(String declineReason, Rule rule) {
             this.declineReason = declineReason;

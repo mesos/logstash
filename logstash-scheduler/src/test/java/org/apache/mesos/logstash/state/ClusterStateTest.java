@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -20,9 +19,9 @@ import static org.mockito.Mockito.*;
  */
 @SuppressWarnings({"PMD.TooManyMethods"})
 public class ClusterStateTest {
-    private SerializableState state = mock(SerializableState.class);
-    private FrameworkState frameworkState = mock(FrameworkState.class);
-    private ClusterState clusterState = new ClusterState();
+    private final SerializableState state = mock(SerializableState.class);
+    private final FrameworkState frameworkState = mock(FrameworkState.class);
+    private final ClusterState clusterState = new ClusterState();
 
     @Before
     public void before() throws IOException {
@@ -57,7 +56,7 @@ public class ClusterStateTest {
     }
 
     @Test(expected = InvalidParameterException.class)
-    public void shouldThrowExceptionWhenGetStatusTaskIDDesntExist() throws IOException {
+    public void shouldThrowExceptionWhenGetStatusTaskIDDoesntExist() throws IOException {
         clusterState.getStatus(Protos.TaskID.newBuilder().setValue("").build());
     }
 

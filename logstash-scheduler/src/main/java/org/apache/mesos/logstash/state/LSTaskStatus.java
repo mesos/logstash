@@ -15,9 +15,8 @@ import java.security.InvalidParameterException;
  */
 public class LSTaskStatus {
     private static final Logger LOGGER = Logger.getLogger(TaskStatus.class);
-    public static final String STATE_KEY = "state";
+    private static final String STATE_KEY = "state";
     public static final String DEFAULT_STATUS_NO_MESSAGE_SET = "Default status. No message set.";
-    private static final String FINGERPRINT_KEY = "configuration";
     private final SerializableState state;
     private final FrameworkID frameworkID;
 
@@ -32,23 +31,6 @@ public class LSTaskStatus {
         this.state = state;
         this.frameworkID = frameworkID;
         this.taskInfo = taskInfo;
-    }
-
-    public void setConfigurationFingerprint(String fingerprint) {
-        try {
-            LOGGER.debug("Writing configuration fingerprint to zk: [" + fingerprint + "] " + taskInfo.getTaskId().getValue());
-            SerializableZookeeperState.mkdirAndSet(getKey(FINGERPRINT_KEY), fingerprint, state);
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to write configuration fingerprint to zookeeper", e);
-        }
-    }
-
-    public String getConfigurationFingerprint() throws IllegalStateException {
-        try {
-            return state.get(getKey(FINGERPRINT_KEY));
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to get task status from zookeeper", e);
-        }
     }
 
     public void setStatus(TaskStatus status) throws IllegalStateException {
@@ -77,10 +59,6 @@ public class LSTaskStatus {
                     .build();
     }
 
-    public TaskInfo getTaskInfo() {
-        return taskInfo;
-    }
-
     @Override
     public String toString() {
         String retVal;
@@ -94,29 +72,5 @@ public class LSTaskStatus {
 
     private String getKey(String path) {
         return frameworkID.getValue() + "/" + path + "/" + taskInfo.getTaskId().getValue();
-    }
-
-    public boolean isRunning(){
-        TaskState state = getStatus().getState();
-        return  TaskState.TASK_RUNNING.equals(state);
-    }
-
-
-    public boolean taskInTerminalState() {
-        TaskState state = getStatus().getState();
-        return StateUtil.isTerminalState(state);
-    }
-
-    public void destroy() {
-        safeDeleteKey(STATE_KEY);
-        safeDeleteKey(FINGERPRINT_KEY);
-    }
-
-    private void safeDeleteKey(String key) {
-        try {
-            state.delete(getKey(key));
-        } catch (Exception e) {
-            LOGGER.error("Could not destroy Task in ZK.", e);
-        }
     }
 }

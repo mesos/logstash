@@ -11,7 +11,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
@@ -28,13 +27,14 @@ import static org.mockito.Mockito.*;
 @SuppressWarnings({"PMD.TooManyMethods"})
 @RunWith(MockitoJUnitRunner.class)
 public class SerializableZookeeperStateTest {
-    public static final String SERIALIZABLE_OBJECT = "Serializable object";
+    private static final String SERIALIZABLE_OBJECT = "Serializable object";
     @Mock
     State state;
     @Mock
-    Variable variable = mock(Variable.class);
+    final Variable variable = mock(Variable.class);
 
     @InjectMocks
+    final
     SerializableState serializableState = new SerializableZookeeperState();
 
     @Before

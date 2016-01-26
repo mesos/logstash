@@ -9,8 +9,6 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -18,10 +16,10 @@ import static org.mockito.Mockito.*;
  */
 public class ExecutorStateTest {
 
-    public static final String FRAMEWORK_ID = "frameworkId";
-    public static final String EXECUTOR_ID = "executorId";
-    public static final String TASK_ID = "task1";
-    public static final String SLAVE_ID = "slaveID";
+    private static final String FRAMEWORK_ID = "frameworkId";
+    private static final String EXECUTOR_ID = "executorId";
+    private static final String TASK_ID = "task1";
+    private static final String SLAVE_ID = "slaveID";
 
     @Test
     public void testExecutorStateMechanism() throws IOException, InterruptedException, ExecutionException, ClassNotFoundException {

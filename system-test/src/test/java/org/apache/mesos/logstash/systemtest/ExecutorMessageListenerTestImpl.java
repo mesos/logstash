@@ -11,7 +11,7 @@ import java.util.List;
 
 
 public class ExecutorMessageListenerTestImpl implements FrameworkMessageListener {
-    List<ExecutorMessage> messages = Collections.synchronizedList(new ArrayList<>());
+    final List<ExecutorMessage> messages = Collections.synchronizedList(new ArrayList<>());
 
     public synchronized List<ExecutorMessage> getExecutorMessages(){
         return messages;

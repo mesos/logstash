@@ -5,11 +5,11 @@ import org.apache.mesos.Protos;
 /**
  * Helper class for building Mesos resources.
  */
-public class Resources {
+class Resources {
 
-    public static final String RESOURCE_PORTS = "ports";
-    public static final String RESOURCE_CPUS = "cpus";
-    public static final String RESOURCE_MEM = "mem";
+    private static final String RESOURCE_PORTS = "ports";
+    private static final String RESOURCE_CPUS = "cpus";
+    private static final String RESOURCE_MEM = "mem";
 
     private Resources() {
 
@@ -23,10 +23,6 @@ public class Resources {
                 .setRanges(Protos.Value.Ranges.newBuilder().addRange(singlePortRange))
                 .setRole(frameworkRole)
                 .build();
-    }
-
-    public static Protos.Resource singlePortRange(long port, String frameworkRole) {
-        return portRange(port, port, frameworkRole);
     }
 
     public static Protos.Resource cpus(double cpus, String frameworkRole) {

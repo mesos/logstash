@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  *
  */
 public class ZKAddressParser {
-    public static final String ZK_PREFIX_REGEX = "^" + ZKAddress.ZK_PREFIX + ".*";
+    private static final String ZK_PREFIX_REGEX = "^" + ZKAddress.ZK_PREFIX + ".*";
 
     public List<ZKAddress> validateZkUrl(final String zkUrl) {
         final List<ZKAddress> zkList = new ArrayList<>();

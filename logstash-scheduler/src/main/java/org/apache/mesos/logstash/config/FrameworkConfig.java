@@ -16,7 +16,6 @@ public class FrameworkConfig {
     private int zkTimeout = 20000;
 
     private String frameworkName = "logstash";
-    private int webserverPort = 9092;
     private double failoverTimeout = 31449600;
     private long reconcilationTimeoutMillis;
 
