@@ -68,9 +68,8 @@ public class LogstashService {
                             LS.map(
                                     filterEmpties(
                                             LS.KV.class,
-                                            Optional.of(LS.kv("host", LS.string(url.getHost()))),
-                                            Optional.of(LS.kv("port", LS.number(url.getPort() > 0 ? url.getPort() : 9200))),
-                                            Optional.of(LS.kv("protocol", LS.string(url.getProtocol()))),
+                                            Optional.of(LS.kv("hosts", LS.string(url.getHost() + ":" + (url.getPort() > 0 ? url.getPort() : 9200)))),
+                                            Optional.of(LS.kv("ssl", LS.bool(url.getProtocol().equals("https")))),
                                             ofConditional(config.getIndex(), StringUtils::isNotEmpty).map(index -> LS.kv("index", LS.string(index)))
                                     )
                             )
