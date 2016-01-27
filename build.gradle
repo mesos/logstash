@@ -28,7 +28,7 @@ ext {
     stompWebsocketVer = "2.3.4"
     sockjsClientVer = "1.0.0"
     highchartsVer = "4.1.6"
-    logstashVer = "2.1.1"
+    logstashVer = "1.5.6"
 
     // Executor
     commonsCompressVer = "1.10"
