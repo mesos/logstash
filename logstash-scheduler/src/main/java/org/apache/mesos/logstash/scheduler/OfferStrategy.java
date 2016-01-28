@@ -96,8 +96,7 @@ public class OfferStrategy {
         if (totalSize < minSize) {
             return Arrays.asList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
         } else {
-            String[] reasons = new String[]{};
-            return Arrays.asList(reasons).stream();
+            return Arrays.asList(new String[]{}).stream();
         }
     }
 
