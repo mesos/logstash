@@ -94,7 +94,7 @@ public class OfferStrategy {
     private Stream<String> complaintsForResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
         double totalSize = resources.stream().filter(resource -> resource.getName().equals(resourceName)).collect(Collectors.summingDouble(resource -> resource.getScalar().getValue()));
         if (totalSize < minSize) {
-            return Arrays.asList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
+            return Collections.singletonList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
         } else {
             return Arrays.asList(new String[]{}).stream();
         }
