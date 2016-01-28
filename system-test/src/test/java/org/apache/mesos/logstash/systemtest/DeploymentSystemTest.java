@@ -1,49 +1,53 @@
 package org.apache.mesos.logstash.systemtest;
 
 import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.container.AbstractContainer;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
-import com.containersol.minimesos.state.Framework;
 import com.containersol.minimesos.state.State;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.NotModifiedException;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.Link;
+import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.ElasticsearchException;
+import org.elasticsearch.client.Client;
+import org.elasticsearch.client.Requests;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.ImmutableSettings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
-import java.nio.ByteBuffer;
-import java.nio.channels.DatagramChannel;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -121,11 +125,9 @@ public class DeploymentSystemTest {
             }
 
             JSONArray tasks = frameworks.getJSONObject(0).getJSONArray("tasks");
-            if (tasks.length() != 0) {
-                if (tasks.getJSONObject(0).getString("name").equals("logstash.task")) {
-                    LOGGER.info("Logstash executor running");
-                    return true;
-                }
+            if (tasks.length() != 0 && tasks.getJSONObject(0).getString("name").equals("logstash.task")) {
+                LOGGER.info("Logstash executor running");
+                return true;
             }
 
             LOGGER.info("Logstash executor not yet running");
@@ -134,59 +136,90 @@ public class DeploymentSystemTest {
     }
 
     @Test
-    public void willForwardDataToElasticsearch() throws IOException, UnirestException, ExecutionException, InterruptedException {
+    public void willForwardDataToElasticsearch() throws JsonParseException, UnirestException, JsonMappingException, ExecutionException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
-        final ElasticsearchContainer elasticsearchContainer = new ElasticsearchContainer(dockerClient);
-        cluster.addAndStartContainer(elasticsearchContainer, 60);
+        final String elasticsearchClusterName = "test-" + System.currentTimeMillis();
+        final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
+            private final String version = "1.7";
 
-        elasticsearchContainer.waitUntilHealthy();
+            @Override
+            protected void pullImage() {
+                pullImage("elasticsearch", version);
+            }
 
-        LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, elasticsearchContainer.getClientUrl());
-        logstashSchedulerContainer.setDocker(true);
-        scheduler = Optional.of(logstashSchedulerContainer);
+            @Override
+            protected CreateContainerCmd dockerCommand() {
+                return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
+            }
+        };
+        cluster.addAndStartContainer(elasticsearchInstance, 9999);
+
+        final int elasticsearchPort = 9300;
+
+        final AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", elasticsearchClusterName).build()).addTransportAddress(new InetSocketTransportAddress(elasticsearchInstance.getIpAddress(), elasticsearchPort));
+            try {
+                c.admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet();
+            } catch (ElasticsearchException e) {
+                c.close();
+                return false;
+            }
+            elasticsearchClient.set(c);
+            return true;
+        });
+        assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
+
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
-        cluster.addAndStartContainer(scheduler.get(), 60);
+        cluster.addAndStartContainer(scheduler.get(), 9999);
 
         waitForFramework();
 
-        String logline = "Hello " + RandomStringUtils.randomAlphanumeric(32);
+        final String sysLogPort = "514";
+        final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    DatagramSocket socket = null;
-                    socket = new DatagramSocket();
-                    byte[] buf = logline.getBytes();
-                    InetAddress address = InetAddress.getByName("localhost");
-                    DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 514);
-                    socket.send(packet);
-                } catch (IOException e) {
-                    // Ignore
-                }
-            }
-        };
-        thread.run();
+        dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
+        final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new AssertionError("Unable to find logstash container"));
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> {
+            assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
-        await().atMost(2, TimeUnit.MINUTES).pollInterval(2, TimeUnit.SECONDS).until(() -> {
-            SearchHits hits = elasticsearchContainer.getClient().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits();
-            if (hits.totalHits() == 0) {
-                LOGGER.info("Log message not found in Elasticsearch on " + elasticsearchContainer.getClientUrl());
-                return false;
+            final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
+            dockerClient.startContainerCmd(loggerContainer.getId()).exec();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> {
+                // TODO: this is a hack to determine whether the container has stopped.
+                // We should use ...exec().getState().getRunning() but docker-java doesn't provide that
+                // (even though it's available in the JSON provided by Docker).
+                final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+                return StringUtils.isNotBlank(finishedAt) && !finishedAt.equals("0001-01-01T00:00:00Z");
+            });
+            final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
+            dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
+            assertEquals(0, exitCode);
+            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+        });
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+
+            String esMessage = fields.get("message").getValue();
+            assertEquals(randomLogLine, esMessage.trim());
+
+            String esMesosSlaveId = fields.get("mesos_slave_id").getValue();
+
+            String trueSlaveId;
+            try {
+                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-            LOGGER.info("Log message found in Elasticsearch");
+            assertEquals(
+                    trueSlaveId,
+                    esMesosSlaveId.trim()
+            );
             return true;
         });
-
-        SearchHits hits = elasticsearchContainer.getClient().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits();
-        String esMessage = hits.getAt(0).getFields().get("message").getValue();
-        assertEquals(logline, esMessage.trim());
-        String esMesosSlaveId = hits.getAt(0).getFields().get("mesos_slave_id").getValue();
-        String trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
-        assertEquals(trueSlaveId, esMesosSlaveId.trim());
     }
-
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();

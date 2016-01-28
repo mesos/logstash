@@ -11,7 +11,7 @@ public class Features {
     private boolean collectd;
     private boolean syslog;
     private boolean file;
-    private boolean docker;
+    private boolean docker = true;
     private Boolean useIpAddress = false;
 
     public boolean isDocker() {

@@ -27,7 +27,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private String zookeeperIpAddress;
     private Optional<String> elasticsearchUrl = Optional.empty();
     private boolean withSyslog = false;
-    private boolean useDocker = false;
+    private boolean useDocker = true;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
         super(dockerClient);
@@ -74,7 +74,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--enable.docker=" + useDocker,
                 withSyslog ? "--enable.syslog=true" : null
         ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
-
+        System.out.println("cmd = " + cmd);
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
