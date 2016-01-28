@@ -25,7 +25,7 @@ mesosslave:
   image: containersol/mesos-agent:0.25.0-0.2.70.ubuntu1404
   privileged: true
   environment:
-    MESOS_RESOURCES: 'ports(*):[5000-5000,31000-32000]; cpus(*):0.2; mem(*):256; disk(*):200'
+    MESOS_RESOURCES: 'ports(*):[25826-25826,31000-32000]; cpus(*):0.2; mem(*):256; disk(*):200'
     MESOS_PORT: '5051'
     MESOS_MASTER: 'zk://zookeeper:2181/mesos'
     MESOS_SWITCH_USER: 'false'

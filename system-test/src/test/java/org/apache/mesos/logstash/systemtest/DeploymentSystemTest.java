@@ -60,7 +60,7 @@ public class DeploymentSystemTest {
 
     private MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
-            .withMaster()
+            .withMaster(zooKeeper -> new LogstashMesosMaster(dockerClient, zooKeeper))
             .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
             .build());
 
@@ -86,21 +86,11 @@ public class DeploymentSystemTest {
         cluster.stop();
     }
 
-    protected State getClusterStateInfo() {
-        try {
-            return State.fromJSON(cluster.getStateInfoJSON().toString());
-        } catch (Exception e) {
-            fail(e.getMessage());
-            return null;
-        }
-    }
-
     @Test
     public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        schedulerContainer.setDocker(true);
-        scheduler = Optional.of(schedulerContainer);
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
+        scheduler.get().setDocker(true);
         cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
@@ -109,8 +99,7 @@ public class DeploymentSystemTest {
     @Test
     public void testDeploymentJar() throws JsonParseException, UnirestException,  JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        scheduler = Optional.of(logstashSchedulerContainer);
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();
@@ -171,7 +160,7 @@ public class DeploymentSystemTest {
         });
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get(), 9999);
 
@@ -223,9 +212,8 @@ public class DeploymentSystemTest {
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        LogstashSchedulerContainer logstashSchedulerContainer = new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress);
-        logstashSchedulerContainer.setDocker(true);
-        scheduler = Optional.of(logstashSchedulerContainer);
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
+        scheduler.get().setDocker(true);
         cluster.addAndStartContainer(scheduler.get(), 60);
 
         waitForFramework();

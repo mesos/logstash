@@ -1,16 +1,17 @@
 package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.mesos.Protos;
 import org.apache.mesos.SchedulerDriver;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 import org.apache.mesos.logstash.config.*;
 import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -20,15 +21,15 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
 import static org.apache.mesos.Protos.*;
 import com.google.protobuf.ByteString;
-import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage.SchedulerMessageType.NEW_CONFIG;
 
 @Component
-public class LogstashScheduler implements org.apache.mesos.Scheduler {
+public class LogstashScheduler implements org.apache.mesos.Scheduler, ApplicationListener<EmbeddedServletContainerInitializedEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
     @Inject
@@ -57,11 +58,20 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Inject
     private FrameworkState frameworkState;
 
+    private final AtomicBoolean appStarted = new AtomicBoolean(false);
+
+    @Override
+    public void onApplicationEvent(EmbeddedServletContainerInitializedEvent event) {
+        if (appStarted.compareAndSet(false, true)) {
+            start();
+        }
+    }
+
     public void start() {
         Protos.FrameworkInfo.Builder frameworkBuilder = Protos.FrameworkInfo.newBuilder()
             .setName(frameworkConfig.getFrameworkName())
-            .setUser(frameworkConfig.getUser())
-            .setRole(frameworkConfig.getRole())
+            .setUser(frameworkConfig.getMesosUser())
+            .setRole(frameworkConfig.getMesosRole())
             .setCheckpoint(true)
             .setFailoverTimeout(frameworkConfig.getFailoverTimeout())
             .setId(frameworkState.getFrameworkID());
@@ -116,7 +126,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
         frameworkState.setFrameworkId(frameworkId);
 
-        LOGGER.info("Framework registered as: {}", frameworkId);
+        LOGGER.info("Framework registered as: {}", frameworkId.getValue());
 
         Protos.Request request = Protos.Request.newBuilder()
             .addAllResources(taskInfoBuilder.getResourcesList())
@@ -134,11 +144,16 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
     @Override
     public void resourceOffers(SchedulerDriver schedulerDriver, List<Offer> offers) {
         offers.forEach(offer -> {
-            if (shouldAcceptOffer(offer)) {
+            final String offerId = offer.getId().getValue();
 
-                LOGGER.info("Accepting Offer. offerId={}, slaveId={}",
-                        offer.getId().getValue(),
-                        offer.getSlaveId());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Received offerId={}: {}", offerId, flattenProtobufString(offer.toString()));
+            }
+
+            final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
+
+            if (result.acceptable) {
+                LOGGER.info("Accepting offer offerId={}", offerId);
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
 
@@ -148,7 +163,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
 
                 clusterState.addTask(taskInfo);
             } else {
-
+                LOGGER.info("Declined offer with offerId={} with reason={}", offerId, result.reason.orElse("UNKNOWN"));
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
@@ -178,14 +193,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler {
             LOGGER.error("Failed to parse framework message. executorId={}, slaveId={}", executorID,
                 slaveID, e);
         }
-    }
-
-    private boolean shouldAcceptOffer(Offer offer) {
-        final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
-        if (!result.acceptable) {
-            LOGGER.debug("Declined offer: " + flattenProtobufString(offer.toString()) + " reason: " + result.reason.orElse("Unknown"));
-        }
-        return result.acceptable;
     }
 
     private String flattenProtobufString(String s) {

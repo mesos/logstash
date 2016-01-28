@@ -29,7 +29,6 @@ public class LogstashSchedulerTest {
     SchedulerDriver driver;
 
     Features features = new Features();
-    LogstashConfig logstashConfig = new LogstashConfig();
 
     private FrameworkConfig frameworkConfig = new FrameworkConfig();
 

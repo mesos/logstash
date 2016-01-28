@@ -5,7 +5,8 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,7 @@ import java.util.Map;
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
 @Service
 public class NetworkUtils {
-    private static final Logger LOG = Logger.getLogger(NetworkUtils.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NetworkUtils.class);
     public static final String DOCKER_MACHINE_IP = "docker-machine ip";
     public static final String LOCALHOST = "127.0.0.1";
     public static final String DOCKER_MACHINE_NAME = "DOCKER_MACHINE_NAME";

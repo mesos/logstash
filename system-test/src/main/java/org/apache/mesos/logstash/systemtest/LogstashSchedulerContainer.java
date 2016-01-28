@@ -27,16 +27,19 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private String zookeeperIpAddress;
     private Optional<String> elasticsearchUrl = Optional.empty();
     private boolean withSyslog = false;
+    private final Optional<String> mesosRole;
     private boolean useDocker = true;
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress) {
-        super(dockerClient);
-        this.zookeeperIpAddress = zookeeperIpAddress;
+    @Override
+    public void start(int timeout) {
+        super.start(timeout);
+        System.out.println("LogstashSchedulerContainer.start");
     }
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String elasticsearchUrl) {
+    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchUrl) {
         super(dockerClient);
         this.zookeeperIpAddress = zookeeperIpAddress;
+        this.mesosRole = Optional.ofNullable(mesosRole);
         this.elasticsearchUrl = Optional.ofNullable(elasticsearchUrl);
     }
 
@@ -67,6 +70,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     protected CreateContainerCmd dockerCommand() {
         final String cmd = asList(
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
+                mesosRole.map(role -> "--mesos-role=" + role).orElse(null),
                 "--failover-enabled=false",
                 elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",

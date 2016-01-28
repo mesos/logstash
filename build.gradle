@@ -5,8 +5,7 @@ import com.bmuschko.gradle.docker.tasks.image.DockerTagImage
 ext {
     imagePrefix = 'mesos'
     mesosVer = "0.25.0"
-    slf4jVer = "1.7.13"
-    springBootVersion = "1.2.5.RELEASE" // Note: Conflict between Jackson in 1.3.0 and docker-java in system test.
+    springBootVersion = "1.2.8.RELEASE" // Note: Conflict between Jackson in 1.3.0 and docker-java in system test.
     junitVer = "4.12"
     awaitilityVer = "1.7.0"
     mockitoVer = "1.9.5"
@@ -22,15 +21,10 @@ ext {
     javaxInjectVer = "1";
 
     // Scheduler
-    log4jVer = "1.2.16"
-    reactVer = "0.13.3"
-    reactRouterVer = "0.13.2"
-    stompWebsocketVer = "2.3.4"
-    sockjsClientVer = "1.0.0"
-    highchartsVer = "4.1.6"
     logstashVer = "1.5.6"
 
     // Executor
+    slf4jVer = "1.7.13"
     commonsCompressVer = "1.10"
     guavaVer = "18.0"
 }
@@ -42,7 +36,7 @@ buildscript {
     dependencies {
         classpath "org.ajoberstar:semver-vcs-gradle-grgit:0.1.0"
         classpath "org.ajoberstar:grgit:1.4.1"
-        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.5.RELEASE" // Unable to parametize this?
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:1.2.8.RELEASE" // Unable to parametize this?
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
         classpath 'com.google.protobuf:protobuf-gradle-plugin:0.7.1'
         classpath 'com.bmuschko:gradle-docker-plugin:2.5' // 2.5.1+ needs newer gradle
@@ -144,12 +138,10 @@ subprojects {
 
     dependencies {
         compile "org.apache.mesos:mesos:${mesosVer}"
-        compile "org.slf4j:log4j-over-slf4j:${slf4jVer}"
-        runtime "ch.qos.logback:logback-classic:${logbackVer}"
-        compile "junit:junit:${junitVer}"
-        compile "com.jayway.awaitility:awaitility:${awaitilityVer}"
+        testCompile "junit:junit:${junitVer}"
+        testCompile "com.jayway.awaitility:awaitility:${awaitilityVer}"
         testCompile "org.mockito:mockito-all:${mockitoVer}"
-        compile "commons-lang:commons-lang:$commonsLang2Ver"
+        compile "commons-lang:commons-lang:$commonsLang2Ver" //TODO: Replace with commons-lang3
     }
 
     sonarRunner {

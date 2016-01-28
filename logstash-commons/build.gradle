@@ -10,6 +10,7 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 dependencies {
+    compile 'ch.qos.logback:logback-classic:1.1.3'
     compile "com.google.protobuf:protobuf-java:$protobufVer"
     compile "javax.inject:javax.inject:$javaxInjectVer"
     compile "org.springframework:spring-context:4.1.7.RELEASE"
