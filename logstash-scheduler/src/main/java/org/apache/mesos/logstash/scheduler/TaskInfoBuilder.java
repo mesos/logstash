@@ -103,7 +103,7 @@ public class TaskInfoBuilder {
                         executorEnvVars.getList()))
                 .setValue(frameworkConfig.getExecutorCommand())
                 .addAllUris(Arrays.asList(
-                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashZipUri()).build(),
+                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashTarballUri()).build(),
                     Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashExecutorUri()).build()
                 ));
 

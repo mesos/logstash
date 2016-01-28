@@ -16,7 +16,7 @@ public class FrameworkConfig {
 
     private static final String LOGSTASH_EXECUTOR_JAR   = "logstash-mesos-executor.jar";
 
-    private static final String LOGSTASH_ZIP = "logstash.zip";
+    private static final String LOGSTASH_TARBALL = "logstash.tar.gz";
 
     @NotNull
     @Pattern(regexp = "^zk://.+$")
@@ -129,8 +129,8 @@ public class FrameworkConfig {
         return networkUtils.addressToString(networkUtils.hostSocket(8080), true);
     }
 
-    public String getLogstashZipUri() {
-        return getFrameworkFileServerAddress() + "/" + FrameworkConfig.LOGSTASH_ZIP;
+    public String getLogstashTarballUri() {
+        return getFrameworkFileServerAddress() + "/" + FrameworkConfig.LOGSTASH_TARBALL;
     }
 
     public String getLogstashExecutorUri() {

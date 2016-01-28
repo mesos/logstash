@@ -44,7 +44,7 @@ task copyExecutor(type: Copy) {
 }
 
 jar {
-    dependsOn 'getLogstashZip', 'copyExecutor'
+    dependsOn 'getLogstashTarball', 'copyExecutor'
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
 
@@ -61,9 +61,9 @@ jar {
 }
 
 import de.undercouch.gradle.tasks.download.Download
-task getLogstashZip(type: Download) {
-    src "https://download.elastic.co/logstash/logstash/logstash-" + "$logstashVer" + ".zip"
-    dest new File(buildDir, './resources/main/public/logstash.zip')
+task getLogstashTarball(type: Download) {
+    src "https://download.elastic.co/logstash/logstash/logstash-" + "$logstashVer" + ".tar.gz"
+    dest new File(buildDir, './resources/main/public/logstash.tar.gz')
     onlyIfNewer true
 }
 
