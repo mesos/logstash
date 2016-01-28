@@ -223,7 +223,22 @@ public class DeploymentSystemTest {
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "localhost:9200", null));
+        final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
+            private final String version = "1.7";
+
+            @Override
+            protected void pullImage() {
+                pullImage("elasticsearch", version);
+            }
+
+            @Override
+            protected CreateContainerCmd dockerCommand() {
+                return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"test-" + System.currentTimeMillis() + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
+            }
+        };
+        cluster.addAndStartContainer(elasticsearchInstance);
+
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
