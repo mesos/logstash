@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +75,7 @@ public class OfferStrategy {
         }
 
         public static OfferResult accept() {
-            return new OfferResult(Arrays.asList());
+            return new OfferResult(Collections.emptyList());
         }
 
         public static OfferResult decline(List<String> complaints) {
@@ -94,10 +94,9 @@ public class OfferStrategy {
     private Stream<String> complaintsForResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
         double totalSize = resources.stream().filter(resource -> resource.getName().equals(resourceName)).collect(Collectors.summingDouble(resource -> resource.getScalar().getValue()));
         if (totalSize < minSize) {
-            return Arrays.asList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
+            return Collections.singletonList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
         } else {
-            String[] reasons = new String[]{};
-            return Arrays.asList(reasons).stream();
+            return Arrays.asList(new String[]{}).stream();
         }
     }
 
