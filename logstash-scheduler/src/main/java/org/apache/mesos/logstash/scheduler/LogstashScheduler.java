@@ -164,7 +164,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
                 clusterState.addTask(taskInfo);
             } else {
-                LOGGER.info("Declined offer offerId={} because: " + result.complaints.stream().collect(Collectors.joining("; ")));
+                LOGGER.debug("Declined offer offerId={} because: " + result.complaints.stream().collect(Collectors.joining("; ")));
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
