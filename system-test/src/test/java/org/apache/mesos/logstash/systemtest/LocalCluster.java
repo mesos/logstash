@@ -40,7 +40,7 @@ public class LocalCluster {
 
         DummyFrameworkContainer dummyFrameworkContainer = new DummyFrameworkContainer(
             clusterDockerClient, "dummy-framework");
-        dummyFrameworkContainer.start(5);
+        dummyFrameworkContainer.start();
 
         System.setProperty("mesos.zk", cluster.getZkUrl());
         System.setProperty("mesos.logstash.logstash.heap.size", "128");

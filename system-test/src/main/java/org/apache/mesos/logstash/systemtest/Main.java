@@ -22,7 +22,7 @@ public class Main {
 
         MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(1, zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper)).withMaster().build());
 
-        cluster.start(5);
+        cluster.start();
 
 /*
         LOGGER.info("Starting scheduler");

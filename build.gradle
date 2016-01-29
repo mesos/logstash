@@ -16,7 +16,7 @@ ext {
     // System test
     dockerJavaVer = "4f094c112";
     unirestVer = "1.4.7"
-    minimesosVer = "db0abe511995bd87d1c76747f9e7417d1f875050"
+    minimesosVer = "0.5.0"
     elasticsearchVer = "1.7.3"
     javaxInjectVer = "1";
 

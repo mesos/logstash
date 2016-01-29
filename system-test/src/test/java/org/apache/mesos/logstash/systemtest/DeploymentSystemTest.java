@@ -91,7 +91,7 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get(), 60);
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
     }
@@ -100,7 +100,7 @@ public class DeploymentSystemTest {
     public void testDeploymentJar() throws JsonParseException, UnirestException,  JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
-        cluster.addAndStartContainer(scheduler.get(), 60);
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
     }
@@ -142,7 +142,7 @@ public class DeploymentSystemTest {
                 return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
             }
         };
-        cluster.addAndStartContainer(elasticsearchInstance, 9999);
+        cluster.addAndStartContainer(elasticsearchInstance);
 
         final int elasticsearchPort = 9300;
 
@@ -162,7 +162,7 @@ public class DeploymentSystemTest {
 
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
         scheduler.get().enableSyslog();
-        cluster.addAndStartContainer(scheduler.get(), 9999);
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
 
@@ -214,11 +214,11 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get(), 60);
+        cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
 
-        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer()), 60));
+        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(
                 () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3

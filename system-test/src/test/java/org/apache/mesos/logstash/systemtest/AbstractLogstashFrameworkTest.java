@@ -61,7 +61,7 @@ public abstract class AbstractLogstashFrameworkTest {
         clusterDockerClient = DockerClientBuilder.getInstance(dockerConfigBuilder.build()).build();
 
         LogstashSchedulerContainer schedulerContainer = new LogstashSchedulerContainer(clusterDockerClient, cluster.getMesosMasterContainer().getIpAddress(), null, null);
-        schedulerContainer.start(60);
+        schedulerContainer.start();
     }
 
     @Before
