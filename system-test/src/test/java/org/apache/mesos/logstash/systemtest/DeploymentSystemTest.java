@@ -4,7 +4,6 @@ import com.containersol.minimesos.MesosCluster;
 import com.containersol.minimesos.container.AbstractContainer;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
-import com.containersol.minimesos.state.Framework;
 import com.containersol.minimesos.state.State;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -17,7 +16,7 @@ import com.github.dockerjava.api.model.Link;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
@@ -30,13 +29,14 @@ import org.json.JSONArray;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -45,7 +45,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -54,7 +55,9 @@ public class DeploymentSystemTest {
 
     private static DockerClient dockerClient = DockerClientFactory.build();
 
-    private static MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
+    private static final Logger LOGGER = LoggerFactory.getLogger(DeploymentSystemTest.class);
+
+    private MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
             .withMaster(zooKeeper -> new LogstashMesosMaster(dockerClient, zooKeeper))
             .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
@@ -67,6 +70,7 @@ public class DeploymentSystemTest {
         cluster.start();
     }
 
+    @SuppressWarnings({"PMD.EmptyCatchBlock"})
     @After
     public void after() {
         scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
@@ -83,17 +87,18 @@ public class DeploymentSystemTest {
         cluster.stop();
     }
 
-    protected State getClusterStateInfo() {
-        try {
-            return cluster.getStateInfo();
-        } catch (Exception e) {
-            fail(e.getMessage());
-            return null;
-        }
+    @Test
+    public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
+        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
+        scheduler.get().setDocker(true);
+        cluster.addAndStartContainer(scheduler.get());
+
+        waitForFramework();
     }
 
     @Test
-    public void testDeployment() throws JsonParseException, UnirestException, JsonMappingException {
+    public void testDeploymentJar() throws JsonParseException, UnirestException,  JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         cluster.addAndStartContainer(scheduler.get());
@@ -102,11 +107,21 @@ public class DeploymentSystemTest {
     }
 
     private void waitForFramework() {
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            Framework framework = getClusterStateInfo().getFramework("logstash");
-            assertNotNull(framework);
-            assertTrue(framework.getTasks().size() > 0);
-            assertEquals("TASK_RUNNING", framework.getTasks().get(0).getState());
+        await().atMost(2, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            JSONArray frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
+            if (frameworks.length() == 0) {
+                LOGGER.info("Logstash framework is not yet running");
+                return false;
+            }
+
+            JSONArray tasks = frameworks.getJSONObject(0).getJSONArray("tasks");
+            if (tasks.length() != 0 && tasks.getJSONObject(0).getString("name").equals("logstash.task")) {
+                LOGGER.info("Logstash executor running");
+                return true;
+            }
+
+            LOGGER.info("Logstash executor not yet running");
+            return false;
         });
     }
 
@@ -156,7 +171,7 @@ public class DeploymentSystemTest {
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
-        final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new AssertionError("Unable to find logstash container"));
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).ignoreExceptions().until(() -> {
             assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
@@ -189,17 +204,17 @@ public class DeploymentSystemTest {
                 throw new RuntimeException(e);
             }
             assertEquals(
-                trueSlaveId,
-                esMesosSlaveId.trim()
+                    trueSlaveId,
+                    esMesosSlaveId.trim()
             );
             return true;
         });
     }
-
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
+        scheduler.get().setDocker(true);
         cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
@@ -207,7 +222,7 @@ public class DeploymentSystemTest {
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(
-                () -> cluster.getStateInfo().getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
+                () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
         );
 
         // TODO use com.containersol.minimesos.state.Task when it exposes the slave_id property https://github.com/ContainerSolutions/minimesos/issues/168

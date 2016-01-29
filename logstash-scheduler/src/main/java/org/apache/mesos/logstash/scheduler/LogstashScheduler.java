@@ -86,8 +86,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
                     credentialBuilder.build(), frameworkConfig.getZkUrl());
         }
-        else
-        {
+        else {
             LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
             driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
@@ -95,8 +94,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
         }
         driver.start();
     }
-
-
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {

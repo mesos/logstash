@@ -38,15 +38,19 @@ public class LogstashExecutor implements Executor {
             LOGGER.info("Forked thread with LogstashService.run()");
             try {
                 logstashService.run(logstashConfiguration);
-                LOGGER.error("LogstashService finished");
+                LOGGER.info("LogstashService finished");
+                driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
+                        .setExecutorId(task.getExecutor().getExecutorId())
+                        .setTaskId(task.getTaskId())
+                        .setState(Protos.TaskState.TASK_FINISHED).build());
             } catch (Exception e) {
                 LOGGER.error("Logstash service failed", e);
+                driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
+                        .setExecutorId(task.getExecutor().getExecutorId())
+                        .setTaskId(task.getTaskId())
+                        .setState(Protos.TaskState.TASK_FAILED)
+                        .setMessage(e.getCause().getMessage()).build());
             }
-
-            driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
-                    .setExecutorId(task.getExecutor().getExecutorId())
-                    .setTaskId(task.getTaskId())
-                    .setState(Protos.TaskState.TASK_FAILED).build());
             driver.stop();
         });
         thread.setDaemon(true);
@@ -71,44 +75,17 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
-        System.out.println("LogstashExecutor.frameworkMessage");
+        LOGGER.info("LogstashExecutor.frameworkMessage");
         try {
             SchedulerMessage message = SchedulerMessage.parseFrom(data);
-
             LOGGER.info("SchedulerMessage. message={}", message);
-
-/*
-            if (message.getType().equals(REQUEST_STATS)) {
-                sendStatsToScheduler(driver);
-            } else {
-                updateConfig(message);
-            }
-*/
         } catch (InvalidProtocolBufferException e) {
             LOGGER.error("Error parsing framework message from scheduler.", e);
         }
     }
 
-/*
-    private void updateConfig(SchedulerMessage message) {
-        LOGGER.info("New configuration received. Reconfiguring...");
-
-        // TODO extract config and update service:
-        // logstashService.update(514, "elasticsearch.service:9200");
-    }
-*/
-
-/*
-    private void sendStatsToScheduler(ExecutorDriver driver) {
-        driver.sendFrameworkMessage(liveState.getStateAsExecutorMessage().toByteArray());
-
-    }
-
-*/
     @Override
     public void shutdown(ExecutorDriver driver) {
-        // The task i killed automatically, so we don't have to
-        // do anything.
         LOGGER.info("Shutting down framework.");
     }
 
