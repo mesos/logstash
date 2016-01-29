@@ -11,6 +11,16 @@ class Features {
     private boolean collectd;
     private boolean syslog;
     private boolean file;
+    private boolean docker = true;
+    private Boolean useIpAddress = false;
+
+    public boolean isDocker() {
+        return docker;
+    }
+
+    public void setDocker(boolean docker) {
+        this.docker = docker;
+    }
 
     public boolean isFailover() {
         return failover;
@@ -43,4 +53,9 @@ class Features {
     public void setFile(boolean file) {
         this.file = file;
     }
+
+    public Boolean getUseIpAddress() {
+        return useIpAddress;
+    }
+
 }

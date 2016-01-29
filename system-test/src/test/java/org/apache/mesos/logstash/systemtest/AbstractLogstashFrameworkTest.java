@@ -3,11 +3,16 @@ package org.apache.mesos.logstash.systemtest;
 import com.containersol.minimesos.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterUtil;
 import com.containersol.minimesos.mesos.MesosSlave;
+import com.containersol.minimesos.state.State;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.InternalServerErrorException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
 import com.github.dockerjava.core.DockerClientConfig;
+import com.jayway.awaitility.Awaitility;
+import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,7 +63,7 @@ abstract class AbstractLogstashFrameworkTest {
     }
 
     @Before
-    public void startLogstashFramework() throws IOException, ExecutionException, InterruptedException {
+    public void startLogstashFramework() throws IOException, ExecutionException, InterruptedException, UnirestException {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
@@ -80,16 +85,22 @@ abstract class AbstractLogstashFrameworkTest {
         }
     }
 
-    private static void waitForLogstashFramework() {
-        // wait for our framework
-        cluster.waitForState(state -> state.getFramework("logstash") != null);
+    private static void waitForLogstashFramework() throws UnirestException, JsonParseException, JsonMappingException {
+        State state = State.fromJSON(cluster.getStateInfoJSON().toString());
+        int timeout = 60;
+        Awaitility.await("Logstash framework did not start within " + timeout + " seconds")
+                  .atMost(timeout, TimeUnit.SECONDS)
+                  .until(() -> state.getFramework("logstash") != null);
     }
 
-    private static void waitForExecutorTaskIsRunning() {
-        // wait for our executor
-        cluster.waitForState(state -> state.getFramework("logstash") != null
-            && state.getFramework("logstash").getTasks().size() > 0
-            && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState()));
+    private static void waitForExecutorTaskIsRunning() throws UnirestException, JsonParseException, JsonMappingException {
+        State state = State.fromJSON(cluster.getStateInfoJSON().toString());
+        int timeout = 60;
+        Awaitility.await("Logstash executor did not start within " + timeout + " seconds")
+                .atMost(timeout, TimeUnit.SECONDS)
+                .until(() -> state.getFramework("logstash") != null
+                             && state.getFramework("logstash").getTasks().size() > 0
+                             && "TASK_RUNNING".equals(state.getFramework("logstash").getTasks().get(0).getState()));
     }
 
     /**

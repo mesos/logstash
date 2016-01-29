@@ -6,6 +6,8 @@ dependencies {
     compile "com.mashape.unirest:unirest-java:$unirestVer"
     compile "com.github.ContainerSolutions:minimesos:$minimesosVer"
     compile "org.elasticsearch:elasticsearch:$elasticsearchVer"
+
+    compile "com.jayway.awaitility:awaitility:${awaitilityVer}"
 }
 
 test {
