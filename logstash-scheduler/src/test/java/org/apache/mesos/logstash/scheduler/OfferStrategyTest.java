@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.util.Optional;
+import java.util.Arrays;
 
 import static java.util.Collections.singletonList;
 import static org.apache.mesos.logstash.scheduler.Resources.*;
@@ -39,8 +39,8 @@ public class OfferStrategyTest {
         when(clusterState.getTaskList()).thenReturn(singletonList(createTask("host1")));
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, validOffer("host1"));
-        assertFalse(result.acceptable);
-        assertEquals("Host already running task", result.reason.get());
+        assertFalse(result.acceptable());
+        assertEquals(Arrays.asList("host host1 is already running task TestId"), result.complaints);
     }
 
     @Test
@@ -49,8 +49,8 @@ public class OfferStrategyTest {
         when(executorConfig.getCpus()).thenReturn(1.0);
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, baseOfferBuilder("host2").addResources(cpus(0.9, FRAMEWORK_ROLE)).build());
-        assertFalse(result.acceptable);
-        assertEquals("Offer did not have enough CPU resources", result.reason.get());
+        assertFalse(result.acceptable());
+        assertEquals(Arrays.asList("required minimum 1.0 cpus but offer only has 0.9 in total"), result.complaints);
     }
 
     @Test
@@ -59,8 +59,8 @@ public class OfferStrategyTest {
         when(executorConfig.getHeapSize()).thenReturn(2048);
 
         final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, baseOfferBuilder("host2").addResources(cpus(1.0, FRAMEWORK_ROLE)).build());
-        assertFalse(result.acceptable);
-        assertEquals("Offer did not have enough RAM resources", result.reason.get());
+        assertFalse(result.acceptable());
+        assertEquals(Arrays.asList("required minimum 2048.0 mem but offer only has 0.0 in total"), result.complaints);
     }
 
     @Test
@@ -77,8 +77,8 @@ public class OfferStrategyTest {
                         .addResources(cpus(1.0, FRAMEWORK_ROLE))
                         .addResources(mem(512, FRAMEWORK_ROLE))
                         .build());
-        assertFalse(result.acceptable);
-        assertEquals("Offer did not have ports available", result.reason.get());
+        assertFalse(result.acceptable());
+        assertEquals(Arrays.asList("required port 514 but was not in offer", "required port 25826 but was not in offer"), result.complaints);
     }
 
     @Test
@@ -97,8 +97,7 @@ public class OfferStrategyTest {
                         .addResources(mem(512, FRAMEWORK_ROLE))
                         .addResources(portRange(1, 25826, FRAMEWORK_ROLE))
                         .build());
-        assertTrue(result.acceptable);
-        assertFalse(result.reason.isPresent());
+        assertTrue(result.acceptable());
     }
 
     @Test
@@ -115,8 +114,7 @@ public class OfferStrategyTest {
                         .addResources(mem(512, "*"))
                         .addResources(portRange(514, 514, "*"))
                         .build());
-        assertEquals(Optional.empty(), result.reason);
-        assertTrue(result.acceptable);
+        assertTrue(result.acceptable());
     }
 
     @Test
@@ -131,8 +129,7 @@ public class OfferStrategyTest {
                         .addResources(cpus(1.0, FRAMEWORK_ROLE))
                         .addResources(mem(512, FRAMEWORK_ROLE))
                         .build());
-        assertTrue(result.acceptable);
-        assertFalse(result.reason.isPresent());
+        assertTrue(result.acceptable());
     }
 
     private Protos.TaskInfo createTask(String hostname) throws InvalidProtocolBufferException {
