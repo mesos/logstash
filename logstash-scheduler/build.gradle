@@ -1,5 +1,6 @@
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'spring-boot'
+apply plugin: 'de.undercouch.download'
 
 mainClassName = "org.apache.mesos.logstash.scheduler.Application"
 ext {
@@ -12,6 +13,7 @@ buildscript {
     }
     dependencies {
         classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath 'de.undercouch:gradle-download-task:2.1.0'
     }
 }
 
@@ -23,6 +25,7 @@ repositories {
 
 dependencies {
     compile project(':logstash-commons')
+    compile project(':logstash-executor')
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-logging:${springBootVersion}")
@@ -32,10 +35,18 @@ dependencies {
     testCompile("org.springframework:spring-test:4.1.7.RELEASE")
 }
 
+task copyExecutor(type: Copy) {
+    from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
+    into "$buildDir/resources/main/static"
+    rename { String fileName ->
+        fileName.replace("-${project.version}", "")
+    }
+}
+
 jar {
+    dependsOn 'getLogstashTarball', 'copyExecutor'
     baseName = "logstash-mesos-scheduler"
     from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } } // Include dependencies
-    from { project(":logstash-executor").getTasksByName("copyJar", false)[0].outputs.files[0] } // Include executor
 
     exclude 'META-INF/*.SF'
     exclude 'META-INF/*.DSA'
@@ -47,6 +58,13 @@ jar {
                 'Implementation-Version': project.version
         )
     }
+}
+
+import de.undercouch.gradle.tasks.download.Download
+task getLogstashTarball(type: Download) {
+    src "https://download.elastic.co/logstash/logstash/logstash-" + "$logstashVer" + ".tar.gz"
+    dest new File(buildDir, './resources/main/public/logstash.tar.gz')
+    onlyIfNewer true
 }
 
 publishing {
@@ -68,7 +86,7 @@ task taskCopyFilesForDocker(type: Copy) {
 }
 
 task copyJar(type: Copy) {
-    dependsOn   'bootRepackage'
+    dependsOn   'copyExecutor'
     from        "build/libs/logstash-mesos-scheduler-${project.version}.jar"
     from        "start-scheduler.sh"
     into        'build/docker'

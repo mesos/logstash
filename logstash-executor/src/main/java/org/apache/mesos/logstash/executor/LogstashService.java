@@ -27,6 +27,8 @@ public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
 
+    public static final String LOGSTASH_PATH = System.getenv("LOGSTASH_PATH");
+
     private static <T> Optional<T> ofConditional(T message, Predicate<T> predicate) {
         if (message != null && predicate.test(message)) {
             return Optional.of(message);
@@ -42,7 +44,7 @@ public class LogstashService {
         List<LS.Plugin> inputPlugins = optionalValuesToList(
                 ofConditional(logstashConfiguration.getLogstashPluginInputSyslog(), LogstashProtos.LogstashPluginInputSyslog::isInitialized).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
                 ofConditional(logstashConfiguration.getLogstashPluginInputCollectd(), LogstashProtos.LogstashPluginInputCollectd::isInitialized).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(config.getPort())), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
+                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> (isRunningInDocker() ? "/logstashpaths" : "") + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
         List<LS.Plugin> filterPlugins = Arrays.asList(
@@ -85,6 +87,10 @@ public class LogstashService {
         ).serialize();
     }
 
+    private static boolean isRunningInDocker() {
+        return System.getenv().containsKey("MESOS_CONTAINER_NAME");
+    }
+
     private static <T> T[] filterEmpties(Class<T> type, Optional<T>... optionals) {
         return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).toArray(size -> (T[]) Array.newInstance(type, size));
     }
@@ -100,7 +106,7 @@ public class LogstashService {
         Process process;
         try {
             String[] command = {
-                    "/opt/logstash/bin/logstash",
+                    LOGSTASH_PATH,
                     "--log", "/var/log/logstash.log",
                     "-e", serialize(logstashConfiguration)
             };
