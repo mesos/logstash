@@ -65,4 +65,9 @@ public class LogstashConfig {
     public void setCollectdPort(int collectdPort) {
         this.collectdPort = collectdPort;
     }
+
+    // FIXME how much disk space does Logstash actually require?
+    public double getRequiredDiskMegabytes() {
+        return 10;
+    }
 }

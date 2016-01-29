@@ -34,7 +34,7 @@ public class OfferStrategy {
     @Inject
     private Features features;
 
-    private List<Rule> acceptanceRules = asList(this::hostRule, this::cpuRule, this::ramRule, this::portsRule);
+    private List<Rule> acceptanceRules = asList(this::hostRule, this::cpuRule, this::ramRule, this::portsRule, this::diskRule);
 
     private List<Integer> neededPorts() {
         final ArrayList<Integer> ports = new ArrayList<>();
@@ -117,6 +117,10 @@ public class OfferStrategy {
                                 .noneMatch(resource -> portIsInRanges(port, resource.getRanges()))
                 )
                 .map(port -> "required port " + port + " but was not in offer");
+    }
+
+    private Stream<String> diskRule(ClusterState clusterState, Protos.Offer offer) {
+        return complaintsForResourceType(offer.getResourcesList(), "disk", logstashConfig.getRequiredDiskMegabytes());
     }
 
     private boolean portIsInRanges(int port, Protos.Value.Ranges ranges) {
