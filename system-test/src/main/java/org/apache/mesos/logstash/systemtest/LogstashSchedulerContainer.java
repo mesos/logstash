@@ -30,12 +30,6 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private final Optional<String> mesosRole;
     private boolean useDocker = true;
 
-    @Override
-    public void start(int timeout) {
-        super.start(timeout);
-        System.out.println("LogstashSchedulerContainer.start");
-    }
-
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchUrl) {
         super(dockerClient);
         this.zookeeperIpAddress = zookeeperIpAddress;
