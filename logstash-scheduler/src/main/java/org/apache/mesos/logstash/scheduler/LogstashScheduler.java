@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -143,10 +144,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Received offerId={}: {}", offerId, flattenProtobufString(offer.toString()));
             }
-
+            
             final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
 
-            if (result.acceptable) {
+            if (result.acceptable()) {
                 LOGGER.info("Accepting offer offerId={}", offerId);
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
@@ -157,7 +158,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
                 clusterState.addTask(taskInfo);
             } else {
-                LOGGER.info("Declined offer with offerId={} with reason={}", offerId, result.reason.orElse("UNKNOWN"));
+                LOGGER.debug("Declined offer offerId={} because: " + result.complaints.stream().collect(Collectors.joining("; ")));
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
