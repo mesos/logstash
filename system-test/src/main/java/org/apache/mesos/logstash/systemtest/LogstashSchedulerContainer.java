@@ -25,10 +25,10 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     public static final String SCHEDULER_NAME = "logstash-scheduler";
 
     private String zookeeperIpAddress;
-    private final int apiPort = 9092;
     private Optional<String> elasticsearchUrl = Optional.empty();
     private boolean withSyslog = false;
     private final Optional<String> mesosRole;
+    private boolean useDocker = true;
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchUrl) {
         super(dockerClient);
@@ -68,19 +68,24 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--failover-enabled=false",
                 elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
-                "--logstash.heap-size=128",
+                "--logstash.heap-size=256",
+                "--enable.docker=" + useDocker,
                 withSyslog ? "--enable.syslog=true" : null
         ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
-
+        System.out.println("cmd = " + cmd);
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withEnv("JAVA_OPTS=" + getJavaOpts().stream().collect(Collectors.joining(" ")))
-                .withExposedPorts(ExposedPort.tcp(apiPort))
+                .withExposedPorts(ExposedPort.tcp(9092))
                 .withCmd(cmd);
     }
 
     public void enableSyslog() {
         withSyslog = true;
+    }
+
+    public void setDocker(boolean useDocker) {
+      this.useDocker = useDocker;
     }
 }

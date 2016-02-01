@@ -10,8 +10,11 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -31,12 +34,7 @@ public class OfferStrategy {
     @Inject
     private Features features;
 
-    private List<OfferRule> acceptanceRules = asList(
-            new OfferRule("Host already running task", this::isHostAlreadyRunningTask),
-            new OfferRule("Offer did not have enough CPU resources", this::isNotEnoughCPU),
-            new OfferRule("Offer did not have enough RAM resources", this::isNotEnoughRAM),
-            new OfferRule("Offer did not have ports available", this::isNotWithNeededPorts)
-    );
+    private List<Rule> acceptanceRules = asList(this::hostRule, this::cpuRule, this::ramRule, this::portsRule);
 
     private List<Integer> neededPorts() {
         final ArrayList<Integer> ports = new ArrayList<>();
@@ -50,9 +48,13 @@ public class OfferStrategy {
     }
 
     public OfferResult evaluate(ClusterState clusterState, Protos.Offer offer) {
-        final Optional<OfferRule> decline = acceptanceRules.stream().filter(offerRule -> offerRule.rule.accepts(clusterState, offer)).limit(1).findFirst();
-        if (decline.isPresent()) {
-            return OfferResult.decline(decline.get().declineReason);
+        final List<String> complaints =
+                acceptanceRules
+                        .stream()
+                        .flatMap(rule -> rule.complaintsFor(clusterState, offer))
+                        .collect(Collectors.toList());
+        if (!complaints.isEmpty()) {
+            return OfferResult.decline(complaints);
         }
 
         return OfferResult.accept();
@@ -62,69 +64,63 @@ public class OfferStrategy {
      * Offer result
      */
     public static class OfferResult {
-        final boolean acceptable;
-        final Optional<String> reason;
+        final List<String> complaints;
 
-        private OfferResult(boolean acceptable, Optional<String> reason) {
-            this.acceptable = acceptable;
-            this.reason = reason;
+        private OfferResult(List<String> complaints) {
+            this.complaints = complaints;
+        }
+
+        public boolean acceptable() {
+            return complaints.isEmpty();
         }
 
         public static OfferResult accept() {
-            return new OfferResult(true, Optional.<String>empty());
+            return new OfferResult(Collections.emptyList());
         }
 
-        public static OfferResult decline(String reason) {
-            return new OfferResult(false, Optional.of(reason));
+        public static OfferResult decline(List<String> complaints) {
+            return new OfferResult(complaints);
         }
     }
 
-    private boolean isHostAlreadyRunningTask(ClusterState clusterState, Protos.Offer offer) {
-        return clusterState.getTaskList().stream().anyMatch(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()));
+    private Stream<String> hostRule(ClusterState clusterState, Protos.Offer offer) {
+        return clusterState
+                .getTaskList()
+                .stream()
+                .filter(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId())  && taskInfo.getName().equals("logstash.task"))
+                .map(taskInfo -> "host " + taskInfo.getSlaveId().getValue() + " is already running task " + taskInfo.getTaskId().getValue());
     }
 
-    private boolean hasEnoughOfResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
-        for (Protos.Resource resource : resources) {
-            if (resourceName.equals(resource.getName())) {
-                return resource.getScalar().getValue() >= minSize;
-            }
+    private Stream<String> complaintsForResourceType(List<Protos.Resource> resources, String resourceName, double minSize) {
+        double totalSize = resources.stream().filter(resource -> resource.getName().equals(resourceName)).collect(Collectors.summingDouble(resource -> resource.getScalar().getValue()));
+        if (totalSize < minSize) {
+            return Collections.singletonList("required minimum " + minSize + " " + resourceName + " but offer only has " + totalSize + " in total").stream();
+        } else {
+            return Arrays.asList(new String[]{}).stream();
         }
-
-        return false;
     }
 
-    private boolean isNotEnoughCPU(ClusterState clusterState, Protos.Offer offer) {
-        return !hasEnoughOfResourceType(offer.getResourcesList(), "cpus", executorConfig.getCpus());
+    private Stream<String> cpuRule(ClusterState clusterState, Protos.Offer offer) {
+        return complaintsForResourceType(offer.getResourcesList(), "cpus", executorConfig.getCpus());
     }
 
-    private boolean isNotEnoughRAM(ClusterState clusterState, Protos.Offer offer) {
-        return !hasEnoughOfResourceType(offer.getResourcesList(), "mem", executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem());
+    private Stream<String> ramRule(ClusterState clusterState, Protos.Offer offer) {
+        return complaintsForResourceType(offer.getResourcesList(), "mem", executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem());
     }
 
-    private boolean isNotWithNeededPorts(ClusterState clusterState, Protos.Offer offer) {
-        return !neededPorts().stream()
-                .allMatch(
+    private Stream<String> portsRule(ClusterState clusterState, Protos.Offer offer) {
+        return neededPorts()
+                .stream()
+                .filter(
                         port -> offer.getResourcesList().stream()
                                 .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
-                                .anyMatch(resource -> portIsInRanges(port, resource.getRanges()))
-                );
-
+                                .noneMatch(resource -> portIsInRanges(port, resource.getRanges()))
+                )
+                .map(port -> "required port " + port + " but was not in offer");
     }
 
     private boolean portIsInRanges(int port, Protos.Value.Ranges ranges) {
         return ranges.getRangeList().stream().anyMatch(range -> new LongRange(range.getBegin(), range.getEnd()).containsLong(port));
-    }
-    /**
-     * Rule and reason container object
-     */
-    private static class OfferRule {
-        String declineReason;
-        Rule rule;
-
-        public OfferRule(String declineReason, Rule rule) {
-            this.declineReason = declineReason;
-            this.rule = rule;
-        }
     }
 
     /**
@@ -132,6 +128,6 @@ public class OfferStrategy {
      */
     @FunctionalInterface
     private interface Rule {
-        boolean accepts(ClusterState clusterState, Protos.Offer offer);
+        Stream<String> complaintsFor(ClusterState clusterState, Protos.Offer offer);
     }
 }

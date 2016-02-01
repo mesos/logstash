@@ -11,6 +11,7 @@ import java.util.List;
 public class ExecutorEnvironmentalVariables {
     private static final String native_mesos_library_key = "MESOS_NATIVE_JAVA_LIBRARY";
     private static final String native_mesos_library_path = "/usr/lib/libmesos.so"; // libmesos.so is usually symlinked to the version.
+    public static final String LOGSTASH_PATH = "LOGSTASH_PATH";
     public static final String JAVA_OPTS = "JAVA_OPTS";
     private final List<Protos.Environment.Variable> envList = new ArrayList<>();
 
@@ -38,7 +39,7 @@ public class ExecutorEnvironmentalVariables {
         addToList(JAVA_OPTS, getExecutorHeap(executorConfig) + " " + getLogstashHeap(logstashConfig));
     }
 
-    private void addToList(String key, String value) {
+    public void addToList(String key, String value) {
         envList.add(getEnvProto(key, value));
     }
 

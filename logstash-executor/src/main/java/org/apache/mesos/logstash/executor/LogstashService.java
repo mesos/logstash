@@ -14,11 +14,13 @@ import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 public class LogstashService {
 
     public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
+
+    public static final String LOGSTASH_PATH = System.getenv("LOGSTASH_PATH");
 
     private static <T> Optional<T> ofConditional(T message, Predicate<T> predicate) {
         if (message != null && predicate.test(message)) {
@@ -42,7 +46,7 @@ public class LogstashService {
         List<LS.Plugin> inputPlugins = optionalValuesToList(
                 ofConditional(logstashConfiguration.getLogstashPluginInputSyslog(), LogstashProtos.LogstashPluginInputSyslog::isInitialized).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
                 ofConditional(logstashConfiguration.getLogstashPluginInputCollectd(), LogstashProtos.LogstashPluginInputCollectd::isInitialized).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(config.getPort())), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> "/logstashpaths" + path).map(LS::string).toArray(LS.Value[]::new))))))
+                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> (isRunningInDocker() ? "/logstashpaths" : "") + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
         List<LS.Plugin> filterPlugins = Arrays.asList(
@@ -84,6 +88,10 @@ public class LogstashService {
         ).serialize();
     }
 
+    private static boolean isRunningInDocker() {
+        return System.getenv().containsKey("MESOS_CONTAINER_NAME");
+    }
+
     private static <T> T[] filterEmpties(Class<T> type, Optional<T>... optionals) {
         return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).toArray(size -> (T[]) Array.newInstance(type, size));
     }
@@ -99,14 +107,16 @@ public class LogstashService {
         Process process;
         try {
             String[] command = {
-                    "/opt/logstash/bin/logstash",
+                    LOGSTASH_PATH,
                     "--log", "/var/log/logstash.log",
                     "-e", serialize(logstashConfiguration)
             };
-            String[] env = {
-                    "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
-                    "HOME=/root"
-            };
+
+            final HashMap<String, String> envs = new HashMap<>(System.getenv());
+            envs.put("LS_HEAP_SIZE", System.getProperty("mesos.logstash.logstash.heap.size"));
+            envs.put("HOME", "/root");
+            
+            String[] env = envs.entrySet().stream().map(kv -> kv.getKey() + "=" + kv.getValue()).toArray(String[]::new);
             LOGGER.info("Starting subprocess: " + String.join(" ", env) + " " + String.join(" ", command));
             process = Runtime.getRuntime().exec(command, env);
         } catch (IOException e) {

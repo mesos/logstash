@@ -9,12 +9,9 @@ import org.apache.mesos.logstash.state.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
-import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.net.InetAddress;
@@ -22,6 +19,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedCollection;
@@ -88,8 +86,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
                     credentialBuilder.build(), frameworkConfig.getZkUrl());
         }
-        else
-        {
+        else {
             LOGGER.info("Starting Logstash Framework: \n{}", frameworkBuilder);
 
             driver = mesosSchedulerDriverFactory.createMesosDriver(this, frameworkBuilder.build(),
@@ -97,8 +94,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
         }
         driver.start();
     }
-
-
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
@@ -152,10 +147,10 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Received offerId={}: {}", offerId, flattenProtobufString(offer.toString()));
             }
-
+            
             final OfferStrategy.OfferResult result = offerStrategy.evaluate(clusterState, offer);
 
-            if (result.acceptable) {
+            if (result.acceptable()) {
                 LOGGER.info("Accepting offer offerId={}", offerId);
 
                 TaskInfo taskInfo = taskInfoBuilder.buildTask(offer);
@@ -166,7 +161,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
                 clusterState.addTask(taskInfo);
             } else {
-                LOGGER.info("Declined offer with offerId={} with reason={}", offerId, result.reason.orElse("UNKNOWN"));
+                LOGGER.debug("Declined offer offerId={} because: " + result.complaints.stream().collect(Collectors.joining("; ")));
                 schedulerDriver.declineOffer(offer.getId());
             }
         });
@@ -174,11 +169,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
-
         LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
-            status.getTaskId().getValue(),
-            status.getState(),
-            status.getMessage());
+                status.getTaskId().getValue(),
+                status.getState(),
+                status.getMessage());
+
+        if  (new TreeSet<>(Arrays.asList(TaskState.TASK_FINISHED, TaskState.TASK_FAILED, TaskState.TASK_KILLED, TaskState.TASK_LOST, TaskState.TASK_ERROR)).contains(status.getState())) {
+            clusterState.removeTaskById(status.getTaskId());
+        }
     }
 
     @Override
@@ -221,13 +219,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
     @Override
     public void slaveLost(SchedulerDriver schedulerDriver, SlaveID slaveID) {
         LOGGER.info("Slave Lost. slaveId={}", slaveID.getValue());
+        clusterState.removeTaskBySlaveId(slaveID);
     }
 
     @Override
     public void executorLost(SchedulerDriver schedulerDriver, ExecutorID executorID,
         SlaveID slaveID, int exitStatus) {
-        // This is handled in statusUpdate.
-
+        LOGGER.warn("Executor Lost. executorId={}", executorID.getValue());
+        clusterState.removeTaskByExecutorId(executorID);
         schedulerDriver.reviveOffers();
     }
 

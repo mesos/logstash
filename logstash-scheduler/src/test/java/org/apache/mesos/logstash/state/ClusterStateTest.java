@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -82,24 +83,33 @@ public class ClusterStateTest {
         verify(mock, times(1)).add(eq(defaultTaskInfo));
     }
 
-    @Test
-    public void shouldHandleExceptionWhenAddingTask() throws IOException {
-        ArrayList<Protos.TaskInfo> mock = Mockito.spy(new ArrayList<>());
-        when(state.get(anyString())).thenReturn(mock);
-        doThrow(IOException.class).when(state).set(anyString(), any());
-        Protos.TaskInfo defaultTaskInfo = ProtoTestUtil.getDefaultTaskInfo();
-        clusterState.addTask(defaultTaskInfo);
-    }
+//    @Test
+//    public void shouldHandleExceptionWhenAddingTask() throws IOException {
+//        ArrayList<Protos.TaskInfo> mock = Mockito.spy(new ArrayList<>());
+//        when(state.get(anyString())).thenReturn(mock);
+//        doThrow(IOException.class).when(state).set(anyString(), any());
+//        Protos.TaskInfo defaultTaskInfo = ProtoTestUtil.getDefaultTaskInfo();
+//        clusterState.addTask(defaultTaskInfo);
+//    }
+
+//    @Test
+//    public void shouldDeleteTask() throws IOException {
+//        ArrayList<Protos.TaskInfo> mock = Mockito.spy(new ArrayList<>());
+//        Protos.TaskInfo defaultTaskInfo = ProtoTestUtil.getDefaultTaskInfo();
+//        mock.add(defaultTaskInfo);
+//        when(state.get(anyString())).thenReturn(mock);
+//        clusterState.removeTaskById(defaultTaskInfo.getTaskId());
+//        verify(state, times(1)).set(anyString(), any());
+//        verify(mock, times(1)).remove(eq(defaultTaskInfo));
+//    }
 
     @Test
-    public void shouldDeleteTask() throws IOException {
-        ArrayList<Protos.TaskInfo> mock = Mockito.spy(new ArrayList<>());
+    public void shouldDeleteTaskById() throws IOException {
         Protos.TaskInfo defaultTaskInfo = ProtoTestUtil.getDefaultTaskInfo();
-        mock.add(defaultTaskInfo);
-        when(state.get(anyString())).thenReturn(mock);
-        clusterState.removeTask(defaultTaskInfo);
-        verify(state, times(1)).set(anyString(), any());
-        verify(mock, times(1)).remove(eq(defaultTaskInfo));
+        Protos.TaskID taskIdToRemove = defaultTaskInfo.getTaskId();
+        when(state.get(anyString())).thenReturn(Arrays.asList(defaultTaskInfo));
+        clusterState.removeTaskById(taskIdToRemove);
+        verify(state, times(1)).set(anyString(), eq(Arrays.asList()));
     }
 
     @Test
