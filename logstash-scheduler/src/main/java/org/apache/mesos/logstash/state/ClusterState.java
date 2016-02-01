@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.state;
 
 import org.apache.log4j.Logger;
+import org.apache.mesos.Protos;
 import org.apache.mesos.Protos.TaskInfo;
 import org.springframework.stereotype.Component;
 
@@ -55,32 +56,23 @@ public class ClusterState {
     public void addTask(TaskInfo taskInfo) {
         LOGGER.debug("Adding TaskInfo to cluster for task: " + taskInfo.getTaskId().getValue());
         if (exists(taskInfo.getTaskId())) {
-            removeTask(taskInfo);
+            removeTaskById(taskInfo.getTaskId());
         }
         List<TaskInfo> taskList = getTaskList();
         taskList.add(taskInfo);
         setTaskInfoList(taskList);
     }
 
-    public void removeTask(TaskInfo taskInfo) throws InvalidParameterException {
-        List<TaskInfo> taskList = getTaskList();
-        Boolean found = false;
-        for (TaskInfo info : taskList) {
-            if (isEqual(info, taskInfo)) {
-                LOGGER.debug("Removing TaskInfo from cluster for task: " + taskInfo.getTaskId().getValue());
-                taskList.remove(info);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            throw new InvalidParameterException("TaskInfo does not exist in list: " + taskInfo.getTaskId().getValue());
-        }
-        setTaskInfoList(taskList);
+    public void removeTaskBySlaveId(Protos.SlaveID slaveId) {
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getSlaveId().getValue().equals(slaveId.getValue())).collect(Collectors.toList()));
     }
 
-    private boolean isEqual(TaskInfo taskInfo1, TaskInfo taskInfo2) {
-        return taskInfo1.getTaskId().getValue().equals(taskInfo2.getTaskId().getValue());
+    public void removeTaskByExecutorId(Protos.ExecutorID executorId) {
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getExecutor().getExecutorId().getValue().equals(executorId.getValue())).collect(Collectors.toList()));
+    }
+
+    public void removeTaskById(TaskID taskId) throws InvalidParameterException {
+        setTaskInfoList(getTaskList().stream().filter(info -> !info.getTaskId().getValue().equals(taskId.getValue())).collect(Collectors.toList()));
     }
 
     public Boolean exists(TaskID taskId) {
