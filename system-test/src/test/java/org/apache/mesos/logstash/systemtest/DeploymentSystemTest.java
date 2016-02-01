@@ -236,9 +236,6 @@ public class DeploymentSystemTest {
 
     @Test
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
-        after();
-        before();
-
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
         final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
@@ -262,23 +259,17 @@ public class DeploymentSystemTest {
 
         waitForFramework();
 
-        Function<String, Stream<Container>> getLogstashExecutorsSince = (String containerId) -> {
-            return dockerClient
-                    .listContainersCmd()
-                    .withSince(containerId)
-                    .exec()
-                    .stream()
-                    .filter(container ->
-                                    container
-                                            .getImage()
-                                            .endsWith("/logstash-executor:latest")
-                    );
-        };
+        Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
+                .listContainersCmd()
+                .withSince(containerId)
+                .exec()
+                .stream()
+                .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
             long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
             LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
-            return count == 1;
+            assertEquals(1, count);
         });
 
         final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
@@ -286,8 +277,7 @@ public class DeploymentSystemTest {
         dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            long count = getLogstashExecutorsSince.apply(slaveToKillContainerId).count();
-            return count == 1;
+            assertEquals(1, getLogstashExecutorsSince.apply(slaveToKillContainerId).count());
         });
     }
 }
