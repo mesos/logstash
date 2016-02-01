@@ -236,6 +236,9 @@ public class DeploymentSystemTest {
 
     @Test
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
+        after();
+        before();
+
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
         final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
@@ -272,14 +275,18 @@ public class DeploymentSystemTest {
                     );
         };
 
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count() == 1);
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
+            LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
+            return count == 1;
+        });
 
-        final String logstashExecutorContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
 
-        dockerClient.killContainerCmd(logstashExecutorContainerId).exec();
+        dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            long count = getLogstashExecutorsSince.apply(logstashExecutorContainerId).count();
+            long count = getLogstashExecutorsSince.apply(slaveToKillContainerId).count();
             return count == 1;
         });
     }
