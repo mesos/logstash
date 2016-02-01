@@ -14,11 +14,13 @@ import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -110,10 +112,12 @@ public class LogstashService {
                     "--log", "/var/log/logstash.log",
                     "-e", serialize(logstashConfiguration)
             };
-            String[] env = {
-                    "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
-                    "HOME=/root"
-            };
+
+            final HashMap<String, String> envs = new HashMap<>(System.getenv());
+            envs.put("LS_HEAP_SIZE", System.getProperty("mesos.logstash.logstash.heap.size"));
+            envs.put("HOME", "/root");
+            
+            String[] env = envs.entrySet().stream().map(kv -> kv.getKey() + "=" + kv.getValue()).toArray(String[]::new);
             LOGGER.info("Starting subprocess: " + String.join(" ", env) + " " + String.join(" ", command));
             process = Runtime.getRuntime().exec(command, env);
         } catch (IOException e) {
