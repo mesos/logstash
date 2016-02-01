@@ -170,9 +170,13 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
     @Override
     public void statusUpdate(SchedulerDriver schedulerDriver, TaskStatus status) {
         LOGGER.info("Received Status Update. taskId={}, state={}, message={}",
-            status.getTaskId().getValue(),
-            status.getState(),
-            status.getMessage());
+                status.getTaskId().getValue(),
+                status.getState(),
+                status.getMessage());
+
+        if  (new TreeSet<>(Arrays.asList(TaskState.TASK_FINISHED, TaskState.TASK_FAILED, TaskState.TASK_KILLED, TaskState.TASK_LOST, TaskState.TASK_ERROR)).contains(status.getState())) {
+            clusterState.removeTaskById(status.getTaskId());
+        }
     }
 
     @Override
@@ -215,13 +219,14 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
     @Override
     public void slaveLost(SchedulerDriver schedulerDriver, SlaveID slaveID) {
         LOGGER.info("Slave Lost. slaveId={}", slaveID.getValue());
+        clusterState.removeTaskBySlaveId(slaveID);
     }
 
     @Override
     public void executorLost(SchedulerDriver schedulerDriver, ExecutorID executorID,
         SlaveID slaveID, int exitStatus) {
-        // This is handled in statusUpdate.
-
+        LOGGER.warn("Executor Lost. executorId={}", executorID.getValue());
+        clusterState.removeTaskByExecutorId(executorID);
         schedulerDriver.reviveOffers();
     }
 

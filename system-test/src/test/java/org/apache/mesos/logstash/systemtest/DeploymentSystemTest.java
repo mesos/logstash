@@ -25,29 +25,28 @@ import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHitField;
-import org.elasticsearch.search.SearchHits;
 import org.json.JSONArray;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.jayway.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -74,15 +73,17 @@ public class DeploymentSystemTest {
     @SuppressWarnings({"PMD.EmptyCatchBlock"})
     @After
     public void after() {
-        try {
-            scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
+        scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
                 .filter(container -> Arrays.stream(container.getNames()).anyMatch(name -> name.startsWith("/mesos-")))
                 .map(Container::getId)
                 .peek(s -> System.out.println("Stopping mesos- container: " + s))
-                .forEach(containerId -> dockerClient.stopContainerCmd(containerId).exec()));
-        } catch (NotModifiedException e) {
-            // Container is already stopped
-        }
+                .forEach(containerId -> {
+                    try {
+                        dockerClient.stopContainerCmd(containerId).exec();
+                    } catch (NotModifiedException e) {
+                        // This is not important
+                    }
+                }));
         cluster.stop();
     }
 
@@ -233,4 +234,50 @@ public class DeploymentSystemTest {
         assertEquals(3, slaveIds.size());
     }
 
+    @Test
+    public void willStartNewExecutorIfOldExecutorFails() throws Exception {
+        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
+
+        final AbstractContainer elasticsearchInstance = new AbstractContainer(dockerClient) {
+            private final String version = "1.7";
+
+            @Override
+            protected void pullImage() {
+                pullImage("elasticsearch", version);
+            }
+
+            @Override
+            protected CreateContainerCmd dockerCommand() {
+                return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"test-" + System.currentTimeMillis() + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
+            }
+        };
+        cluster.addAndStartContainer(elasticsearchInstance);
+
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler.get().enableSyslog();
+        cluster.addAndStartContainer(scheduler.get());
+
+        waitForFramework();
+
+        Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
+                .listContainersCmd()
+                .withSince(containerId)
+                .exec()
+                .stream()
+                .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
+
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
+            LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
+            assertEquals(1, count);
+        });
+
+        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+
+        dockerClient.killContainerCmd(slaveToKillContainerId).exec();
+
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            assertEquals(1, getLogstashExecutorsSince.apply(slaveToKillContainerId).count());
+        });
+    }
 }
