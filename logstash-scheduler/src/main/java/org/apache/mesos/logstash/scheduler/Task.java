@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.common.LogstashProtos.ContainerState;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage.ExecutorStatus;
