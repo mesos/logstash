@@ -109,9 +109,6 @@ Note that command-line arguments take precedence:
 if both a command-line argument and an environment variable are provided,
 the value of the command-line argument will be used.
 
-We recommend using command-line arguments for options which clash with common environment variables, e.g. `USER`.
-(FIXME: we should prefix environment variables to avoid this.)
-
 Here is the full list of configuration options:
 
 | Command-line argument            | Environment variable           | Default                   | What it does                                                                                                               |
