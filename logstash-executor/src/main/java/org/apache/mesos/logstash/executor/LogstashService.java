@@ -129,9 +129,13 @@ public class LogstashService {
             inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: " + s), process.getErrorStream());
 
             process.waitFor();
-            LOGGER.warn("Logstash quit with exit={}", process.exitValue());
         } catch (InterruptedException e) {
             throw new RuntimeException("Logstash process was interrupted", e);
+        }
+
+        LOGGER.info("Logstash quit with exit={}", process.exitValue());
+        if (process.exitValue() != 0) {
+            throw new RuntimeException("Logstash quit with exit=" + process.exitValue());
         }
 
         try {
