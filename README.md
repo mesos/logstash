@@ -1,7 +1,7 @@
 # Logstash Mesos Framework
 
 This is a [Mesos](http://mesos.apache.org/) framework for running [Logstash][logstash] in your cluster.
-When another program on any Mesos slave logs an event,
+When another program on any Mesos agent logs an event,
 it will be parsed by Logstash and sent to central log locations.
 There are many ways to log an event, such as [syslog](https://en.wikipedia.org/wiki/Syslog) or writing to a log file.
 Programs can simply log to `localhost` or a local file,
@@ -11,12 +11,12 @@ such as resource usage statistics.
 We currently advise using other systems for business-critical event logging,
 such as PCI DSS events.
 
-This framework tries to launch a Logstash process on every Mesos slave.
-Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
+This framework tries to launch a Logstash process on every Mesos agent.
+Specifically, it accepts a Mesos offer if the offered agent does not yet have Logstash running,
 and the offer has enough resources to run Logstash.
-This does not guarantee the presence of Logstash on every slave,
-but we believe that most clusters will gain high allocation
-(TODO why: because of reserved resources for the `logstash` role).
+This does not guarantee the presence of Logstash on every agent,
+but most clusters can gain high allocation
+if they reserve resources for the `logstash` role.
 
 
 # Running
@@ -35,17 +35,17 @@ but we believe that most clusters will gain high allocation
   add TCP and UDP port `514` to the resources for the `logstash` role,
   e.g. by adding `ports(logstash):[514-514]`
   to the list in the file `/etc/mesos-slave/resources`
-  on every Mesos slave in the cluster.
+  on every Mesos agent in the cluster.
 
 * If you are going to enable `collectd` monitoring,
   add TCP and UDP port `25826` to the resources for the `logstash` role,
   e.g. by adding `ports(logstash):[25826-25826]`
   to the list in the file `/etc/mesos-slave/resources`
-  on every Mesos slave in the cluster.
+  on every Mesos agent in the cluster.
 
 * That Mesos cluster must have the `docker` containerizer enabled.
 
-* A Docker server must be running on every Mesos slave on port 2376,
+* A Docker server must be running on every Mesos agent on port 2376,
   to be used by the `docker` containerizer.
 
 * Every Docker server must have an API version compatible with our Docker client,
@@ -120,16 +120,16 @@ Here is the full list of configuration options:
 | `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`                   | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
 | `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash`                | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
 | `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600`                | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
-| `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash`                | The Logstash framework role will register with Mesos with framework role `U`.                                              |
+| `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash`                | The Logstash framework role will register with Mesos with framework role `R`                                               |
 | `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`                    | Logstash tasks will be launched with Unix user `U`                                                                         |
-| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent                    | If present, the Logstash framework will authenticate with Mesos as principal `P`.                                          |
-| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent                    | If present, the Logstash framework will authenticate with Mesos using secret `S`.                                          |
+| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent                    | If present, the Logstash framework will authenticate with Mesos as principal `P`                                           |
+| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent                    | If present, the Logstash framework will authenticate with Mesos using secret `S`                                           |
 | `--logstash.heap-size=H`         | `LOGSTASH_HEAP_SIZE=H`         | `32`                      | The memory allocation pool for the Logstash process will be limited to `H` megabytes                                       |
 | `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
-| `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The framework executor will use docker image with this name to start LogStash on Mesos Agent                               | 
-| `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The framework executor will use this version of docker image to start LogStash on Mesos Agent                              |
-| `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Listen for syslog messages on port 514. Must be enabled with `--enable.syslog=true`                                        |
-| `--logstash.collectd-port=I`     | `LOGSTASH_COLLECTD_PORT=I`     | `25826`                   | Listsen for collectd events on port 25826. Must be enabled with `--enable.collectd=true`                                   |
+| `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The Logstash framework will use the Docker image with name `S` as the executor on new Mesos Agents                         | 
+| `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The Logstash framework will use version `S` of the Docker image on new Mesos Agents                                        |
+| `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Every Mesos agent will listen for syslog messages on port `I`. Must be enabled with `--enable.syslog=true`                 |
+| `--logstash.collectd-port=I`     | `LOGSTASH_COLLECTD_PORT=I`     | `25826`                   | Every Mesos agent will listen for collectd messages on port `I`. Must be enabled with `--enable.collectd=true`             |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`                     | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`                      | The memory allocation pool for the executor will be limited to `H` megabytes                                               |
 | `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`                    | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
@@ -178,15 +178,15 @@ You can use the `"env"` map to configure the framework with environment variable
 ```
  
 Please keep in mind that if you start the Logstash app as a Marathon app that this will start a 
-scheduler on one arbitrary slave. The scheduler itself will try to start one (only one) executor 
+scheduler on one arbitrary agent. The scheduler itself will try to start one (only one) executor 
 on each node. To scale the application from within Marathon makes no sense because only one scheduler
-per framework is allowed to run and the framework scales itself to all slaves.  
+per framework is allowed to run and the framework scales itself to all agents.  
 
 
 ## <a name="newversion"></a>Updating to a newer version (or reinstalling the app)
 
 When reinstalling, you must manually go into your zookeeper ui and remove the path `/logstash/frameworkId`.
-This is so that the reinstalled app will be able to register without losing the Logstash docker and slave configurations.
+This is so that the reinstalled app will be able to register without losing the Logstash docker and agent configurations.
 
 
 # <a name="building"></a>Building the artifacts
@@ -261,11 +261,13 @@ The intention is to do a best guess when allocating resources from Mesos (Work i
 
 ## Full deployment not guaranteed
 
-This framework tries to launch a Logstash process on every Mesos slave.
-Specifically, it accepts a Mesos offer if the offered slave does not yet have Logstash running,
+This framework accepts a Mesos offer if the offered agent does not yet have Logstash running,
 and the offer has enough resources to run Logstash.
-This does not guarantee the presence of Logstash on every slave,
-but we believe that most clusters will gain high allocation (TODO why?).
+This does not guarantee the presence of Logstash on every agent,
+because we are dependent on Mesos giving us appropriate offers for every agent.
+Most clusters can gain high allocation
+if they reserve resources for the `logstash` role,
+but we cannot guarantee full allocation.
 
 
 ## Security
