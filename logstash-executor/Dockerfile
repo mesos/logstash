@@ -1,6 +1,6 @@
 FROM mesos/logstash-commons:latest
 
-RUN echo 'deb http://packages.elasticsearch.org/logstash/1.5/debian stable main' > /etc/apt/sources.list.d/logstash.list && \
+RUN echo 'deb http://packages.elastic.co/logstash/2.1/debian stable main' > /etc/apt/sources.list.d/logstash.list && \
   apt-get update && \
   apt-get install -y --force-yes logstash && \
   rm -rf /var/lib/apt/lists/*
