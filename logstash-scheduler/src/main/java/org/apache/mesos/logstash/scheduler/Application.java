@@ -1,5 +1,9 @@
 package org.apache.mesos.logstash.scheduler;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.mesos.MesosSchedulerDriver;
+import org.apache.mesos.Protos;
+import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosStateZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.parser.ZKAddressParser;

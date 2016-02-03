@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,11 +14,13 @@ import java.lang.reflect.Array;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -70,9 +72,8 @@ class LogstashService {
                             LS.map(
                                     filterEmpties(
                                             LS.KV.class,
-                                            Optional.of(LS.kv("host", LS.string(url.getHost()))),
-                                            Optional.of(LS.kv("port", LS.number(url.getPort() > 0 ? url.getPort() : 9200))),
-                                            Optional.of(LS.kv("protocol", LS.string(url.getProtocol()))),
+                                            Optional.of(LS.kv("hosts", LS.string(url.getHost() + ":" + (url.getPort() > 0 ? url.getPort() : 9200)))),
+                                            Optional.of(LS.kv("ssl", LS.bool(url.getProtocol().equals("https")))),
                                             ofConditional(config.getIndex(), StringUtils::isNotEmpty).map(index -> LS.kv("index", LS.string(index)))
                                     )
                             )
@@ -110,10 +111,14 @@ class LogstashService {
                     "--log", "/var/log/logstash.log",
                     "-e", serialize(logstashConfiguration)
             };
-            String[] env = {
-                    "LS_HEAP_SIZE=" + System.getProperty("mesos.logstash.logstash.heap.size"),
-                    "HOME=/root"
-            };
+
+            final HashMap<String, String> envs = new HashMap<>();
+//            envs.putAll(System.getenv());
+            envs.put("PATH", System.getenv("PATH"));
+            envs.put("LS_HEAP_SIZE", System.getProperty("mesos.logstash.logstash.heap.size"));
+            envs.put("HOME", "/root");
+
+            String[] env = envs.entrySet().stream().map(kv -> kv.getKey() + "=" + kv.getValue()).toArray(String[]::new);
             LOGGER.info("Starting subprocess: " + String.join(" ", env) + " " + String.join(" ", command));
             process = Runtime.getRuntime().exec(command, env);
         } catch (IOException e) {
@@ -125,10 +130,15 @@ class LogstashService {
             inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: " + s), process.getErrorStream());
 
             process.waitFor();
-            LOGGER.warn("Logstash quit with exit={}", process.exitValue());
+
+            LOGGER.info("Logstash quit with exit={}", process.exitValue());
+            if (process.exitValue() != 0) {
+                throw new RuntimeException("Logstash quit with exit=" + process.exitValue());
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException("Logstash process was interrupted", e);
         }
+
 
         try {
             IOUtils.copy(process.getErrorStream(), System.err);
