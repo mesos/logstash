@@ -47,21 +47,6 @@ public class ElasticsearchContainer extends AbstractContainer {
                            .withName(getName());
     }
 
-    public void waitUntilHealthy() {
-        client = new AtomicReference<>();
-        await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", CLUSTER_NAME).build()).addTransportAddress(new InetSocketTransportAddress(getIpAddress(), TRANSPORT_PORT));
-            try {
-                c.admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet();
-            } catch (ElasticsearchException e) {
-                c.close();
-                return false;
-            }
-            client.set(c);
-            return true;
-        });
-    }
-
     public Client getClient() {
         return client.get();
     }

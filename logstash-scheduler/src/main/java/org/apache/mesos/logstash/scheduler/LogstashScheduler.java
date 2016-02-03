@@ -97,6 +97,7 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
 
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
+        LOGGER.info("Stopping scheduler. Failover={}", features.isFailover());
         configManager.setOnConfigUpdate(null);
 
         if (features.isFailover()) {

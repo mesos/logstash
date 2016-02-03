@@ -24,7 +24,7 @@ public class TaskInfoBuilder {
 
     public static final Logger LOGGER = Logger.getLogger(TaskInfoBuilder.class);
 
-    private static final String LOGSTASH_VERSION = "1.5.6";
+    private static final String LOGSTASH_VERSION = "2.1.1";
 
     @Inject
     private Clock clock;
