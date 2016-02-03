@@ -166,6 +166,12 @@ public class TaskInfoBuilder {
                 .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
                 .build(),
             Protos.Resource.newBuilder()
+                    .setName("disk")
+                    .setType(Protos.Value.Type.SCALAR)
+                    .setScalar(Protos.Value.Scalar.newBuilder()
+                            .setValue(logstashConfig.getRequiredDiskMegabytes()).build())
+                    .build(),
+            Protos.Resource.newBuilder()
                 .setName("ports")
                 .setRole(frameworkConfig.getMesosRole())
                 .setType(Protos.Value.Type.RANGES)
