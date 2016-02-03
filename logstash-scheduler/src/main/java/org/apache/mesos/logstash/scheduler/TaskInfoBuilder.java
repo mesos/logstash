@@ -20,7 +20,7 @@ import java.util.UUID;
 import static java.util.Arrays.asList;
 
 @Component
-public class TaskInfoBuilder {
+class TaskInfoBuilder {
 
     public static final Logger LOGGER = Logger.getLogger(TaskInfoBuilder.class);
 

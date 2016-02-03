@@ -113,7 +113,7 @@ public class OfferStrategy {
                 .stream()
                 .filter(
                         port -> offer.getResourcesList().stream()
-                                .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check wether this can be removed
+                                .filter(Protos.Resource::hasRanges) // TODO: 23/11/2015 Check whether this can be removed
                                 .noneMatch(resource -> portIsInRanges(port, resource.getRanges()))
                 )
                 .map(port -> "required port " + port + " but was not in offer");

@@ -14,7 +14,6 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.jayway.awaitility.Awaitility;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.mesos.logstash.common.LogstashProtos.ExecutorMessage;
-import org.apache.mesos.logstash.config.ConfigManager;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -32,13 +31,13 @@ import static com.jayway.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
-public abstract class AbstractLogstashFrameworkTest {
+abstract class AbstractLogstashFrameworkTest {
 
     private static final String DOCKER_PORT = "2376";
 
-    public static final int NUMBER_OF_SLAVES = 3;
+    private static final int NUMBER_OF_SLAVES = 3;
     @ClassRule
-    public static MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(NUMBER_OF_SLAVES, zooKeeper -> new MesosSlave(null, zooKeeper) {
+    public static final MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(NUMBER_OF_SLAVES, zooKeeper -> new MesosSlave(null, zooKeeper) {
         @Override
         public TreeMap<String, String> getDefaultEnvVars() {
             final TreeMap<String, String> envVars = super.getDefaultEnvVars();
@@ -47,11 +46,10 @@ public abstract class AbstractLogstashFrameworkTest {
         }
     }).withMaster().withZooKeeper().build());
 
-    public static DockerClient clusterDockerClient;
+    private static DockerClient clusterDockerClient;
 
-    ExecutorMessageListenerTestImpl executorMessageListener;
-    protected ConfigManager configManager;
-    public LogstashExecutorContainer executorContainer;
+    private ExecutorMessageListenerTestImpl executorMessageListener;
+    private Object executorContainer;
 
     @BeforeClass
     public static void publishExecutorInMesosCluster() throws IOException {
@@ -69,20 +67,15 @@ public abstract class AbstractLogstashFrameworkTest {
         TemporaryFolder folder = new TemporaryFolder();
         folder.create();
 
-//        configuration.setDisableFailover(true); // we remove our framework completely
-//        configuration.setVolumeString("/tmp");
-
-        configManager = new ConfigManager();
-        configManager.start();
-
         System.out.println("**************** RECONCILIATION_DONE CONTAINERS ON TEST START *******************");
         printRunningContainers(clusterDockerClient);
         System.out.println("*********************************************************************");
 
         waitForLogstashFramework();
-        waitForExcutorTaskIsRunning();
+        waitForExecutorTaskIsRunning();
 
-        executorContainer = new LogstashExecutorContainer(clusterDockerClient);
+        await().atMost(60, TimeUnit.SECONDS).until(
+            () -> clusterDockerClient.listContainersCmd().exec().size() > 0);
     }
 
     private void printRunningContainers(DockerClient dockerClient) {
@@ -100,7 +93,7 @@ public abstract class AbstractLogstashFrameworkTest {
                   .until(() -> state.getFramework("logstash") != null);
     }
 
-    private static void waitForExcutorTaskIsRunning() throws UnirestException, JsonParseException, JsonMappingException {
+    private static void waitForExecutorTaskIsRunning() throws UnirestException, JsonParseException, JsonMappingException {
         State state = State.fromJSON(cluster.getStateInfoJSON().toString());
         int timeout = 60;
         Awaitility.await("Logstash executor did not start within " + timeout + " seconds")
@@ -118,8 +111,8 @@ public abstract class AbstractLogstashFrameworkTest {
      *
      * @return Messages
      */
-    public List<ExecutorMessage> requestInternalStatusAndWaitForResponse(
-        Predicate<List<ExecutorMessage>> predicate) {
+    List<ExecutorMessage> requestInternalStatusAndWaitForResponse(
+            Predicate<List<ExecutorMessage>> predicate) {
 
         int seconds = 10;
         int numberOfExpectedMessages = NUMBER_OF_SLAVES;

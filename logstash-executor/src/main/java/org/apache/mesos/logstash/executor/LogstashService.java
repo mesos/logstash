@@ -25,9 +25,9 @@ import java.util.stream.Stream;
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
  */
-public class LogstashService {
+class LogstashService {
 
-    public static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LogstashService.class);
 
     public static final String LOGSTASH_PATH = System.getenv("LOGSTASH_PATH");
 

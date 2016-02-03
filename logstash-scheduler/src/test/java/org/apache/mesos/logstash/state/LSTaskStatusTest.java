@@ -9,15 +9,13 @@ import org.junit.Test;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
  * Tests
  */
 public class LSTaskStatusTest {
-    private SerializableState state = mock(SerializableState.class);
+    private final SerializableState state = mock(SerializableState.class);
     private Protos.FrameworkID frameworkID;
     private Protos.TaskInfo taskInfo;
     private LSTaskStatus status;

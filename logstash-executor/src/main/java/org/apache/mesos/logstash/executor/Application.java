@@ -19,8 +19,6 @@ public class Application implements Runnable {
     public void run() {
         LogstashService logstashService = new LogstashService();
 
-//        LiveState liveState = new LiveState(logstashService, dockerClient);
-
         LogstashExecutor executor = new LogstashExecutor(logstashService);
 
         MesosExecutorDriver driver = new MesosExecutorDriver(executor);
@@ -32,9 +30,6 @@ public class Application implements Runnable {
         LOGGER.info("Mesos Logstash Executor Started");
         Protos.Status status = driver.run();
         LOGGER.info("Mesos Logstash Executor Stopped");
-
-//        logstashService.stop();
-//        dockerClient.stop();
 
         if (status.equals(Protos.Status.DRIVER_STOPPED)) {
             System.exit(0);

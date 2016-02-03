@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * Main app to run Mesos Logstash with Mini Mesos.
  */
 @SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
-public class Main {
+class Main {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 

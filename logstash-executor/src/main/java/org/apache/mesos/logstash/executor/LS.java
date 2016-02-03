@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  */
 public class LS {
     public static class Config {
-        private Section[] sections;
+        private final Section[] sections;
         public Config(Section... sections) {
             this.sections = sections;
         }
@@ -39,8 +39,8 @@ public class LS {
     }
 
     public static class Section {
-        private java.lang.String name;
-        private Plugin[] plugins;
+        private final java.lang.String name;
+        private final Plugin[] plugins;
         public Section(java.lang.String name, Plugin... plugins) {
             validateName(name);
             this.name = name;
@@ -53,8 +53,8 @@ public class LS {
     }
 
     public static class Plugin implements Value {
-        private java.lang.String name;
-        private Map config;
+        private final java.lang.String name;
+        private final Map config;
         public Plugin(java.lang.String name, Map config) {
             validateName(name);
             this.name = name;
@@ -71,7 +71,7 @@ public class LS {
     }
 
     public static class Map implements Value {
-        private KV[] mappings;
+        private final KV[] mappings;
 
         public Map(KV... mappings) {
             this.mappings = mappings;
@@ -84,7 +84,7 @@ public class LS {
     }
 
     public static class Array implements Value {
-        private Value[] elements;
+        private final Value[] elements;
 
         public Array(Value... elements) {
             this.elements = elements;
@@ -97,8 +97,8 @@ public class LS {
     }
 
     public static class KV {
-        private java.lang.String key;
-        private Value value;
+        private final java.lang.String key;
+        private final Value value;
         public KV(java.lang.String key, Value value) {
             this.key = key;
             this.value = value;
@@ -110,7 +110,7 @@ public class LS {
     }
 
     public static class String implements Value {
-        private java.lang.String string;
+        private final java.lang.String string;
         public String(java.lang.String string) {
             this.string = string;
         }
@@ -121,7 +121,7 @@ public class LS {
     }
 
     public static class Number implements Value {
-        private double number;
+        private final double number;
         public Number(double number) {
             this.number = number;
         }
@@ -131,7 +131,7 @@ public class LS {
     }
 
     public static class Bool implements Value {
-        private boolean bool;
+        private final boolean bool;
         public Bool(boolean bool) {
             this.bool = bool;
         }

@@ -12,10 +12,10 @@ import java.util.regex.Pattern;
  */
 public class ZKAddress {
     public static final String ZK_PREFIX = "zk://";
-    public static final String USER_AND_PASS_REG = "([^/@:]+):([^/@:]+)";
-    public static final String HOST_AND_PORT_REG = "([A-z0-9-.]+)(?::)([0-9]+)";
-    public static final String ZK_NODE_REG = "(/.+)";
-    public static final String ADDRESS_REGEX = "^(?:"                       +
+    private static final String USER_AND_PASS_REG = "([^/@:]+):([^/@:]+)";
+    private static final String HOST_AND_PORT_REG = "([A-z0-9-.]+)(?::)([0-9]+)";
+    private static final String ZK_NODE_REG = "(/.+)";
+    private static final String ADDRESS_REGEX = "^(?:"                       +
                                                 USER_AND_PASS_REG + "@)?"   +
                                                 HOST_AND_PORT_REG           +
                                                 "(?:" + ZK_NODE_REG + ")?";
@@ -25,7 +25,7 @@ public class ZKAddress {
     private String address;
     private String port;
     private String zkNode;
-    private Map<Integer, String> matcherMap = new HashMap<>(5);
+    private final Map<Integer, String> matcherMap = new HashMap<>(5);
 
     /**
      * Represents a single zookeeper address.
@@ -51,7 +51,7 @@ public class ZKAddress {
         return user;
     }
 
-    public void setUser(String user) {
+    void setUser(String user) {
         this.user = "";
         if (user != null) {
             this.user = user;
@@ -62,7 +62,7 @@ public class ZKAddress {
         return password;
     }
 
-    public void setPassword(String password) {
+    void setPassword(String password) {
         this.password = "";
         if (password != null) {
             this.password = password;
@@ -73,7 +73,7 @@ public class ZKAddress {
         return address;
     }
 
-    public void setAddress(String address) {
+    void setAddress(String address) {
         this.address = "";
         if (address != null) {
             this.address = address;
@@ -84,7 +84,7 @@ public class ZKAddress {
         return port;
     }
 
-    public void setPort(String port) {
+    void setPort(String port) {
         this.port = "";
         if (port != null) {
             this.port = port;
@@ -95,7 +95,7 @@ public class ZKAddress {
         return zkNode;
     }
 
-    public void setZkNode(String zkNode) {
+    void setZkNode(String zkNode) {
         this.zkNode = "";
         if (zkNode != null) {
             this.zkNode = zkNode;

@@ -14,8 +14,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
 import javax.inject.Inject;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -30,8 +28,6 @@ import com.google.protobuf.ByteString;
 public class LogstashScheduler implements org.apache.mesos.Scheduler, ApplicationListener<EmbeddedServletContainerInitializedEvent> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LogstashScheduler.class);
 
-    @Inject
-    ConfigManager configManager;
     private final Collection<FrameworkMessageListener> listeners = synchronizedCollection(new ArrayList<>());
 
     @Inject
@@ -98,7 +94,6 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
     @PreDestroy
     public void stop() throws ExecutionException, InterruptedException {
         LOGGER.info("Stopping scheduler. Failover={}", features.isFailover());
-        configManager.setOnConfigUpdate(null);
 
         if (features.isFailover()) {
             driver.stop(true);
@@ -229,33 +224,5 @@ public class LogstashScheduler implements org.apache.mesos.Scheduler, Applicatio
         LOGGER.warn("Executor Lost. executorId={}", executorID.getValue());
         clusterState.removeTaskByExecutorId(executorID);
         schedulerDriver.reviveOffers();
-    }
-
-    private boolean isRunningState(TaskStatus taskStatus) {
-        return taskStatus.getState().equals(TaskState.TASK_RUNNING);
-    }
-
-
-    private String createWebuiUrl(int webServerPort) {
-        String webUiUrl = null;
-        try {
-            String hostName = InetAddress.getLocalHost().getHostName();
-            webUiUrl = "http:\\/\\/" + hostName + ":" + webServerPort;
-        } catch (UnknownHostException e) {
-            LOGGER.warn("Can not determine host name", e);
-        }
-        LOGGER.debug("Setting webuiUrl to " + webUiUrl);
-        return webUiUrl;
-    }
-
-    /**
-     * Implementation of Observable to fix the setChanged problem.
-     */
-    private static class StatusUpdateObservable extends Observable {
-        @Override
-        public void notifyObservers(Object arg) {
-            this.setChanged(); // This is ridiculous.
-            super.notifyObservers(arg);
-        }
     }
 }

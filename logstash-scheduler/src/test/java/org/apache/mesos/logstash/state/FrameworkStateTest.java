@@ -10,8 +10,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -20,7 +18,7 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class FrameworkStateTest {
 
-    public static final Protos.FrameworkID FRAMEWORK_ID = Protos.FrameworkID.newBuilder().setValue("FrameworkID").build();
+    private static final Protos.FrameworkID FRAMEWORK_ID = Protos.FrameworkID.newBuilder().setValue("FrameworkID").build();
     @Mock
     SerializableState state;
 
