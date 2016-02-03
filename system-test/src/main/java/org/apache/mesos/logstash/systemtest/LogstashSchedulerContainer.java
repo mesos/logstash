@@ -37,16 +37,6 @@ public class LogstashSchedulerContainer extends AbstractContainer {
         this.elasticsearchUrl = Optional.ofNullable(elasticsearchUrl);
     }
 
-    private List<String> getJavaOpts() {
-        return mergeWithOptionals(
-                asList(
-                        "-Dmesos.logstash.framework.name=logstash",
-                        "-Dmesos.logstash.volumes=/var/log/mesos"
-                ),
-                elasticsearchUrl.map(d -> "-Dmesos.logstash.elasticsearchDomainAndPort=" + d)
-        );
-    }
-
     @SafeVarargs
     private static <T> List<T> mergeWithOptionals(List<T> list, Optional<T> ... optionals) {
         return Stream.concat(
@@ -62,21 +52,19 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     @Override
     protected CreateContainerCmd dockerCommand() {
-        final String cmd = asList(
+        final String[] cmd = asList(
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
                 mesosRole.map(role -> "--mesos-role=" + role).orElse(null),
-                "--failover-enabled=false",
+                "--enable.failover=false",
                 elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
                 "--executor.heap-size=64",
                 "--logstash.heap-size=256",
                 "--enable.docker=" + useDocker,
                 withSyslog ? "--enable.syslog=true" : null
-        ).stream().filter(StringUtils::isNotEmpty).collect(Collectors.joining(" "));
-        System.out.println("cmd = " + cmd);
+        ).stream().filter(StringUtils::isNotEmpty).toArray(String[]::new);
         return dockerClient
                 .createContainerCmd(SCHEDULER_IMAGE)
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
-                .withEnv("JAVA_OPTS=" + getJavaOpts().stream().collect(Collectors.joining(" ")))
                 .withExposedPorts(ExposedPort.tcp(9092))
                 .withCmd(cmd);
     }

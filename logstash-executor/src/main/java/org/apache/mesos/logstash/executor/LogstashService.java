@@ -112,10 +112,12 @@ public class LogstashService {
                     "-e", serialize(logstashConfiguration)
             };
 
-            final HashMap<String, String> envs = new HashMap<>(System.getenv());
+            final HashMap<String, String> envs = new HashMap<>();
+//            envs.putAll(System.getenv());
+            envs.put("PATH", System.getenv("PATH"));
             envs.put("LS_HEAP_SIZE", System.getProperty("mesos.logstash.logstash.heap.size"));
             envs.put("HOME", "/root");
-            
+
             String[] env = envs.entrySet().stream().map(kv -> kv.getKey() + "=" + kv.getValue()).toArray(String[]::new);
             LOGGER.info("Starting subprocess: " + String.join(" ", env) + " " + String.join(" ", command));
             process = Runtime.getRuntime().exec(command, env);
@@ -128,14 +130,15 @@ public class LogstashService {
             inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: " + s), process.getErrorStream());
 
             process.waitFor();
+
+            LOGGER.info("Logstash quit with exit={}", process.exitValue());
+            if (process.exitValue() != 0) {
+                throw new RuntimeException("Logstash quit with exit=" + process.exitValue());
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException("Logstash process was interrupted", e);
         }
 
-        LOGGER.info("Logstash quit with exit={}", process.exitValue());
-        if (process.exitValue() != 0) {
-            throw new RuntimeException("Logstash quit with exit=" + process.exitValue());
-        }
 
         try {
             IOUtils.copy(process.getErrorStream(), System.err);

@@ -40,8 +40,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.jayway.awaitility.Awaitility.await;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Tests whether the framework is deployed correctly
@@ -67,18 +66,21 @@ public class DeploymentSystemTest {
 
     @SuppressWarnings({"PMD.EmptyCatchBlock"})
     @After
-    public void after() {
-        scheduler.ifPresent(scheduler -> dockerClient.listContainersCmd().withSince(scheduler.getContainerId()).exec().stream()
-                .filter(container -> Arrays.stream(container.getNames()).anyMatch(name -> name.startsWith("/mesos-")))
-                .map(Container::getId)
-                .peek(s -> LOGGER.debug("Stopping mesos- container: {}", s))
-                .forEach(containerId -> {
-                    try {
-                        dockerClient.stopContainerCmd(containerId).exec();
-                    } catch (NotModifiedException e) {
-                        // This is not important
-                    }
-                }));
+    public void after() throws Exception {
+        scheduler.ifPresent(scheduler -> {
+            dockerClient.stopContainerCmd(scheduler.getContainerId()).withTimeout(30).exec();
+        });
+
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            LOGGER.warn("Waiting");
+            JSONArray frameworks = null;
+            try {
+                frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
+            } catch (UnirestException e) {
+                fail("Couldn't get stateInfoJson: " + e.getMessage());
+            }
+            assertEquals(0, frameworks.length());
+        });
         cluster.stop();
     }
 
@@ -96,6 +98,7 @@ public class DeploymentSystemTest {
     public void testDeploymentJar() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
+        scheduler.get().setDocker(false);
         cluster.addAndStartContainer(scheduler.get());
 
         waitForFramework();
@@ -294,7 +297,6 @@ public class DeploymentSystemTest {
     }
 
     @Test
-
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
