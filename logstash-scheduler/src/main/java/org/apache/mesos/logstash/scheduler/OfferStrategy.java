@@ -1,6 +1,6 @@
 package org.apache.mesos.logstash.scheduler;
 
-import org.apache.commons.lang.math.LongRange;
+import org.apache.commons.lang3.Range;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
 import org.apache.mesos.logstash.config.ExecutorConfig;
@@ -120,7 +120,7 @@ public class OfferStrategy {
     }
 
     private boolean portIsInRanges(int port, Protos.Value.Ranges ranges) {
-        return ranges.getRangeList().stream().anyMatch(range -> new LongRange(range.getBegin(), range.getEnd()).containsLong(port));
+        return ranges.getRangeList().stream().anyMatch(range -> Range.between(range.getBegin(), range.getEnd()).contains(((long) port)));
     }
 
     /**

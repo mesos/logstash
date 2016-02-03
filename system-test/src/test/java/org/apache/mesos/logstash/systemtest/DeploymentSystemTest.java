@@ -15,7 +15,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Link;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.mashape.unirest.http.exceptions.UnirestException;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.client.Client;

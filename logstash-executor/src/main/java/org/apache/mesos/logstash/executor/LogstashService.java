@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.mesos.logstash.common.LogstashProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
