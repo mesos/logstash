@@ -89,6 +89,7 @@ like this:
     --enable.collectd=true \
     --enable.syslog=true \
     --enable.file=true \
+    --enable.docker=true \
     --executor.file-path='/var/log/*,/home/jhf/example.log'
 ```
 
@@ -133,6 +134,7 @@ Here is the full list of configuration options:
 | `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`                   | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
 | `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`                   | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
 | `--enable.file=B`                | `ENABLE_FILE=B`                | `false`                   | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
+| `--nable.docker=B`               | `ENABLE_DOCKER=B`              | `true`                    | Run executors in Docker containers. If disabled Mesos will distribute executors and Logstash automatically via http.            |
 | `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty)                | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
@@ -169,6 +171,7 @@ You can use the `"env"` map to configure the framework with environment variable
     "ENABLE_COLLECTD": "true",
     "ENABLE_SYSLOG": "true",
     "ENABLE_FILE": "true",
+    "ENABLE_DOCKER": "true",
     "EXECUTOR_FILE_PATH": "/var/log/*,/home/jhf/example.log"
   }
 }
