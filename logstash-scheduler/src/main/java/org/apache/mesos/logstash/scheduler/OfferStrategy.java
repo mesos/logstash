@@ -87,7 +87,7 @@ public class OfferStrategy {
         return clusterState
                 .getTaskList()
                 .stream()
-                .filter(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId())  && taskInfo.getName().equals("logstash.task"))
+                .filter(taskInfo -> taskInfo.getSlaveId().equals(offer.getSlaveId()) && taskInfo.getName().equals("logstash.task"))
                 .map(taskInfo -> "host " + taskInfo.getSlaveId().getValue() + " is already running task " + taskInfo.getTaskId().getValue());
     }
 

@@ -1,14 +1,12 @@
 package org.apache.mesos.logstash.executor;
 
-import com.google.protobuf.InvalidProtocolBufferException;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.mesos.Executor;
 import org.apache.mesos.ExecutorDriver;
 import org.apache.mesos.Protos;
-import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.ExecutorBootConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.apache.mesos.logstash.common.LogstashProtos.SchedulerMessage;
 
 /**
  * Executor for Logstash.
@@ -27,17 +25,12 @@ public class LogstashExecutor implements Executor {
     public void launchTask(final ExecutorDriver driver, final Protos.TaskInfo task) {
         LOGGER.info("Launching task taskId={}", task.getTaskId());
 
-        LogstashProtos.LogstashConfiguration logstashConfiguration;
-        try {
-            logstashConfiguration = LogstashProtos.LogstashConfiguration.parseFrom(task.getData().toByteArray());
-        } catch (InvalidProtocolBufferException e) {
-            throw new RuntimeException(e);
-        }
+        ExecutorBootConfiguration bootConfiguration = SerializationUtils.deserialize(task.getData().toByteArray());
 
         final Thread thread = new Thread(() -> {
             LOGGER.info("Forked thread with LogstashService.run()");
             try {
-                logstashService.run(logstashConfiguration);
+                logstashService.run(bootConfiguration);
                 LOGGER.info("LogstashService finished");
                 driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
                         .setExecutorId(task.getExecutor().getExecutorId())
@@ -57,9 +50,9 @@ public class LogstashExecutor implements Executor {
         thread.start();
 
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
-            .setExecutorId(task.getExecutor().getExecutorId())
-            .setTaskId(task.getTaskId())
-            .setState(Protos.TaskState.TASK_RUNNING).build());
+                .setExecutorId(task.getExecutor().getExecutorId())
+                .setTaskId(task.getTaskId())
+                .setState(Protos.TaskState.TASK_RUNNING).build());
     }
 
     @Override
@@ -67,8 +60,8 @@ public class LogstashExecutor implements Executor {
         LOGGER.info("Kill task. taskId={}", taskId.getValue());
 
         driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
-            .setTaskId(taskId)
-            .setState(Protos.TaskState.TASK_KILLED).build());
+                .setTaskId(taskId)
+                .setState(Protos.TaskState.TASK_KILLED).build());
 
         driver.stop();
     }
@@ -76,12 +69,6 @@ public class LogstashExecutor implements Executor {
     @Override
     public void frameworkMessage(ExecutorDriver driver, byte[] data) {
         LOGGER.info("LogstashExecutor.frameworkMessage");
-        try {
-            SchedulerMessage message = SchedulerMessage.parseFrom(data);
-            LOGGER.info("SchedulerMessage. message={}", message);
-        } catch (InvalidProtocolBufferException e) {
-            LOGGER.error("Error parsing framework message from scheduler.", e);
-        }
     }
 
     @Override
@@ -96,7 +83,7 @@ public class LogstashExecutor implements Executor {
 
     @Override
     public void registered(ExecutorDriver driver, Protos.ExecutorInfo executorInfo,
-        Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
+                           Protos.FrameworkInfo frameworkInfo, Protos.SlaveInfo slaveInfo) {
         LOGGER.info("LogstashExecutor Logstash registered. slaveId={}", slaveInfo.getId());
     }
 

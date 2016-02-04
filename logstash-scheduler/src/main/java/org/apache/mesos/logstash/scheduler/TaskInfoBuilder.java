@@ -1,9 +1,11 @@
 package org.apache.mesos.logstash.scheduler;
 
+import com.google.protobuf.ByteString;
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
+import org.apache.mesos.logstash.common.ExecutorBootConfiguration;
 import org.apache.mesos.logstash.common.LogstashConstants;
-import org.apache.mesos.logstash.common.LogstashProtos;
 import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.FrameworkConfig;
@@ -12,6 +14,7 @@ import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -55,10 +58,10 @@ public class TaskInfoBuilder {
         String executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
-            .newBuilder()
-            .setForcePullImage(false)
-            .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
-            .setImage(executorImage);
+                .newBuilder()
+                .setForcePullImage(false)
+                .setNetwork(Protos.ContainerInfo.DockerInfo.Network.BRIDGE)
+                .setImage(executorImage);
 
         if (features.isSyslog()) {
             dockerExecutor.addPortMappings(Protos.ContainerInfo.DockerInfo.PortMapping.newBuilder().setHostPort(logstashConfig.getSyslogPort()).setContainerPort(logstashConfig.getSyslogPort()).setProtocol("udp"));
@@ -79,17 +82,17 @@ public class TaskInfoBuilder {
         executorEnvVars.addToList(ExecutorEnvironmentalVariables.LOGSTASH_PATH, "/opt/logstash/bin/logstash");
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
-            .setName(LogstashConstants.NODE_NAME + " executor")
-            .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
-            .setContainer(container)
-            .setCommand(Protos.CommandInfo.newBuilder()
-                .addArguments("dummyArgument")
-                .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
-                    .setImage(executorImage).build())
-                .setEnvironment(Protos.Environment.newBuilder()
-                    .addAllVariables(executorEnvVars.getList()))
-                .setShell(false))
-            .build();
+                .setName(LogstashConstants.NODE_NAME + " executor")
+                .setExecutorId(Protos.ExecutorID.newBuilder().setValue("executor." + UUID.randomUUID()))
+                .setContainer(container)
+                .setCommand(Protos.CommandInfo.newBuilder()
+                        .addArguments("dummyArgument")
+                        .setContainer(Protos.CommandInfo.ContainerInfo.newBuilder()
+                                .setImage(executorImage).build())
+                        .setEnvironment(Protos.Environment.newBuilder()
+                                .addAllVariables(executorEnvVars.getList()))
+                        .setShell(false))
+                .build();
 
         return createTask(offer, executorInfo);
     }
@@ -103,8 +106,8 @@ public class TaskInfoBuilder {
                         executorEnvVars.getList()))
                 .setValue(frameworkConfig.getExecutorCommand())
                 .addAllUris(Arrays.asList(
-                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashTarballUri()).build(),
-                    Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashExecutorUri()).build()
+                        Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashTarballUri()).build(),
+                        Protos.CommandInfo.URI.newBuilder().setValue(frameworkConfig.getLogstashExecutorUri()).build()
                 ));
 
         Protos.ExecutorInfo executorInfo = Protos.ExecutorInfo.newBuilder()
@@ -117,26 +120,22 @@ public class TaskInfoBuilder {
     }
 
     private Protos.TaskInfo createTask(Protos.Offer offer, Protos.ExecutorInfo executorInfo) {
-        final LogstashProtos.LogstashConfiguration.Builder logstashConfigBuilder = LogstashProtos.LogstashConfiguration.newBuilder();
+        ExecutorBootConfiguration bootConfiguration = new ExecutorBootConfiguration(offer.getSlaveId().getValue());
+
+        bootConfiguration.setElasticSearchUrl(logstashConfig.getElasticsearchUrl().map(URL::toExternalForm).orElse(null));
+
         if (features.isSyslog()) {
-            logstashConfigBuilder.setLogstashPluginInputSyslog(
-                    LogstashProtos.LogstashPluginInputSyslog.newBuilder().setPort(logstashConfig.getSyslogPort())
-            );
+            bootConfiguration.setEnableSyslog(true);
+            bootConfiguration.setSyslogPort(logstashConfig.getSyslogPort());
         }
         if (features.isCollectd()) {
-            logstashConfigBuilder.setLogstashPluginInputCollectd(
-                    LogstashProtos.LogstashPluginInputCollectd.newBuilder().setPort(logstashConfig.getCollectdPort())
-            );
+            bootConfiguration.setEnableCollectd(true);
+            bootConfiguration.setCollectdPort(logstashConfig.getCollectdPort());
         }
-        //TODO: repeat for collectd
-        logstashConfig.getElasticsearchUrl().ifPresent(url -> logstashConfigBuilder.setLogstashPluginOutputElasticsearch(LogstashProtos.LogstashPluginOutputElasticsearch.newBuilder().setUrl(url.toExternalForm())));
-
-        logstashConfigBuilder.setMesosSlaveId(offer.getSlaveId().getValue());
 
         if (features.isFile()) {
-            logstashConfigBuilder.setLogstashPluginInputFile(
-                    LogstashProtos.LogstashPluginInputFile.newBuilder().addAllPath(executorConfig.getFilePath())
-            );
+            bootConfiguration.setEnableFile(true);
+            bootConfiguration.setFilePaths(executorConfig.getFilePath().stream().toArray(String[]::new));
         }
 
         return Protos.TaskInfo.newBuilder()
@@ -145,7 +144,7 @@ public class TaskInfoBuilder {
                 .setName(LogstashConstants.TASK_NAME)
                 .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
                 .setSlaveId(offer.getSlaveId())
-                .setData(logstashConfigBuilder.build().toByteString())
+                .setData(ByteString.copyFrom(SerializationUtils.serialize(bootConfiguration)))
                 .build();
     }
 
@@ -154,23 +153,23 @@ public class TaskInfoBuilder {
         int memNeeded = executorConfig.getHeapSize() + logstashConfig.getHeapSize() + executorConfig.getOverheadMem();
 
         return asList(
-            Protos.Resource.newBuilder()
-                .setName("cpus")
-                .setType(Protos.Value.Type.SCALAR)
-                .setScalar(Protos.Value.Scalar.newBuilder()
-                    .setValue(executorConfig.getCpus()).build())
-                .build(),
-            Protos.Resource.newBuilder()
-                .setName("mem")
-                .setType(Protos.Value.Type.SCALAR)
-                .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
-                .build(),
-            Protos.Resource.newBuilder()
-                .setName("ports")
-                .setRole(frameworkConfig.getMesosRole())
-                .setType(Protos.Value.Type.RANGES)
-                .setRanges(mapSelectedPortRanges())
-                .build()
+                Protos.Resource.newBuilder()
+                        .setName("cpus")
+                        .setType(Protos.Value.Type.SCALAR)
+                        .setScalar(Protos.Value.Scalar.newBuilder()
+                                .setValue(executorConfig.getCpus()).build())
+                        .build(),
+                Protos.Resource.newBuilder()
+                        .setName("mem")
+                        .setType(Protos.Value.Type.SCALAR)
+                        .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
+                        .build(),
+                Protos.Resource.newBuilder()
+                        .setName("ports")
+                        .setRole(frameworkConfig.getMesosRole())
+                        .setType(Protos.Value.Type.RANGES)
+                        .setRanges(mapSelectedPortRanges())
+                        .build()
         );
     }
 

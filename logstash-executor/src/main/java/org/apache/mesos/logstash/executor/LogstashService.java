@@ -1,8 +1,7 @@
 package org.apache.mesos.logstash.executor;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.mesos.logstash.common.LogstashProtos;
+import org.apache.mesos.logstash.common.ExecutorBootConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +19,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -38,54 +36,53 @@ public class LogstashService {
         return Optional.empty();
     }
 
-    private static String serialize(LogstashProtos.LogstashConfiguration logstashConfiguration) {
-        LOGGER.info("Received " + logstashConfiguration.toString());
-        LOGGER.info("logstashConfiguration.getLogstashPluginOutputElasticsearch() = " + logstashConfiguration.getLogstashPluginOutputElasticsearch().isInitialized());
+    private static String serialize(ExecutorBootConfiguration bootConfiguration) {
+        LOGGER.info("Received " + bootConfiguration.toString());
 
 
         List<LS.Plugin> inputPlugins = optionalValuesToList(
-                ofConditional(logstashConfiguration.getLogstashPluginInputSyslog(), LogstashProtos.LogstashPluginInputSyslog::isInitialized).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getPort()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputCollectd(), LogstashProtos.LogstashPluginInputCollectd::isInitialized).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(config.getPort())), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
-                ofConditional(logstashConfiguration.getLogstashPluginInputFile(), LogstashProtos.LogstashPluginInputFile::isInitialized).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(config.getPathList().stream().map(path -> (isRunningInDocker() ? "/logstashpaths" : "") + path).map(LS::string).toArray(LS.Value[]::new))))))
+                ofConditional(bootConfiguration, ExecutorBootConfiguration::isEnableSyslog).map(config -> LS.plugin("syslog", LS.map(LS.kv("port", LS.number(config.getSyslogPort()))))),
+                ofConditional(bootConfiguration, ExecutorBootConfiguration::isEnableCollectd).map(config -> LS.plugin("udp", LS.map(LS.kv("port", LS.number(config.getCollectdPort())), LS.kv("buffer_size", LS.number(1452)), LS.kv("codec", LS.plugin("collectd", LS.map()))))),
+                ofConditional(bootConfiguration, ExecutorBootConfiguration::isEnableFile).map(config -> LS.plugin("file", LS.map(LS.kv("path", LS.array(Arrays.stream(config.getFilePaths()).map(path -> (isRunningInDocker() ? "/logstashpaths" : "") + path).map(LS::string).toArray(LS.Value[]::new))))))
         );
 
         List<LS.Plugin> filterPlugins = Arrays.asList(
-            LS.plugin("mutate", LS.map(
-                    LS.kv("add_field", LS.map(
-                            LS.kv("mesos_slave_id", LS.string(logstashConfiguration.getMesosSlaveId()))
+                LS.plugin("mutate", LS.map(
+                        LS.kv("add_field", LS.map(
+                                LS.kv("mesos_slave_id", LS.string(bootConfiguration.getMesosAgentId()))
+                                )
                         )
-                    )
+                        )
                 )
-            )
         );
 
         List<LS.Plugin> outputPlugins = optionalValuesToList(
-                ofConditional(logstashConfiguration.getLogstashPluginOutputElasticsearch(), LogstashProtos.LogstashPluginOutputElasticsearch::isInitialized).map(config -> {
-                    URL url;
-                    try {
-                        url = new URL(config.getUrl());
-                    } catch (MalformedURLException e) {
-                        throw new RuntimeException("Failed to parse Elasticsearch URL: " + config.getUrl(), e);
-                    }
-                    return LS.plugin(
-                            "elasticsearch",
-                            LS.map(
-                                    filterEmpties(
-                                            LS.KV.class,
-                                            Optional.of(LS.kv("hosts", LS.string(url.getHost() + ":" + (url.getPort() > 0 ? url.getPort() : 9200)))),
-                                            Optional.of(LS.kv("ssl", LS.bool(url.getProtocol().equals("https")))),
-                                            ofConditional(config.getIndex(), StringUtils::isNotEmpty).map(index -> LS.kv("index", LS.string(index)))
-                                    )
-                            )
-                    );
-                })
+                Optional.ofNullable(bootConfiguration.getElasticSearchUrl()).map(LogstashService::parseURL).map(url -> LS.plugin(
+                        "elasticsearch",
+                        LS.map(
+                                filterEmpties(
+                                        LS.KV.class,
+                                        Optional.of(LS.kv("hosts", LS.string(url.getHost() + ":" + (url.getPort() > 0 ? url.getPort() : 9200)))),
+                                        Optional.of(LS.kv("ssl", LS.bool(url.getProtocol().equals("https"))))
+                                        //TODO: Add index
+                                )
+                        )
+                ))
         );
 
         return LS.config(
-                LS.section("input",  inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
+                LS.section("input", inputPlugins.toArray(new LS.Plugin[inputPlugins.size()])),
                 LS.section("filter", filterPlugins.toArray(new LS.Plugin[filterPlugins.size()])),
                 LS.section("output", outputPlugins.toArray(new LS.Plugin[outputPlugins.size()]))
         ).serialize();
+    }
+
+    private static URL parseURL(String url) {
+        try {
+            return new URL(url);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Not valid url: " + url, e);
+        }
     }
 
     private static boolean isRunningInDocker() {
@@ -97,11 +94,11 @@ public class LogstashService {
     }
 
     @SafeVarargs
-    private static <T> List<T> optionalValuesToList(Optional<T> ... optionals) {
+    private static <T> List<T> optionalValuesToList(Optional<T>... optionals) {
         return Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
     }
 
-    public void run(LogstashProtos.LogstashConfiguration logstashConfiguration) {
+    public void run(ExecutorBootConfiguration bootConfiguration) {
         LOGGER.info("Starting the Logstash Process.");
 
         Process process;
@@ -109,7 +106,7 @@ public class LogstashService {
             String[] command = {
                     LOGSTASH_PATH,
                     "--log", "/var/log/logstash.log",
-                    "-e", serialize(logstashConfiguration)
+                    "-e", serialize(bootConfiguration)
             };
 
             final HashMap<String, String> envs = new HashMap<>();
