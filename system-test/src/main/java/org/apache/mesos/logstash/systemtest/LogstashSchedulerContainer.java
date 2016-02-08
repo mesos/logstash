@@ -44,7 +44,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
                 mesosRole.map(role -> "--mesos-role=" + role).orElse(null),
                 "--enable.failover=false",
-                elasticsearchHost.map(host -> "--logstash.elasticsearch-Host=" + host).orElse(null),
+                elasticsearchHost.map(host -> "--logstash.elasticsearch-host=" + host).orElse(null),
                 "--executor.heap-size=64",
                 "--logstash.heap-size=256",
                 "--enable.docker=" + useDocker,
