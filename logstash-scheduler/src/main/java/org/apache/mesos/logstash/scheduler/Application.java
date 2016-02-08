@@ -1,9 +1,6 @@
 package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.mesos.MesosSchedulerDriver;
-import org.apache.mesos.Protos;
-import org.apache.mesos.SchedulerDriver;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosStateZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
@@ -13,7 +10,6 @@ import org.apache.mesos.state.State;
 import org.apache.mesos.state.ZooKeeperState;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.embedded.jetty.JettyEmbeddedServletContainerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -49,7 +45,7 @@ public class Application {
     private void checkSystemProperties(String zkUrl) {
         if (StringUtils.isEmpty(zkUrl)) {
             System.out.println(
-                "No zookeeper configuration given. Please provide \"mesos.zk\" system property.");
+                    "No zookeeper configuration given. Please provide \"mesos.zk\" system property.");
             System.exit(2);
         }
 

@@ -1,0 +1,37 @@
+input {
+    <#if syslog??>
+    syslog {
+        port => ${syslog.port}
+    }
+    </#if>
+    <#if collectd??>
+    udp {
+        port => ${collectd.port}
+        buffer_size => 1452
+        codec => collectd { }
+    }
+    </#if>
+    <#if file??>
+    file {
+        path => <#list file.paths>[<#items as path>"${path}"<#sep>,</#sep></#items>]</#list>
+    }
+    </#if>
+}
+
+filter {
+    mutate {
+        add_field => {
+            "mesos_agent_id" => "${mesosAgentId}"
+        }
+    }
+}
+
+output {
+    <#if elasticsearch??>
+    elasticsearch {
+        <#list elasticsearch.hosts>hosts => [<#items as host>"${host}"<#sep>,</#sep></#items>]</#list>
+        <#if elasticsearch.ssl??>ssl => ${elasticsearch.ssl}</#if>
+        <#if elasticsearch.index??>index => ${elasticsearch.index}</#if>
+    }
+    </#if>
+}

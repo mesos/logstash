@@ -1,4 +1,3 @@
-apply plugin: 'com.google.protobuf'
 apply plugin: 'idea'
 
 ext {
@@ -30,15 +29,5 @@ idea {
         excludeDirs += file("$buildDir/reports")
         excludeDirs += file("$buildDir/resources")
         excludeDirs += file("$buildDir/tmp")
-
-        sourceDirs  += file("$buildDir/generated/source/proto/main/java")
     }
-}
-
-protobuf {
-
-    protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVer"
-    }
-
 }

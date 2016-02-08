@@ -33,9 +33,6 @@ public class LogstashSchedulerTest {
     private FrameworkConfig frameworkConfig = new FrameworkConfig();
 
     @Mock
-    ConfigManager configManager;
-
-    @Mock
     SerializableState serializableState;
 
     @Mock
@@ -52,12 +49,6 @@ public class LogstashSchedulerTest {
         scheduler.features = features;
 
         when(driverFactory.createMesosDriver(any(), any(), any())).thenReturn(driver);
-    }
-
-    @Test
-    public void hasInjected() throws Exception {
-        assertNotNull(configManager);
-        assertSame(configManager, scheduler.configManager);
     }
 
     @Test
@@ -106,8 +97,6 @@ public class LogstashSchedulerTest {
         when(frameworkState.getFrameworkID()).thenReturn(createFrameworkId("test"));
         scheduler.start();
         scheduler.stop();
-
-        verify(configManager).setOnConfigUpdate(null);
     }
 
     @Test
