@@ -12,9 +12,11 @@ import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
 import org.apache.mesos.logstash.util.Clock;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StreamUtils;
 
 import javax.inject.Inject;
-import java.net.URL;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -122,7 +124,15 @@ public class TaskInfoBuilder {
     private Protos.TaskInfo createTask(Protos.Offer offer, Protos.ExecutorInfo executorInfo) {
         ExecutorBootConfiguration bootConfiguration = new ExecutorBootConfiguration(offer.getSlaveId().getValue());
 
-        bootConfiguration.setElasticSearchUrl(logstashConfig.getElasticsearchUrl().map(URL::toExternalForm).orElse(null));
+        bootConfiguration.setElasticSearchHosts(logstashConfig.getElasticsearchHost());
+
+        try {
+            String template = StreamUtils.copyToString(getClass().getResourceAsStream("/default_logstash.config.fm"), StandardCharsets.UTF_8);
+            LOGGER.debug("Template: " + template);
+            bootConfiguration.setLogstashConfigTemplate(template);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to open template", e);
+        }
 
         if (features.isSyslog()) {
             bootConfiguration.setEnableSyslog(true);

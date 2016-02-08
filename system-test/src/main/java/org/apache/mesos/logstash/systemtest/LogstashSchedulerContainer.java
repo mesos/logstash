@@ -7,11 +7,7 @@ import com.github.dockerjava.api.model.ExposedPort;
 import org.elasticsearch.common.lang3.StringUtils;
 
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -25,24 +21,16 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     public static final String SCHEDULER_NAME = "logstash-scheduler";
 
     private String zookeeperIpAddress;
-    private Optional<String> elasticsearchUrl = Optional.empty();
+    private Optional<String> elasticsearchHost = Optional.empty();
     private boolean withSyslog = false;
     private final Optional<String> mesosRole;
     private boolean useDocker = true;
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchUrl) {
+    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchHost) {
         super(dockerClient);
         this.zookeeperIpAddress = zookeeperIpAddress;
         this.mesosRole = Optional.ofNullable(mesosRole);
-        this.elasticsearchUrl = Optional.ofNullable(elasticsearchUrl);
-    }
-
-    @SafeVarargs
-    private static <T> List<T> mergeWithOptionals(List<T> list, Optional<T> ... optionals) {
-        return Stream.concat(
-                list.stream(),
-                Arrays.stream(optionals).filter(Optional::isPresent).map(Optional::get)
-        ).collect(Collectors.toList());
+        this.elasticsearchHost = Optional.ofNullable(elasticsearchHost);
     }
 
     @Override
@@ -56,7 +44,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
                 mesosRole.map(role -> "--mesos-role=" + role).orElse(null),
                 "--enable.failover=false",
-                elasticsearchUrl.map(url -> "--logstash.elasticsearch-url=" + url).orElse(null),
+                elasticsearchHost.map(host -> "--logstash.elasticsearch-Host=" + host).orElse(null),
                 "--executor.heap-size=64",
                 "--logstash.heap-size=256",
                 "--enable.docker=" + useDocker,

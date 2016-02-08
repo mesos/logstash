@@ -45,6 +45,7 @@ import static org.junit.Assert.*;
 /**
  * Tests whether the framework is deployed correctly
  */
+@SuppressWarnings("Duplicates")
 public class DeploymentSystemTest {
 
     private static DockerClient dockerClient = DockerClientFactory.build();
@@ -159,7 +160,7 @@ public class DeploymentSystemTest {
         });
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
         scheduler.get().enableSyslog();
         cluster.addAndStartContainer(scheduler.get());
 
@@ -180,20 +181,22 @@ public class DeploymentSystemTest {
                 // We should use ...exec().getState().getRunning() but docker-java doesn't provide that
                 // (even though it's available in the JSON provided by Docker).
                 final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
-                return StringUtils.isNotBlank(finishedAt) && !finishedAt.equals("0001-01-01T00:00:00Z");
+                assertNotNull(finishedAt);
+                assertNotEquals("", finishedAt);
+                assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
             });
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits().getAt(0).fields();
         });
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits().getAt(0).fields();
 
             String esMessage = fields.get("message").getValue();
             assertEquals(randomLogLine, esMessage.trim());
 
-            String esMesosSlaveId = fields.get("mesos_slave_id").getValue();
+            String esMesosSlaveId = fields.get("mesos_agent_id").getValue();
 
             String trueSlaveId;
             try {
@@ -245,7 +248,7 @@ public class DeploymentSystemTest {
         });
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", "http://" + elasticsearchInstance.getIpAddress() + ":" + 9200));
+        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
         scheduler.get().enableSyslog();
         scheduler.get().setDocker(false);
         cluster.addAndStartContainer(scheduler.get());
@@ -267,20 +270,21 @@ public class DeploymentSystemTest {
                 // We should use ...exec().getState().getRunning() but docker-java doesn't provide that
                 // (even though it's available in the JSON provided by Docker).
                 final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+                System.out.println("finishedAt = " + finishedAt);
                 return StringUtils.isNotBlank(finishedAt) && !finishedAt.equals("0001-01-01T00:00:00Z");
             });
             final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
             dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
             assertEquals(0, exitCode);
-            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits().getAt(0).fields();
         });
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_slave_id").execute().actionGet().getHits().getAt(0).fields();
+            Map<String, SearchHitField> fields = elasticsearchClient.get().prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits().getAt(0).fields();
 
             String esMessage = fields.get("message").getValue();
             assertEquals(randomLogLine, esMessage.trim());
 
-            String esMesosSlaveId = fields.get("mesos_slave_id").getValue();
+            String esMesosSlaveId = fields.get("mesos_agent_id").getValue();
 
             String trueSlaveId;
             try {

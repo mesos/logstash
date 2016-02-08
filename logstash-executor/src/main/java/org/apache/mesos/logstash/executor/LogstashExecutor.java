@@ -42,7 +42,7 @@ public class LogstashExecutor implements Executor {
                         .setExecutorId(task.getExecutor().getExecutorId())
                         .setTaskId(task.getTaskId())
                         .setState(Protos.TaskState.TASK_FAILED)
-                        .setMessage(e.getCause().getMessage()).build());
+                        .setMessage(e.getMessage()).build());
             }
             driver.stop();
         });

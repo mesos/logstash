@@ -12,6 +12,7 @@ dependencies {
     compile "org.apache.commons:commons-compress:$commonsCompressVer"
     compile "org.apache.commons:commons-io:1.3.2"
     compile "com.google.guava:guava:$guavaVer"
+    compile 'org.freemarker:freemarker:2.3.23'
 
 }
 

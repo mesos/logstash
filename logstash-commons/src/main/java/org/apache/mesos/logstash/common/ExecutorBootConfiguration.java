@@ -1,11 +1,15 @@
 package org.apache.mesos.logstash.common;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import java.io.Serializable;
-import java.util.Arrays;
 
 public class ExecutorBootConfiguration implements Serializable {
+    private static final long serialVersionUID = -7053478803581002057L;
+
     private String mesosAgentId;
-    private String elasticSearchUrl;
+    private String[] elasticSearchHosts;
+    private String elasticsearchIndex;
 
     private boolean enableSyslog;
     private int syslogPort;
@@ -15,6 +19,8 @@ public class ExecutorBootConfiguration implements Serializable {
 
     private boolean enableFile;
     private String[] filePaths;
+    private String logstashConfigTemplate;
+    private Boolean elasticsearchSSL;
 
     public ExecutorBootConfiguration(String mesosAgentId) {
         this.mesosAgentId = mesosAgentId;
@@ -26,14 +32,6 @@ public class ExecutorBootConfiguration implements Serializable {
 
     public void setMesosAgentId(String mesosAgentId) {
         this.mesosAgentId = mesosAgentId;
-    }
-
-    public String getElasticSearchUrl() {
-        return elasticSearchUrl;
-    }
-
-    public void setElasticSearchUrl(String elasticSearchUrl) {
-        this.elasticSearchUrl = elasticSearchUrl;
     }
 
     public boolean isEnableSyslog() {
@@ -86,15 +84,49 @@ public class ExecutorBootConfiguration implements Serializable {
 
     @Override
     public String toString() {
-        return "ExecutorBootConfiguration{" +
-                "mesosAgentId='" + mesosAgentId + '\'' +
-                ", elasticSearchUrl='" + elasticSearchUrl + '\'' +
-                ", enableSyslog=" + enableSyslog +
-                ", syslogPort=" + syslogPort +
-                ", enableCollectd=" + enableCollectd +
-                ", collectdPort=" + collectdPort +
-                ", enableFile=" + enableFile +
-                ", filePaths=" + Arrays.toString(filePaths) +
-                '}';
+        return new ToStringBuilder(this)
+                .append("mesosAgentId", mesosAgentId)
+                .append("elasticSearchHosts", elasticSearchHosts)
+                .append("elasticsearchIndex", elasticsearchIndex)
+                .append("enableSyslog", enableSyslog)
+                .append("syslogPort", syslogPort)
+                .append("enableCollectd", enableCollectd)
+                .append("collectdPort", collectdPort)
+                .append("enableFile", enableFile)
+                .append("filePaths", filePaths)
+                .append("logstashConfigTemplate", logstashConfigTemplate)
+                .toString();
+    }
+
+    public String getLogstashConfigTemplate() {
+        return logstashConfigTemplate;
+    }
+
+    public void setLogstashConfigTemplate(String logstashConfigTemplate) {
+        this.logstashConfigTemplate = logstashConfigTemplate;
+    }
+
+    public String[] getElasticSearchHosts() {
+        return elasticSearchHosts;
+    }
+
+    public void setElasticSearchHosts(String ... elasticSearchHosts) {
+        this.elasticSearchHosts = elasticSearchHosts;
+    }
+
+    public String getElasticsearchIndex() {
+        return elasticsearchIndex;
+    }
+
+    public void setElasticsearchIndex(String elasticsearchIndex) {
+        this.elasticsearchIndex = elasticsearchIndex;
+    }
+
+    public Boolean getElasticsearchSSL() {
+        return elasticsearchSSL;
+    }
+
+    public void setElasticsearchSSL(Boolean elasticsearchSSL) {
+        this.elasticsearchSSL = elasticsearchSSL;
     }
 }
