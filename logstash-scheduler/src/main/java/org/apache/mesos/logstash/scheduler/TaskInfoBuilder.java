@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
 import com.google.protobuf.ByteString;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
@@ -15,11 +16,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
@@ -127,7 +132,11 @@ public class TaskInfoBuilder {
         bootConfiguration.setElasticSearchHosts(logstashConfig.getElasticsearchHost());
 
         try {
-            String template = StreamUtils.copyToString(getClass().getResourceAsStream("/default_logstash.config.fm"), StandardCharsets.UTF_8);
+            String template = StreamUtils.copyToString(
+                    Optional.ofNullable(logstashConfig.getConfigFile())
+                            .map(file -> (InputStream) getFileInputStream(file))
+                            .orElseGet(() -> getClass().getResourceAsStream("/default_logstash.config.fm")), StandardCharsets.UTF_8);
+
             LOGGER.debug("Template: " + template);
             bootConfiguration.setLogstashConfigTemplate(template);
         } catch (IOException e) {
@@ -157,6 +166,15 @@ public class TaskInfoBuilder {
                 .setData(ByteString.copyFrom(SerializationUtils.serialize(bootConfiguration)))
                 .build();
     }
+
+    private FileInputStream getFileInputStream(File file) {
+        try {
+            return FileUtils.openInputStream(file);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to open file: " + file.getAbsolutePath(), e);
+        }
+    }
+
 
     public List<Protos.Resource> getResourcesList() {
 

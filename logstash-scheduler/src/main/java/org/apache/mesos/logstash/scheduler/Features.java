@@ -12,6 +12,8 @@ public class Features {
     private boolean syslog;
     private boolean file;
     private boolean docker = true;
+
+    //TODO (mwl): Seems unused?
     private Boolean useIpAddress = false;
 
     public boolean isDocker() {
