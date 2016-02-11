@@ -2,7 +2,6 @@ input {
     heartbeat {
         message => "Logstash is ready on mesos agent ${mesosAgentId}"
         add_field => { "start" => "1" }
-        count => 1
     }
 }
 
