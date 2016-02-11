@@ -139,6 +139,7 @@ public class TaskInfoBuilder {
 
             LOGGER.debug("Template: " + template);
             bootConfiguration.setLogstashConfigTemplate(template);
+            bootConfiguration.setLogstashStartConfigTemplate(StreamUtils.copyToString(getClass().getResourceAsStream("/startup_logstash.config.fm"), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException("Failed to open template", e);
         }

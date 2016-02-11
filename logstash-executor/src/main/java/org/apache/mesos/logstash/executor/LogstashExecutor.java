@@ -47,12 +47,13 @@ public class LogstashExecutor implements Executor {
             driver.stop();
         });
         thread.setDaemon(true);
-        thread.start();
 
-        driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
+        logstashService.addOnLogstashReadyListener(() -> driver.sendStatusUpdate(Protos.TaskStatus.newBuilder()
                 .setExecutorId(task.getExecutor().getExecutorId())
                 .setTaskId(task.getTaskId())
-                .setState(Protos.TaskState.TASK_RUNNING).build());
+                .setState(Protos.TaskState.TASK_RUNNING).build()));
+
+        thread.start();
     }
 
     @Override

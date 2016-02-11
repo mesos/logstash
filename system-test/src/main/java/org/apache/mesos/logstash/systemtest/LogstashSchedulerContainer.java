@@ -3,9 +3,14 @@ package org.apache.mesos.logstash.systemtest;
 import com.containersol.minimesos.container.AbstractContainer;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.model.AccessMode;
+import com.github.dockerjava.api.model.Bind;
 import com.github.dockerjava.api.model.ExposedPort;
+import com.github.dockerjava.api.model.Volume;
 import org.elasticsearch.common.lang3.StringUtils;
 
+import java.io.File;
+import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.Optional;
 
@@ -25,6 +30,7 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private boolean withSyslog = false;
     private final Optional<String> mesosRole;
     private boolean useDocker = true;
+    private Optional<File> logstashConfig = Optional.empty();
 
     public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchHost) {
         super(dockerClient);
@@ -48,10 +54,19 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 "--executor.heap-size=64",
                 "--logstash.heap-size=256",
                 "--enable.docker=" + useDocker,
+                logstashConfig.map(file -> "--logstash.config-file=/config/" + file.getName()).orElse(null),
                 withSyslog ? "--enable.syslog=true" : null
         ).stream().filter(StringUtils::isNotEmpty).toArray(String[]::new);
-        return dockerClient
-                .createContainerCmd(SCHEDULER_IMAGE)
+
+        final CreateContainerCmd containerCmd = dockerClient.createContainerCmd(SCHEDULER_IMAGE);
+        logstashConfig.ifPresent(file -> {
+            try {
+                containerCmd.withBinds(new Bind(file.getParentFile().getCanonicalPath(), new Volume("/config"), AccessMode.ro));
+            } catch (IOException e) {
+                throw new IllegalStateException("Path error", e);
+            }
+        });
+        return containerCmd
                 .withName(SCHEDULER_NAME + "_" + new SecureRandom().nextInt())
                 .withExposedPorts(ExposedPort.tcp(9092))
                 .withCmd(cmd);
@@ -63,5 +78,9 @@ public class LogstashSchedulerContainer extends AbstractContainer {
 
     public void setDocker(boolean useDocker) {
       this.useDocker = useDocker;
+    }
+
+    public void setLogstashConfig(File logstashConfig) {
+        this.logstashConfig = Optional.of(logstashConfig);
     }
 }

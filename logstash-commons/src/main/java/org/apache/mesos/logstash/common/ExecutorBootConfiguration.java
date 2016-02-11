@@ -21,6 +21,7 @@ public class ExecutorBootConfiguration implements Serializable {
     private String[] filePaths;
     private String logstashConfigTemplate;
     private Boolean elasticsearchSSL;
+    private String logstashStartConfigTemplate;
 
     public ExecutorBootConfiguration(String mesosAgentId) {
         this.mesosAgentId = mesosAgentId;
@@ -128,5 +129,13 @@ public class ExecutorBootConfiguration implements Serializable {
 
     public void setElasticsearchSSL(Boolean elasticsearchSSL) {
         this.elasticsearchSSL = elasticsearchSSL;
+    }
+
+    public void setLogstashStartConfigTemplate(String logstashStartConfigTemplate) {
+        this.logstashStartConfigTemplate = logstashStartConfigTemplate;
+    }
+
+    public String getLogstashStartConfigTemplate() {
+        return logstashStartConfigTemplate;
     }
 }
