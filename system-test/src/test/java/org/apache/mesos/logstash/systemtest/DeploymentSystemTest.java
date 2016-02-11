@@ -109,7 +109,7 @@ public class DeploymentSystemTest {
             assertTrue(tasks.getJSONObject(0).has("name"));
             assertEquals("logstash.task", tasks.getJSONObject(0).getString("name"));
         });
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
             assertEquals("TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
         });
     }
