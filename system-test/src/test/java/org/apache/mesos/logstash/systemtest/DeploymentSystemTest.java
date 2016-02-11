@@ -19,6 +19,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHitField;
 import org.elasticsearch.search.SearchHits;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -80,24 +81,52 @@ public class DeploymentSystemTest {
 
     }
 
-    @Test
-    public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
+    private void deployScheduler(String mesosRole, String elasticsearchHost, boolean useDocker, File logstashConfig) {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
-        scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get());
+        this.scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, mesosRole, elasticsearchHost));
+        this.scheduler.get().setDocker(useDocker);
+        if (logstashConfig != null) {
+            this.scheduler.get().setLogstashConfig(logstashConfig);
+        }
+        cluster.addAndStartContainer(this.scheduler.get());
 
         waitForFramework();
     }
 
+    private void waitForFramework() {
+        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            JSONArray frameworks = getFrameworks();
+            assertEquals(1, frameworks.length());
+            JSONObject framework = frameworks.getJSONObject(0);
+            assertTrue(framework.has("tasks"));
+        });
+        await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            JSONArray tasks = getFrameworks().getJSONObject(0).getJSONArray("tasks");
+            assertEquals(1, tasks.length());
+            assertTrue(tasks.getJSONObject(0).has("name"));
+            assertEquals("logstash.task", tasks.getJSONObject(0).getString("name"));
+        });
+        await().atMost(20, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+            assertEquals("TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
+        });
+    }
+
+    protected JSONArray getFrameworks() {
+        try {
+            return cluster.getStateInfoJSON().getJSONArray("frameworks");
+        } catch (UnirestException e) {
+            throw new AssertionError("Failed to get Frameworks", e);
+        }
+    }
+
+    @Test
+    public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
+        deployScheduler(null, null, true, null);
+    }
+
     @Test
     public void testDeploymentJar() throws JsonParseException, UnirestException, JsonMappingException {
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
-        scheduler.get().setDocker(false);
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
+        deployScheduler(null, null, false, null);
     }
 
     @Test
@@ -105,50 +134,17 @@ public class DeploymentSystemTest {
         final File logstashConfig = new File(tmpDir, "logstash.config");
         FileUtils.writeStringToFile(logstashConfig, "input { heartbeat {} } output {}");
 
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
-        scheduler.get().setDocker(false);
-        scheduler.get().setLogstashConfig(logstashConfig);
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
-    }
-
-    private void waitForFramework() {
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            JSONArray frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
-            if (frameworks.length() == 0) {
-                LOGGER.info("Logstash framework is not yet running");
-                return false;
-            }
-
-            JSONArray tasks = frameworks.getJSONObject(0).getJSONArray("tasks");
-
-            if (IntStream.range(0, tasks.length()).mapToObj(tasks::getJSONObject).filter(task -> task.getString("name").equals("logstash.task")).anyMatch(task -> task.getString("state").equalsIgnoreCase("TASK_RUNNING"))) {
-                LOGGER.info("Logstash executor running");
-                return true;
-            }
-
-            LOGGER.info("Logstash executor not yet running");
-            return false;
-        });
+        deployScheduler(null, null, false, logstashConfig);
     }
 
     @Test
     public void willForwardDataToElasticsearchInDockerMode() throws Exception {
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-
         final ElasticsearchContainer elasticsearchInstance = new ElasticsearchContainer(dockerClient);
         cluster.addAndStartContainer(elasticsearchInstance);
 
         Client elasticsearchClient = elasticsearchInstance.createClient();
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
-        scheduler.get().enableSyslog();
-        scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
+        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", true, null);
 
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
@@ -190,19 +186,12 @@ public class DeploymentSystemTest {
 
     @Test
     public void willForwardDataToElasticsearchInJarMode() throws Exception {
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-
         final ElasticsearchContainer elasticsearchInstance = new ElasticsearchContainer(dockerClient);
         cluster.addAndStartContainer(elasticsearchInstance);
 
         Client elasticsearchClient = elasticsearchInstance.createClient();
 
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
-        scheduler.get().enableSyslog();
-        scheduler.get().setDocker(false);
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
+        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", false, null);
 
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
@@ -244,12 +233,7 @@ public class DeploymentSystemTest {
 
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
-        scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
+        deployScheduler(null, null, true, null);
 
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
@@ -268,12 +252,7 @@ public class DeploymentSystemTest {
 
     @Test
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
-        String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-
-        scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", null));
-        cluster.addAndStartContainer(scheduler.get());
-
-        waitForFramework();
+        deployScheduler("logstash", null, true, null);
 
         Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
                 .listContainersCmd()
