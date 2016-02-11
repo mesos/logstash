@@ -81,10 +81,13 @@ public class DeploymentSystemTest {
 
     }
 
-    private void deployScheduler(String mesosRole, String elasticsearchHost, boolean useDocker, File logstashConfig) {
+    private void deployScheduler(String mesosRole, String elasticsearchHost, boolean useDocker, File logstashConfig, boolean enableSyslog) {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         this.scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, mesosRole, elasticsearchHost));
         this.scheduler.get().setDocker(useDocker);
+        if (enableSyslog) {
+            this.scheduler.get().enableSyslog();
+        }
         if (logstashConfig != null) {
             this.scheduler.get().setLogstashConfig(logstashConfig);
         }
@@ -106,7 +109,7 @@ public class DeploymentSystemTest {
             assertTrue(tasks.getJSONObject(0).has("name"));
             assertEquals("logstash.task", tasks.getJSONObject(0).getString("name"));
         });
-        await().atMost(20, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
             assertEquals("TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
         });
     }
@@ -121,12 +124,12 @@ public class DeploymentSystemTest {
 
     @Test
     public void testDeploymentDocker() throws JsonParseException, UnirestException, JsonMappingException {
-        deployScheduler(null, null, true, null);
+        deployScheduler(null, null, true, null, false);
     }
 
     @Test
     public void testDeploymentJar() throws JsonParseException, UnirestException, JsonMappingException {
-        deployScheduler(null, null, false, null);
+        deployScheduler(null, null, false, null, false);
     }
 
     @Test
@@ -134,7 +137,7 @@ public class DeploymentSystemTest {
         final File logstashConfig = new File(tmpDir, "logstash.config");
         FileUtils.writeStringToFile(logstashConfig, "input { heartbeat {} } output {}");
 
-        deployScheduler(null, null, false, logstashConfig);
+        deployScheduler(null, null, false, logstashConfig, false);
     }
 
     @Test
@@ -144,7 +147,7 @@ public class DeploymentSystemTest {
 
         Client elasticsearchClient = elasticsearchInstance.createClient();
 
-        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", true, null);
+        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", true, null, true);
 
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
@@ -191,7 +194,7 @@ public class DeploymentSystemTest {
 
         Client elasticsearchClient = elasticsearchInstance.createClient();
 
-        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", false, null);
+        deployScheduler("logstash", elasticsearchInstance.getIpAddress() + ":9200", false, null, true);
 
         final String sysLogPort = "514";
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
@@ -203,6 +206,7 @@ public class DeploymentSystemTest {
 
         final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
         dockerClient.startContainerCmd(loggerContainer.getId()).exec();
+        Thread.sleep(100L);
         final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
         assertNotEquals("", finishedAt.trim());
         assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
@@ -233,7 +237,7 @@ public class DeploymentSystemTest {
 
     @Test
     public void willAddExecutorOnNewNodes() throws JsonParseException, UnirestException, JsonMappingException {
-        deployScheduler(null, null, true, null);
+        deployScheduler(null, null, true, null, false);
 
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
@@ -252,7 +256,7 @@ public class DeploymentSystemTest {
 
     @Test
     public void willStartNewExecutorIfOldExecutorFails() throws Exception {
-        deployScheduler("logstash", null, true, null);
+        deployScheduler("logstash", null, true, null, false);
 
         Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
                 .listContainersCmd()
