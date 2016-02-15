@@ -159,9 +159,12 @@ public class DeploymentSystemTest {
 
         final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
         dockerClient.startContainerCmd(loggerContainer.getId()).exec();
-        final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
-        assertNotEquals("", finishedAt.trim());
-        assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
+
+        await().atMost(5, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+            assertNotEquals("", finishedAt.trim());
+            assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
+        });
 
         final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
         dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
