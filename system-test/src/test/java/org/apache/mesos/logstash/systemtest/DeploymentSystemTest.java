@@ -34,6 +34,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 
 /**
@@ -68,7 +69,7 @@ public class DeploymentSystemTest {
     public void after() throws Exception {
         scheduler.ifPresent(scheduler -> dockerClient.stopContainerCmd(scheduler.getContainerId()).withTimeout(30).exec());
 
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(30, SECONDS).pollInterval(1, SECONDS).until(() -> {
             JSONArray frameworks = null;
             try {
                 frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
@@ -97,19 +98,19 @@ public class DeploymentSystemTest {
     }
 
     private void waitForFramework() {
-        await().atMost(15, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(15, SECONDS).pollInterval(1, SECONDS).until(() -> {
             JSONArray frameworks = getFrameworks();
             assertEquals(1, frameworks.length());
             JSONObject framework = frameworks.getJSONObject(0);
             assertTrue(framework.has("tasks"));
         });
-        await().atMost(10, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(10, SECONDS).pollInterval(1, SECONDS).until(() -> {
             JSONArray tasks = getFrameworks().getJSONObject(0).getJSONArray("tasks");
             assertEquals(1, tasks.length());
             assertTrue(tasks.getJSONObject(0).has("name"));
             assertEquals("logstash.task", tasks.getJSONObject(0).getString("name"));
         });
-        await().atMost(60, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(60, SECONDS).pollInterval(1, SECONDS).until(() -> {
             assertEquals("TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
         });
     }
@@ -160,7 +161,7 @@ public class DeploymentSystemTest {
         final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
         dockerClient.startContainerCmd(loggerContainer.getId()).exec();
 
-        await().atMost(5, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(5, SECONDS).pollDelay(1, SECONDS).until(() -> {
             final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
             assertNotEquals("", finishedAt.trim());
             assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
@@ -170,7 +171,7 @@ public class DeploymentSystemTest {
         dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
         assertEquals(0, exitCode);
 
-        await().atMost(10, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(10, SECONDS).pollDelay(1, SECONDS).until(() -> {
             final SearchHits hits = elasticsearchClient.prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("Hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits();
             assertEquals(1, hits.totalHits());
             Map<String, SearchHitField> fields = hits.getAt(0).fields();
@@ -209,16 +210,19 @@ public class DeploymentSystemTest {
 
         final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
         dockerClient.startContainerCmd(loggerContainer.getId()).exec();
-        Thread.sleep(100L);
-        final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
-        assertNotEquals("", finishedAt.trim());
-        assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
+
+        await().atMost(5, SECONDS).pollDelay(1, SECONDS).until(() -> {
+            final String finishedAt = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getFinishedAt();
+            assertNotEquals("", finishedAt.trim());
+            assertNotEquals("0001-01-01T00:00:00Z", finishedAt);
+        });
+
 
         final int exitCode = dockerClient.inspectContainerCmd(loggerContainer.getId()).exec().getState().getExitCode();
         dockerClient.removeContainerCmd(loggerContainer.getId()).exec();
         assertEquals(0, exitCode);
 
-        await().atMost(10, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(10, SECONDS).pollDelay(1, SECONDS).until(() -> {
             final SearchHits hits = elasticsearchClient.prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("Hello")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits();
             assertEquals(1, hits.totalHits());
             Map<String, SearchHitField> fields = hits.getAt(0).fields();
@@ -244,7 +248,7 @@ public class DeploymentSystemTest {
 
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
-        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(
+        await().atMost(1, TimeUnit.MINUTES).pollInterval(1, SECONDS).until(
                 () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
         );
 
@@ -268,7 +272,7 @@ public class DeploymentSystemTest {
                 .stream()
                 .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
 
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, SECONDS).until(() -> {
             long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
             LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
             assertEquals(1, count);
@@ -278,7 +282,7 @@ public class DeploymentSystemTest {
 
         dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 
-        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+        await().atMost(1, TimeUnit.MINUTES).pollDelay(1, SECONDS).until(() -> {
             assertEquals(1, getLogstashExecutorsSince.apply(slaveToKillContainerId).count());
         });
     }
