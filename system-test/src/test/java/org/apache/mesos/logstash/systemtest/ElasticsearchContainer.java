@@ -47,6 +47,11 @@ public class ElasticsearchContainer extends AbstractContainer {
                            .withName(getName());
     }
 
+    @Override
+    public String getRole() {
+        return "elasticsearch";
+    }
+
     public Client getClient() {
         return client.get();
     }

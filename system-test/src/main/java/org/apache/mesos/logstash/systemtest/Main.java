@@ -1,6 +1,6 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.cluster.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterUtil;
 import com.containersol.minimesos.mesos.DockerClientFactory;
 import com.github.dockerjava.api.DockerClient;
