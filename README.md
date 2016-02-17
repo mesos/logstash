@@ -134,7 +134,7 @@ Here is the full list of configuration options:
 | `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`                   | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
 | `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`                   | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
 | `--enable.file=B`                | `ENABLE_FILE=B`                | `false`                   | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
-| `--nable.docker=B`               | `ENABLE_DOCKER=B`              | `true`                    | Run executors in Docker containers. If disabled Mesos will distribute executors and Logstash automatically via http.            |
+| `--enable.docker=B`               | `ENABLE_DOCKER=B`              | `true`                    | Run executors in Docker containers. If disabled Mesos will distribute executors and Logstash automatically via http.            |
 | `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty)                | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
@@ -162,7 +162,7 @@ You can use the `"env"` map to configure the framework with environment variable
     "FRAMEWORK_NAME": "logstash",
     "FAILOVER_TIMEOUT": "60",
     "MESOS_ROLE": "logstash",
-    "NESOS_USER": "root",
+    "MESOS_USER": "root",
     "LOGSTASH_HEAP_SIZE": "64",
     "LOGSTASH_ELASTICSEARCH_URL": "http://elasticsearch.service.consul:1234",
     "EXECUTOR_CPUS": "0.5",
