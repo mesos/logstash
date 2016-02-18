@@ -1,14 +1,14 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.cluster.MesosCluster;
 import com.containersol.minimesos.container.AbstractContainer;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
+import com.containersol.minimesos.mesos.MesosContainer;
 import com.containersol.minimesos.state.State;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.NotModifiedException;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Container;
@@ -65,7 +65,6 @@ public class DeploymentSystemTest {
         cluster.start();
     }
 
-    @SuppressWarnings({"PMD.EmptyCatchBlock"})
     @After
     public void after() throws Exception {
         scheduler.ifPresent(scheduler -> {
@@ -74,12 +73,7 @@ public class DeploymentSystemTest {
 
         await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).until(() -> {
             LOGGER.warn("Waiting");
-            JSONArray frameworks = null;
-            try {
-                frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
-            } catch (UnirestException e) {
-                fail("Couldn't get stateInfoJson: " + e.getMessage());
-            }
+            JSONArray frameworks = cluster.getClusterStateInfo().getJSONArray("frameworks");
             assertEquals(0, frameworks.length());
         });
         cluster.stop();
@@ -90,7 +84,7 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
     }
@@ -100,14 +94,14 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         scheduler.get().setDocker(false);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
     }
 
     private void waitForFramework() {
         await().atMost(2, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(() -> {
-            JSONArray frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
+            JSONArray frameworks = cluster.getClusterStateInfo().getJSONArray("frameworks");
             if (frameworks.length() == 0) {
                 LOGGER.info("Logstash framework is not yet running");
                 return false;
@@ -141,8 +135,13 @@ public class DeploymentSystemTest {
             protected CreateContainerCmd dockerCommand() {
                 return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
             }
+
+            @Override
+            public String getRole() {
+                return "test";
+            }
         };
-        cluster.addAndStartContainer(elasticsearchInstance);
+        cluster.addAndStartContainer(elasticsearchInstance, MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         final int elasticsearchPort = 9300;
 
@@ -162,7 +161,7 @@ public class DeploymentSystemTest {
 
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
         scheduler.get().enableSyslog();
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
 
@@ -200,7 +199,7 @@ public class DeploymentSystemTest {
 
             String trueSlaveId;
             try {
-                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+                trueSlaveId = cluster.getClusterStateInfo().getJSONArray("slaves").getJSONObject(0).getString("id");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -229,8 +228,13 @@ public class DeploymentSystemTest {
             protected CreateContainerCmd dockerCommand() {
                 return dockerClient.createContainerCmd("elasticsearch:" + version).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
             }
+
+            @Override
+            public String getRole() {
+                return "test";
+            }
         };
-        cluster.addAndStartContainer(elasticsearchInstance);
+        cluster.addAndStartContainer(elasticsearchInstance, MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         final int elasticsearchPort = 9300;
 
@@ -251,7 +255,7 @@ public class DeploymentSystemTest {
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", elasticsearchInstance.getIpAddress() + ":9200"));
         scheduler.get().enableSyslog();
         scheduler.get().setDocker(false);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
 
@@ -288,7 +292,7 @@ public class DeploymentSystemTest {
 
             String trueSlaveId;
             try {
-                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+                trueSlaveId = cluster.getClusterStateInfo().getJSONArray("slaves").getJSONObject(0).getString("id");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -305,18 +309,18 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, null, null));
         scheduler.get().setDocker(true);
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
 
-        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
+        IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer()), MesosContainer.DEFAULT_TIMEOUT_SEC));
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, TimeUnit.SECONDS).until(
-                () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
+                () -> State.fromJSON(cluster.getClusterStateInfo().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
         );
 
         // TODO use com.containersol.minimesos.state.Task when it exposes the slave_id property https://github.com/ContainerSolutions/minimesos/issues/168
-        JSONArray tasks = cluster.getStateInfoJSON().getJSONArray("frameworks").getJSONObject(0).getJSONArray("tasks");
+        JSONArray tasks = cluster.getClusterStateInfo().getJSONArray("frameworks").getJSONObject(0).getJSONArray("tasks");
         Set<String> slaveIds = new TreeSet<>();
         for (int i = 0; i < tasks.length(); i++) {
             slaveIds.add(tasks.getJSONObject(i).getString("slave_id"));
@@ -329,9 +333,11 @@ public class DeploymentSystemTest {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
 
         scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, "logstash", null));
-        cluster.addAndStartContainer(scheduler.get());
+        cluster.addAndStartContainer(scheduler.get(), MesosContainer.DEFAULT_TIMEOUT_SEC);
 
         waitForFramework();
+
+        final String firstSlaveId = cluster.getSlaves()[0].getContainerId();
 
         Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
                 .listContainersCmd()
@@ -341,12 +347,12 @@ public class DeploymentSystemTest {
                 .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
-            LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
+            long count = getLogstashExecutorsSince.apply(firstSlaveId).count();
+            LOGGER.info("There are " + count + " executors since " + firstSlaveId);
             assertEquals(1, count);
         });
 
-        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(firstSlaveId).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
 
         dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 

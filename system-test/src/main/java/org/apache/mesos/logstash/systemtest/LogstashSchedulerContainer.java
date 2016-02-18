@@ -64,4 +64,10 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     public void setDocker(boolean useDocker) {
       this.useDocker = useDocker;
     }
+
+    @Override
+    public String getRole() {
+        return SCHEDULER_NAME;
+    }
+
 }

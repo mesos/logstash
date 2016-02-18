@@ -1,7 +1,8 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.cluster.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterUtil;
+import com.containersol.minimesos.mesos.MesosContainer;
 import com.containersol.minimesos.mesos.MesosSlave;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
@@ -34,21 +35,21 @@ public class LocalCluster {
 
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
             .createDefaultConfigBuilder()
-            .withUri("http://" + cluster.getMesosMasterContainer().getIpAddress() + ":" + DOCKER_PORT);
+            .withUri("http://" + cluster.getMasterContainer().getIpAddress() + ":" + DOCKER_PORT);
         DockerClient clusterDockerClient = DockerClientBuilder
             .getInstance(dockerConfigBuilder.build()).build();
 
         DummyFrameworkContainer dummyFrameworkContainer = new DummyFrameworkContainer(
             clusterDockerClient, "dummy-framework");
-        dummyFrameworkContainer.start();
+        dummyFrameworkContainer.start(MesosContainer.DEFAULT_TIMEOUT_SEC);
 
-        System.setProperty("mesos.zk", cluster.getZkUrl());
+        System.setProperty("mesos.zk", cluster.getMasterContainer().getFormattedZKAddress());
         System.setProperty("mesos.logstash.logstash.heap.size", "128");
         System.setProperty("mesos.logstash.executor.heap.size", "64");
 
         System.out.println("");
         System.out.println("Cluster Started.");
-        System.out.println("MASTER URL: " + cluster.getMesosMasterContainer().getFormattedZKAddress());
+        System.out.println("MASTER URL: " + cluster.getMasterContainer().getFormattedZKAddress());
         System.out.println("");
 
         while (!Thread.currentThread().isInterrupted()) {

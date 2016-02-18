@@ -30,4 +30,9 @@ public class DummyFrameworkContainer extends AbstractContainer {
             .withTty(true)
             .withCmd("sh");
     }
+
+    @Override
+    public String getRole() {
+        return name;
+    }
 }
