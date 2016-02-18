@@ -95,18 +95,18 @@ public class DeploymentSystemTest {
     private void waitForFramework() {
         await().atMost(15, SECONDS).pollInterval(1, SECONDS).until(() -> {
             JSONArray frameworks = getFrameworks();
-            assertEquals(1, frameworks.length());
+            assertEquals("only one framework is expected", 1, frameworks.length());
             JSONObject framework = frameworks.getJSONObject(0);
-            assertTrue(framework.has("tasks"));
+            assertTrue("framework is expected to have running tasks", framework.has("tasks"));
         });
         await().atMost(10, SECONDS).pollInterval(1, SECONDS).until(() -> {
             JSONArray tasks = getFrameworks().getJSONObject(0).getJSONArray("tasks");
-            assertEquals(1, tasks.length());
-            assertTrue(tasks.getJSONObject(0).has("name"));
-            assertEquals("logstash.task", tasks.getJSONObject(0).getString("name"));
+            assertEquals("only one task of the framework is expected", 1, tasks.length());
+            assertTrue("the task is expected to have a name", tasks.getJSONObject(0).has("name"));
+            assertEquals("the task should have the predefined name", "logstash.task", tasks.getJSONObject(0).getString("name"));
         });
         await().atMost(60, SECONDS).pollInterval(1, SECONDS).until(() -> {
-            assertEquals("TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
+            assertEquals("task expected to be running", "TASK_RUNNING", getFrameworks().getJSONObject(0).getJSONArray("tasks").getJSONObject(0).getString("state"));
         });
     }
 
@@ -147,7 +147,7 @@ public class DeploymentSystemTest {
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
         final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new AssertionError("Unable to find logstash container"));
 
-        assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
+        assertTrue("logstash slave is expected to be running", dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
         final CreateContainerResponse loggerContainer = dockerClient.createContainerCmd("ubuntu:15.10").withLinks(new Link(logstashSlave, "logstash")).withCmd("logger", "--server=logstash", "--port=" + sysLogPort, "--udp", "--rfc3164", randomLogLine).exec();
         dockerClient.startContainerCmd(loggerContainer.getId()).exec();
