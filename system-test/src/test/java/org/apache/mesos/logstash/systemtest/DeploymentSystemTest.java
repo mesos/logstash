@@ -65,7 +65,6 @@ public class DeploymentSystemTest {
         cluster.start();
     }
 
-    @SuppressWarnings({"PMD.EmptyCatchBlock"})
     @After
     public void after() throws Exception {
         scheduler.ifPresent(scheduler -> {
@@ -338,6 +337,8 @@ public class DeploymentSystemTest {
 
         waitForFramework();
 
+        final String firstSlaveId = cluster.getSlaves()[0].getContainerId();
+
         Function<String, Stream<Container>> getLogstashExecutorsSince = containerId -> dockerClient
                 .listContainersCmd()
                 .withSince(containerId)
@@ -346,12 +347,12 @@ public class DeploymentSystemTest {
                 .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, TimeUnit.SECONDS).until(() -> {
-            long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
-            LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
+            long count = getLogstashExecutorsSince.apply(firstSlaveId).count();
+            LOGGER.info("There are " + count + " executors since " + firstSlaveId);
             assertEquals(1, count);
         });
 
-        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(firstSlaveId).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
 
         dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 
