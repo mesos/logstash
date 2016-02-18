@@ -72,6 +72,11 @@ public class LogstashSchedulerContainer extends AbstractContainer {
                 .withCmd(cmd);
     }
 
+    @Override
+    public String getRole() {
+        return SCHEDULER_NAME;
+    }
+
     public void enableSyslog() {
         withSyslog = true;
     }

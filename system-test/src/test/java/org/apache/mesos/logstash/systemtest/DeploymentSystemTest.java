@@ -1,6 +1,6 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.cluster.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterArchitecture;
 import com.containersol.minimesos.mesos.DockerClientFactory;
 import com.containersol.minimesos.state.State;
@@ -70,12 +70,7 @@ public class DeploymentSystemTest {
         scheduler.ifPresent(scheduler -> dockerClient.stopContainerCmd(scheduler.getContainerId()).withTimeout(30).exec());
 
         await().atMost(30, SECONDS).pollInterval(1, SECONDS).until(() -> {
-            JSONArray frameworks = null;
-            try {
-                frameworks = cluster.getStateInfoJSON().getJSONArray("frameworks");
-            } catch (UnirestException e) {
-                fail("Couldn't get stateInfoJson: " + e.getMessage());
-            }
+            JSONArray frameworks = cluster.getClusterStateInfo().getJSONArray("frameworks");
             assertEquals(0, frameworks.length());
         });
         cluster.stop();
@@ -116,11 +111,7 @@ public class DeploymentSystemTest {
     }
 
     protected JSONArray getFrameworks() {
-        try {
-            return cluster.getStateInfoJSON().getJSONArray("frameworks");
-        } catch (UnirestException e) {
-            throw new AssertionError("Failed to get Frameworks", e);
-        }
+        return cluster.getClusterStateInfo().getJSONArray("frameworks");
     }
 
     @Test
@@ -183,7 +174,7 @@ public class DeploymentSystemTest {
 
             String trueSlaveId;
             try {
-                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+                trueSlaveId = cluster.getClusterStateInfo().getJSONArray("slaves").getJSONObject(0).getString("id");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -234,7 +225,7 @@ public class DeploymentSystemTest {
 
             String trueSlaveId;
             try {
-                trueSlaveId = cluster.getStateInfoJSON().getJSONArray("slaves").getJSONObject(0).getString("id");
+                trueSlaveId = cluster.getClusterStateInfo().getJSONArray("slaves").getJSONObject(0).getString("id");
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -249,11 +240,11 @@ public class DeploymentSystemTest {
         IntStream.range(0, 2).forEach(value -> cluster.addAndStartContainer(new LogstashMesosSlave(dockerClient, cluster.getZkContainer())));
 
         await().atMost(1, TimeUnit.MINUTES).pollInterval(1, SECONDS).until(
-                () -> State.fromJSON(cluster.getStateInfoJSON().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
+                () -> State.fromJSON(cluster.getClusterStateInfo().toString()).getFramework("logstash").getTasks().stream().filter(task -> task.getState().equals("TASK_RUNNING")).count() == 3
         );
 
         // TODO use com.containersol.minimesos.state.Task when it exposes the slave_id property https://github.com/ContainerSolutions/minimesos/issues/168
-        JSONArray tasks = cluster.getStateInfoJSON().getJSONArray("frameworks").getJSONObject(0).getJSONArray("tasks");
+        JSONArray tasks = cluster.getClusterStateInfo().getJSONArray("frameworks").getJSONObject(0).getJSONArray("tasks");
         Set<String> slaveIds = new TreeSet<>();
         for (int i = 0; i < tasks.length(); i++) {
             slaveIds.add(tasks.getJSONObject(i).getString("slave_id"));

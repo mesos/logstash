@@ -60,4 +60,10 @@ public class ElasticsearchContainer extends AbstractContainer {
         assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
         return elasticsearchClient.get();
     }
+
+    @Override
+    public String getRole() {
+        return "elasticsearch";
+    }
+
 }
