@@ -25,7 +25,6 @@ repositories {
 
 dependencies {
     compile project(':logstash-commons')
-    compile project(':logstash-executor')
 
     compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
     compile("org.springframework.boot:spring-boot-starter-logging:${springBootVersion}")

@@ -1,7 +1,4 @@
 dependencies {
-    compile project(':logstash-commons')
-    compile project(':logstash-scheduler')
-
     compile "com.github.docker-java:docker-java:$dockerJavaVer"
     compile "com.mashape.unirest:unirest-java:$unirestVer"
     compile "com.github.ContainerSolutions:minimesos:$minimesosVer"
