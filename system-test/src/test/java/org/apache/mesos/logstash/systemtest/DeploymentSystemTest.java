@@ -79,7 +79,8 @@ public class DeploymentSystemTest {
 
     private void deployScheduler(String mesosRole, String elasticsearchHost, boolean useDocker, File logstashConfig, boolean enableSyslog) {
         String zookeeperIpAddress = cluster.getZkContainer().getIpAddress();
-        this.scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, zookeeperIpAddress, mesosRole, elasticsearchHost));
+        String mesosMasterIpAddress = cluster.getMasterContainer().getIpAddress();
+        this.scheduler = Optional.of(new LogstashSchedulerContainer(dockerClient, mesosMasterIpAddress, zookeeperIpAddress, mesosRole, elasticsearchHost));
         this.scheduler.get().setDocker(useDocker);
         if (enableSyslog) {
             this.scheduler.get().enableSyslog();

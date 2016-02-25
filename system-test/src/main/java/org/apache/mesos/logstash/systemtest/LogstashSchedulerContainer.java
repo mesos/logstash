@@ -19,12 +19,14 @@ import static java.util.Arrays.asList;
 /**
  * Container for the Logstash scheduler
  */
+@SuppressWarnings({"PMD.AvoidUsingHardCodedIP"})
 public class LogstashSchedulerContainer extends AbstractContainer {
 
     public static final String SCHEDULER_IMAGE = "mesos/logstash-scheduler";
 
     public static final String SCHEDULER_NAME = "logstash-scheduler";
 
+    private final String mesosMasterIpAddress;
     private String zookeeperIpAddress;
     private Optional<String> elasticsearchHost = Optional.empty();
     private boolean withSyslog = false;
@@ -32,8 +34,9 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     private boolean useDocker = true;
     private Optional<File> logstashConfig = Optional.empty();
 
-    public LogstashSchedulerContainer(DockerClient dockerClient, String zookeeperIpAddress, String mesosRole, String elasticsearchHost) {
+    public LogstashSchedulerContainer(DockerClient dockerClient, String mesosMasterIpAddress, String zookeeperIpAddress, String mesosRole, String elasticsearchHost) {
         super(dockerClient);
+        this.mesosMasterIpAddress = mesosMasterIpAddress;
         this.zookeeperIpAddress = zookeeperIpAddress;
         this.mesosRole = Optional.ofNullable(mesosRole);
         this.elasticsearchHost = Optional.ofNullable(elasticsearchHost);
@@ -47,7 +50,8 @@ public class LogstashSchedulerContainer extends AbstractContainer {
     @Override
     protected CreateContainerCmd dockerCommand() {
         final String[] cmd = asList(
-                "--zk-url=zk://" + zookeeperIpAddress + ":2181/mesos",
+                "--mesos.master=" + mesosMasterIpAddress + ":5050",
+                "--mesos.zookeeper.server=" + zookeeperIpAddress + ":2181",
                 mesosRole.map(role -> "--mesos-role=" + role).orElse(null),
                 "--enable.failover=false",
                 elasticsearchHost.map(host -> "--logstash.elasticsearch-host=" + host).orElse(null),

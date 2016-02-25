@@ -26,12 +26,13 @@ repositories {
 dependencies {
     compile project(':logstash-commons')
 
-    compile("org.springframework.boot:spring-boot-starter-jetty:${springBootVersion}")
-    compile("org.springframework.boot:spring-boot-starter-logging:${springBootVersion}")
-    compile("org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-jetty")
+    compile("org.springframework.boot:spring-boot-starter-logging")
+    compile("org.springframework.boot:spring-boot-starter-websocket")
     compile("org.springframework:spring-messaging")
+    compile('com.github.mwl.mesos-starter:spring-boot-starter-mesos:21280b4946')
 
-    testCompile("org.springframework:spring-test:4.1.7.RELEASE")
+    testCompile("org.springframework:spring-test")
 }
 
 task copyExecutor(type: Copy) {

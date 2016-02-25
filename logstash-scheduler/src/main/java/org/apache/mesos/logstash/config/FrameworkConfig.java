@@ -18,12 +18,6 @@ public class FrameworkConfig {
 
     private static final String LOGSTASH_TARBALL = "logstash.tar.gz";
 
-    @NotNull
-    @Pattern(regexp = "^zk://.+$")
-    private String zkUrl;
-
-    private int zkTimeout = 20000;
-
     private String frameworkName = "logstash";
 
     private double failoverTimeout = 31449600;
@@ -51,22 +45,6 @@ public class FrameworkConfig {
 
     public void setJavaHome(String javaHome) {
         this.javaHome = javaHome;
-    }
-
-    public String getZkUrl() {
-        return zkUrl;
-    }
-
-    public void setZkUrl(String zkUrl) {
-        this.zkUrl = zkUrl;
-    }
-
-    public int getZkTimeout() {
-        return zkTimeout;
-    }
-
-    public void setZkTimeout(int zkTimeout) {
-        this.zkTimeout = zkTimeout;
     }
 
     public String getFrameworkName() {
