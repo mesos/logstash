@@ -30,7 +30,7 @@ dependencies {
     compile("org.springframework.boot:spring-boot-starter-logging")
     compile("org.springframework.boot:spring-boot-starter-websocket")
     compile("org.springframework:spring-messaging")
-    compile('com.github.mwl.mesos-starter:spring-boot-starter-mesos:21280b4946')
+    compile('com.github.containersolutions.mesos-starter:spring-boot-starter-mesos:0.1')
 
     testCompile("org.springframework:spring-test")
 }

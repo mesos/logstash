@@ -1,7 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
+import com.containersolutions.mesos.scheduler.TaskInfoFactory;
 import com.google.protobuf.ByteString;
-import dk.mwl.mesos.scheduler.TaskInfoFactory;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.log4j.Logger;
