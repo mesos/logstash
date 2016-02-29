@@ -127,10 +127,27 @@ public class DeploymentSystemTest {
 
     @Test
     public void testDeploymentExternalConfiguration() throws Exception {
+        final ElasticsearchContainer elasticsearchInstance = new ElasticsearchContainer(dockerClient);
+        cluster.addAndStartContainer(elasticsearchInstance);
+
         final File logstashConfig = new File(tmpDir, "logstash.config");
-        FileUtils.writeStringToFile(logstashConfig, "input { heartbeat {} } output {}");
+        FileUtils.writeStringToFile(logstashConfig, "input { generator {} } output { elasticsearch { hosts => \"" + elasticsearchInstance.getIpAddress() + ":9200" + "\" } }");
+
+        Client elasticsearchClient = elasticsearchInstance.createClient();
 
         deployScheduler(null, null, false, logstashConfig, false);
+
+        SECONDS.sleep(2);
+
+        await().atMost(20, SECONDS).pollDelay(1, SECONDS).until(() -> {
+            final SearchHits hits = elasticsearchClient.prepareSearch("logstash-*").setQuery(QueryBuilders.simpleQueryStringQuery("Hello*")).addField("message").addField("mesos_agent_id").execute().actionGet().getHits();
+            assertNotEquals(0, hits.totalHits());
+            Map<String, SearchHitField> fields = hits.getAt(0).fields();
+
+            String esMessage = fields.get("message").getValue();
+            assertEquals("Hello world!", esMessage.trim());
+        });
+
     }
 
     @Test
