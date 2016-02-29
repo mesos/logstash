@@ -128,13 +128,14 @@ Here is the full list of configuration options:
 | `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The Logstash framework will use version `S` of the Docker image on new Mesos Agents                                        |
 | `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Every Mesos agent will listen for syslog messages on port `I`. Must be enabled with `--enable.syslog=true`                 |
 | `--logstash.collectd-port=I`     | `LOGSTASH_COLLECTD_PORT=I`     | `25826`                   | Every Mesos agent will listen for collectd messages on port `I`. Must be enabled with `--enable.collectd=true`             |
+| `--logstash.config-file=F`       | `LOGSTASH_CONFIG_FILE=F`       | Absent                    | Use your own logstash configuration file. This will usually disable the `--enable.*` flags.                                |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`                     | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`                      | The memory allocation pool for the executor will be limited to `H` megabytes                                               |
 | `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`                    | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
 | `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`                   | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
 | `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`                   | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
 | `--enable.file=B`                | `ENABLE_FILE=B`                | `false`                   | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
-| `--nable.docker=B`               | `ENABLE_DOCKER=B`              | `true`                    | Run executors in Docker containers. If disabled Mesos will distribute executors and Logstash automatically via http.            |
+| `--nable.docker=B`               | `ENABLE_DOCKER=B`              | `true`                    | Run executors in Docker containers. If disabled Mesos will distribute executors and Logstash automatically via http.       |
 | `--executor.file-path=P`         | `EXECUTOR_FILE_PATH=P`         | `` (empty)                | All files at paths matching `P`, a comma-separated list of file path glob patterns, will be watched for log lines          |
 
 
