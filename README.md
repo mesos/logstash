@@ -71,10 +71,9 @@ like this:
 
 ```bash
 > docker run mesos/logstash-scheduler \
-    --zk-url=zk://123.0.0.12:5181/logstash \
-    --zk-timeout=20000 \
+    --mesos.zookeeper.server=123.0.0.12:5181 \
+    --mesos.master=123.0.0.11:5050 \
     --framework-name=logstash \
-    --failover-timeout=60 \
     --mesos-role='*' \
     --mesos-user=root \
     --logstash.heap-size=64 \
@@ -85,7 +84,6 @@ like this:
     --logstash.collectd-port=25826 \
     --executor.cpus=0.5 \
     --executor.heap-size=128 \
-    --enable.failover=false \
     --enable.collectd=true \
     --enable.syslog=true \
     --enable.file=true \
@@ -100,10 +98,10 @@ This means the following two `docker` commands are equivalent:
 
 ```bash
 # Using command-line arguments
-docker run mesos/logstash-scheduler --zk-url=zk://123.0.0.12:5181/logstash
+docker run mesos/logstash-scheduler --mesos.zookeeper.server=123.0.0.12:5181 --mesos.master=123.0.0.11:5050
 
 # Using environment variables
-docker run -e ZK_URL=zk://123.0.0.12:5181/logstash mesos/logstash-scheduler
+docker run -e MESOS_ZOOKEEPER>SERVER=123.0.0.12:5181 -e MESOS_MASTER=123.0.0.11:5050 mesos/logstash-scheduler
 ```
 
 Note that command-line arguments take precedence:
@@ -113,15 +111,12 @@ the value of the command-line argument will be used.
 Here is the full list of configuration options:
 
 | Command-line argument            | Environment variable           | Default                   | What it does                                                                                                               |
-| -------------------------------- | ------------------------------ | --------------------------| -------------------------------------------------------------------------------------------------------------------------- |
-| `--zk-url=U`                     | `ZK_URL=U`                     | Required                  | The Logstash framework will find Mesos using ZooKeeper at URL `U`, which must be in the format `zk://host:port/zkNode,...` |
-| `--zk-timeout=T`                 | `ZK_TIMEOUT=T`                 | `20000`                   | The Logstash framework will wait `T` milliseconds for ZooKeeper to respond before assuming that the session has timed out  |
-| `--framework-name=N`             | `FRAMEWORK_NAME=N`             | `logstash`                | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
-| `--failover-timeout=T`           | `FAILOVER_TIMEOUT=T`           | `31449600`                | Mesos will wait `T` seconds for the Logstash framework to failover before it kills all its tasks/executors                 |
+| -------------------------------- | ------------------------------ | --------------------------| ---------------------------------------------------------------------------------------------------------------------------|
+| `--mesos.zookeeper.server=H`     | `MESOS_ZOOKEEPER_SERVER=H`     | Required                  | The Logstash framework will use ZooKeeper at host `H`, which must be in the format `host:port`                             |
+| `--mesos.master=H`               | `MESOS_MASTER=H`               | Required                  | The Logstash framework will use Mesos master at host `H`, which must be in the format `host:port`                          |
+| `--mesos-framework-name=N`       | `MESOS_FRAMEWORK_NAME=N`       | `logstash`                | The Logstash framework will show up in the Mesos Web UI with name `N`, and the ZK state will be rooted at znode `N`        |
 | `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash`                | The Logstash framework role will register with Mesos with framework role `R`                                               |
 | `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`                    | Logstash tasks will be launched with Unix user `U`                                                                         |
-| `--mesos-principal=P`            | `MESOS_PRINCIPAL=P`            | Absent                    | If present, the Logstash framework will authenticate with Mesos as principal `P`                                           |
-| `--mesos-secret=S`               | `MESOS_SECRET=S`               | Absent                    | If present, the Logstash framework will authenticate with Mesos using secret `S`                                           |
 | `--logstash.heap-size=H`         | `LOGSTASH_HEAP_SIZE=H`         | `32`                      | The memory allocation pool for the Logstash process will be limited to `H` megabytes                                       |
 | `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
 | `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The Logstash framework will use the Docker image with name `S` as the executor on new Mesos Agents                         | 
@@ -131,7 +126,6 @@ Here is the full list of configuration options:
 | `--logstash.config-file=F`       | `LOGSTASH_CONFIG_FILE=F`       | Absent                    | Use your own logstash configuration file. This will usually disable the `--enable.*` flags.                                |
 | `--executor.cpus=C`              | `EXECUTOR_CPUS=C`              | `0.2`                     | The Logstash framework will only accept resource offers with at least `C` CPUs. `C` must be a decimal greater than 0       |
 | `--executor.heap-size=H`         | `EXECUTOR_HEAP_SIZE=H`         | `64`                      | The memory allocation pool for the executor will be limited to `H` megabytes                                               |
-| `--enable.failover=B`            | `ENABLE_FAILOVER=B`            | `true`                    | Iff `B` is `true`, all executors and tasks will remain running after this scheduler exits FIXME what's the format for `B`? |
 | `--enable.collectd=B`            | `ENABLE_COLLECTD=B`            | `false`                   | Iff `B` is `true`, Logstash will listen for collectd events on UDP port 25826 on all executors                             |
 | `--enable.syslog=B`              | `ENABLE_SYSLOG=B`              | `false`                   | Iff `B` is `true`, Logstash will listen for syslog events on TCP port 514 on all executors                                 |
 | `--enable.file=B`                | `ENABLE_FILE=B`                | `false`                   | Iff `B` is `true`, each line in files matching the `--file.path` pattern will be treated as a log event                    |
@@ -158,17 +152,15 @@ You can use the `"env"` map to configure the framework with environment variable
     }
   },
   "env": {
-    "ZK_URL": "zk://123.0.0.12:5181/logstash",
-    "ZK_TIMEOUT": "20000",
+    "MESOS_ZOOKEEPER_SERVER": "123.0.0.12:5181",
+    "MESOS_MASTER": "123.0.0.11:5050",
     "FRAMEWORK_NAME": "logstash",
-    "FAILOVER_TIMEOUT": "60",
     "MESOS_ROLE": "logstash",
     "MESOS_USER": "root",
     "LOGSTASH_HEAP_SIZE": "64",
     "LOGSTASH_ELASTICSEARCH_URL": "http://elasticsearch.service.consul:1234",
     "EXECUTOR_CPUS": "0.5",
     "EXECUTOR_HEAP_SIZE": "128",
-    "ENABLE_FAILOVER": "false",
     "ENABLE_COLLECTD": "true",
     "ENABLE_SYSLOG": "true",
     "ENABLE_FILE": "true",
@@ -247,6 +239,11 @@ mesos/logstash-executor     latest                     cdbc9d56ef73        2 sec
 ...
 ```
 
+# Scheduler shutdown and restarts
+
+The scheduler will always de-register the framework when shut down gracefully by `SIGTERM` (a.k.a. `CTRL-C`). To restart
+the scheduler without Logstash instances being stopped the scheduler has to be stopped with a `SIGKILL`
+(a.k.a. `kill -9 PID`) and then started again with the same framework name.
 
 # Limitations
 
