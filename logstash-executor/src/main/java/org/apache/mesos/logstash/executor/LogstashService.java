@@ -5,19 +5,16 @@ import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import freemarker.template.TemplateExceptionHandler;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.mesos.logstash.common.ExecutorBootConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static java.util.Collections.singletonMap;
 
 /**
  * Encapsulates a logstash instance. Keeps track of the current container id for logstash.
@@ -30,16 +27,24 @@ public class LogstashService {
 
     static Configuration cfg = new Configuration(Configuration.VERSION_2_3_23);
 
+    private final static File MESOS_DIRECTORY = new File(System.getenv("MESOS_DIRECTORY"));
+    private final static File LOGSTASH_CONFIG_DIRECTORY = new File(MESOS_DIRECTORY, "logstashconfigs");
+
     static {
         cfg.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
     }
 
-    private static String generateLogstashConfig(ExecutorBootConfiguration bootConfiguration) {
-        LOGGER.info("Received " + bootConfiguration.toString());
+    private List<Runnable> logstashReadyListerners = Collections.synchronizedList(new ArrayList<>());
 
+    public void addOnLogstashReadyListener(Runnable listener) {
+        logstashReadyListerners.add(listener);
+    }
+
+    private static void generateLogstashConfig(ExecutorBootConfiguration bootConfiguration, String configTemplate, String name) {
         try {
-            Template template = new Template("logstashConfig", new StringReader(bootConfiguration.getLogstashConfigTemplate()), cfg);
-            StringWriter out = new StringWriter();
+            Template template = new Template("logstashConfig", new StringReader(configTemplate), cfg);
+            final File templateResult = new File(LOGSTASH_CONFIG_DIRECTORY, name);
+            Writer out = new FileWriter(templateResult);
             Map<String, Object> model = new HashMap<>();
             if (bootConfiguration.isEnableSyslog()) {
                 model.put("syslog", map(
@@ -67,9 +72,8 @@ public class LogstashService {
 
 
             template.process(model, out);
-            String templateResult = out.toString();
-            LOGGER.info("Resulting template: " + templateResult);
-            return templateResult;
+            out.close();
+            LOGGER.debug("Resulting template (" + name + "): " + FileUtils.readFileToString(templateResult));
         } catch (IOException e) {
             throw new RuntimeException("Failed to read template", e);
         } catch (TemplateException e) {
@@ -82,14 +86,21 @@ public class LogstashService {
     }
 
     public void run(ExecutorBootConfiguration bootConfiguration) {
+        LOGGER.debug("Received ");
+        try {
+            FileUtils.forceMkdir(LOGSTASH_CONFIG_DIRECTORY);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to create directory: " + LOGSTASH_CONFIG_DIRECTORY.getAbsolutePath(), e);
+        }
         LOGGER.info("Starting the Logstash Process.");
 
         Process process;
         try {
+            generateLogstashConfig(bootConfiguration, bootConfiguration.getLogstashStartConfigTemplate(), "logstash_start.config");
+            generateLogstashConfig(bootConfiguration, bootConfiguration.getLogstashConfigTemplate(), "logstash.config");
             String[] command = {
                     LOGSTASH_PATH, //TOOD: replace with bootConfiguration.getLogstashPath()
-                    "--log", "/var/log/logstash.log",
-                    "-e", generateLogstashConfig(bootConfiguration)
+                    "-f", LOGSTASH_CONFIG_DIRECTORY.getAbsolutePath()
             };
 
             final HashMap<String, String> envs = new HashMap<>();
@@ -105,8 +116,13 @@ public class LogstashService {
         }
 
         try {
-            inputStreamForEach((s) -> LOGGER.info("Logstash stdout: " + s), process.getInputStream());
-            inputStreamForEach((s) -> LOGGER.warn("Logstash stderr: " + s), process.getErrorStream());
+            inputStreamForEach(line -> {
+                LOGGER.info("Logstash stdout: " + line);
+                if (line.contains("Logstash is ready")) {
+                    logstashReadyListerners.stream().forEach(Runnable::run);
+                }
+            }, process.getInputStream());
+            inputStreamForEach(line -> LOGGER.warn("Logstash stderr: " + line), process.getErrorStream());
 
             process.waitFor();
 

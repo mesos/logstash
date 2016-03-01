@@ -1,6 +1,8 @@
 package org.apache.mesos.logstash.scheduler;
 
+import com.containersolutions.mesos.scheduler.TaskInfoFactory;
 import com.google.protobuf.ByteString;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.log4j.Logger;
 import org.apache.mesos.Protos;
@@ -10,29 +12,30 @@ import org.apache.mesos.logstash.config.ExecutorConfig;
 import org.apache.mesos.logstash.config.ExecutorEnvironmentalVariables;
 import org.apache.mesos.logstash.config.FrameworkConfig;
 import org.apache.mesos.logstash.config.LogstashConfig;
-import org.apache.mesos.logstash.util.Clock;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 
 import javax.inject.Inject;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.util.Arrays.asList;
 
 @Component
-public class TaskInfoBuilder {
+public class TaskInfoBuilder implements TaskInfoFactory {
 
     public static final Logger LOGGER = Logger.getLogger(TaskInfoBuilder.class);
 
     private static final String LOGSTASH_VERSION = "2.1.1";
 
-    @Inject
-    private Clock clock;
     @Inject
     private Features features;
     @Inject
@@ -42,21 +45,26 @@ public class TaskInfoBuilder {
     @Inject
     private FrameworkConfig frameworkConfig;
 
-    public Protos.TaskInfo buildTask(Protos.Offer offer) {
+    @Inject
+    private Environment environment;
+
+    @Override
+    public Protos.TaskInfo create(String taskId, Protos.Offer offer, List<Protos.Resource> list) {
         if (features.isDocker()) {
             LOGGER.debug("Building Docker task");
-            Protos.TaskInfo taskInfo = buildDockerTask(offer);
+            Protos.TaskInfo taskInfo = buildDockerTask(taskId, offer);
             LOGGER.debug(taskInfo.toString());
             return taskInfo;
-        } else {
+        }
+        else {
             LOGGER.debug("Building native task");
-            Protos.TaskInfo taskInfo = buildNativeTask(offer);
+            Protos.TaskInfo taskInfo = buildNativeTask(taskId, offer);
             LOGGER.debug(taskInfo.toString());
             return taskInfo;
         }
     }
 
-    private Protos.TaskInfo buildDockerTask(Protos.Offer offer) {
+    private Protos.TaskInfo buildDockerTask(String taskId, Protos.Offer offer) {
         String executorImage = logstashConfig.getExecutorImage() + ":" + logstashConfig.getExecutorVersion();
 
         Protos.ContainerInfo.DockerInfo.Builder dockerExecutor = Protos.ContainerInfo.DockerInfo
@@ -96,10 +104,10 @@ public class TaskInfoBuilder {
                         .setShell(false))
                 .build();
 
-        return createTask(offer, executorInfo);
+        return createTask(taskId, offer, executorInfo);
     }
 
-    private Protos.TaskInfo buildNativeTask(Protos.Offer offer) {
+    private Protos.TaskInfo buildNativeTask(String taskId, Protos.Offer offer) {
         ExecutorEnvironmentalVariables executorEnvVars = new ExecutorEnvironmentalVariables(executorConfig, logstashConfig);
         executorEnvVars.addToList(ExecutorEnvironmentalVariables.LOGSTASH_PATH, "./logstash-" + LOGSTASH_VERSION + "/bin/logstash");
 
@@ -118,18 +126,23 @@ public class TaskInfoBuilder {
                 .setCommand(commandInfoBuilder)
                 .build();
 
-        return createTask(offer, executorInfo);
+        return createTask(taskId, offer, executorInfo);
     }
 
-    private Protos.TaskInfo createTask(Protos.Offer offer, Protos.ExecutorInfo executorInfo) {
+    private Protos.TaskInfo createTask(String taskId, Protos.Offer offer, Protos.ExecutorInfo executorInfo) {
         ExecutorBootConfiguration bootConfiguration = new ExecutorBootConfiguration(offer.getSlaveId().getValue());
 
         bootConfiguration.setElasticSearchHosts(logstashConfig.getElasticsearchHost());
 
         try {
-            String template = StreamUtils.copyToString(getClass().getResourceAsStream("/default_logstash.config.fm"), StandardCharsets.UTF_8);
+            String template = StreamUtils.copyToString(
+                    Optional.ofNullable(logstashConfig.getConfigFile())
+                            .map(file -> (InputStream) getFileInputStream(file))
+                            .orElseGet(() -> getClass().getResourceAsStream("/default_logstash.config.fm")), StandardCharsets.UTF_8);
+
             LOGGER.debug("Template: " + template);
             bootConfiguration.setLogstashConfigTemplate(template);
+            bootConfiguration.setLogstashStartConfigTemplate(StreamUtils.copyToString(getClass().getResourceAsStream("/startup_logstash.config.fm"), StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new RuntimeException("Failed to open template", e);
         }
@@ -152,10 +165,18 @@ public class TaskInfoBuilder {
                 .setExecutor(executorInfo)
                 .addAllResources(getResourcesList())
                 .setName(LogstashConstants.TASK_NAME)
-                .setTaskId(Protos.TaskID.newBuilder().setValue(formatTaskId(offer)))
+                .setTaskId(Protos.TaskID.newBuilder().setValue(taskId))
                 .setSlaveId(offer.getSlaveId())
                 .setData(ByteString.copyFrom(SerializationUtils.serialize(bootConfiguration)))
                 .build();
+    }
+
+    private FileInputStream getFileInputStream(File file) {
+        try {
+            return FileUtils.openInputStream(file);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to open file: " + file.getAbsolutePath(), e);
+        }
     }
 
     public List<Protos.Resource> getResourcesList() {
@@ -165,22 +186,28 @@ public class TaskInfoBuilder {
         return asList(
                 Protos.Resource.newBuilder()
                         .setName("cpus")
+                        .setRole(getMesosRole())
                         .setType(Protos.Value.Type.SCALAR)
                         .setScalar(Protos.Value.Scalar.newBuilder()
                                 .setValue(executorConfig.getCpus()).build())
                         .build(),
                 Protos.Resource.newBuilder()
                         .setName("mem")
+                        .setRole(getMesosRole())
                         .setType(Protos.Value.Type.SCALAR)
                         .setScalar(Protos.Value.Scalar.newBuilder().setValue(memNeeded).build())
                         .build(),
                 Protos.Resource.newBuilder()
                         .setName("ports")
-                        .setRole(frameworkConfig.getMesosRole())
+                        .setRole(getMesosRole())
                         .setType(Protos.Value.Type.RANGES)
                         .setRanges(mapSelectedPortRanges())
                         .build()
         );
+    }
+
+    private String getMesosRole() {
+        return environment.getProperty("mesos.role", "*");
     }
 
     private Protos.Value.Ranges.Builder mapSelectedPortRanges() {
@@ -193,10 +220,4 @@ public class TaskInfoBuilder {
         }
         return rangesBuilder;
     }
-
-    private String formatTaskId(Protos.Offer offer) {
-        String date = new SimpleDateFormat(LogstashConstants.TASK_DATE_FORMAT).format(clock.now());
-        return LogstashConstants.FRAMEWORK_NAME + "_" + offer.getHostname() + "_" + date;
-    }
-
 }

@@ -14,21 +14,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.jayway.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Container running Elasticsearch
  */
 public class ElasticsearchContainer extends AbstractContainer {
-
-    public static final int CLIENT_PORT = 9200;
-    public static final int TRANSPORT_PORT = 9300;
     public static final String VERSION = "1.7";
-    public static final String CLUSTER_NAME = "test-" + System.currentTimeMillis();
 
-    private AtomicReference<Client> client;
+    private String elasticsearchClusterName;
+
+    public ElasticsearchContainer(DockerClient dockerClient, String elasticsearchClusterName) {
+        super(dockerClient);
+        this.elasticsearchClusterName = elasticsearchClusterName;
+    }
 
     public ElasticsearchContainer(DockerClient dockerClient) {
-        super(dockerClient);
+        this(dockerClient, "test-" + System.currentTimeMillis());
     }
 
     @Override
@@ -37,21 +39,31 @@ public class ElasticsearchContainer extends AbstractContainer {
     }
 
     @Override
-    public String getName() {
-        return "elasticsearch-" + CLUSTER_NAME;
+    protected CreateContainerCmd dockerCommand() {
+        return dockerClient.createContainerCmd("elasticsearch:" + VERSION).withCmd("elasticsearch",  "-Des.cluster.name=\"" + elasticsearchClusterName + "\"", "-Des.discovery.zen.ping.multicast.enabled=false");
+    }
+
+
+    public Client createClient() {
+        final AtomicReference<Client> elasticsearchClient = new AtomicReference<>();
+        await().atMost(30, TimeUnit.SECONDS).pollDelay(1, TimeUnit.SECONDS).until(() -> {
+            Client c = new TransportClient(ImmutableSettings.settingsBuilder().put("cluster.name", elasticsearchClusterName).build()).addTransportAddress(new InetSocketTransportAddress(getIpAddress(), 9300));
+            try {
+                c.admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet();
+            } catch (ElasticsearchException e) {
+                c.close();
+                return false;
+            }
+            elasticsearchClient.set(c);
+            return true;
+        });
+        assertEquals(elasticsearchClusterName, elasticsearchClient.get().admin().cluster().health(Requests.clusterHealthRequest("_all")).actionGet().getClusterName());
+        return elasticsearchClient.get();
     }
 
     @Override
-    protected CreateContainerCmd dockerCommand() {
-        return dockerClient.createContainerCmd("elasticsearch:" + VERSION).withCmd("elasticsearch", "-Des.cluster.name=\"" + CLUSTER_NAME + "\"", "-Des.discovery.zen.ping.multicast.enabled=false")
-                           .withName(getName());
+    public String getRole() {
+        return "elasticsearch";
     }
 
-    public Client getClient() {
-        return client.get();
-    }
-
-    public String getClientUrl() {
-        return "http://" + getIpAddress() + ":" + CLIENT_PORT;
-    }
 }

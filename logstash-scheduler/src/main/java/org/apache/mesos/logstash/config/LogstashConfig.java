@@ -3,6 +3,8 @@ package org.apache.mesos.logstash.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+
 @Component
 @ConfigurationProperties(prefix = "logstash")
 public class LogstashConfig {
@@ -14,6 +16,8 @@ public class LogstashConfig {
     private String executorVersion = "latest";
     private int syslogPort = 514;
     private int collectdPort = 25826;
+
+    private File configFile;
 
     public int getHeapSize() {
         return heapSize;
@@ -61,5 +65,13 @@ public class LogstashConfig {
 
     public void setCollectdPort(int collectdPort) {
         this.collectdPort = collectdPort;
+    }
+
+    public File getConfigFile() {
+        return configFile;
+    }
+
+    public void setConfigFile(File configFile) {
+        this.configFile = configFile;
     }
 }

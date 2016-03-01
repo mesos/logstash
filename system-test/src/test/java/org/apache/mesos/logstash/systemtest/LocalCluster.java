@@ -1,7 +1,8 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.MesosCluster;
+import com.containersol.minimesos.cluster.MesosCluster;
 import com.containersol.minimesos.mesos.ClusterUtil;
+import com.containersol.minimesos.mesos.MesosMaster;
 import com.containersol.minimesos.mesos.MesosSlave;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
@@ -29,26 +30,31 @@ public class LocalCluster {
     }
 
     private void run() throws Exception {
+
         Runtime.getRuntime().addShutdownHook(new Thread(cluster::stop));
         cluster.start();
 
+        MesosMaster master = cluster.getMasterContainer();
+
         DockerClientConfig.DockerClientConfigBuilder dockerConfigBuilder = DockerClientConfig
             .createDefaultConfigBuilder()
-            .withUri("http://" + cluster.getMesosMasterContainer().getIpAddress() + ":" + DOCKER_PORT);
+            .withUri("http://" + master.getIpAddress() + ":" + DOCKER_PORT);
         DockerClient clusterDockerClient = DockerClientBuilder
             .getInstance(dockerConfigBuilder.build()).build();
 
         DummyFrameworkContainer dummyFrameworkContainer = new DummyFrameworkContainer(
             clusterDockerClient, "dummy-framework");
-        dummyFrameworkContainer.start();
+        dummyFrameworkContainer.start(MesosCluster.DEFAULT_TIMEOUT_SECS);
 
-        System.setProperty("mesos.zk", cluster.getZkUrl());
+        String mesosZk = master.getFormattedZKAddress();
+
+        System.setProperty("mesos.zk", mesosZk);
         System.setProperty("mesos.logstash.logstash.heap.size", "128");
         System.setProperty("mesos.logstash.executor.heap.size", "64");
 
         System.out.println("");
         System.out.println("Cluster Started.");
-        System.out.println("MASTER URL: " + cluster.getMesosMasterContainer().getFormattedZKAddress());
+        System.out.println("MASTER URL: " + master.getFormattedZKAddress());
         System.out.println("");
 
         while (!Thread.currentThread().isInterrupted()) {

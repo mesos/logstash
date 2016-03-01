@@ -7,7 +7,6 @@ import org.apache.commons.exec.environment.EnvironmentUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,7 +25,6 @@ import java.util.Map;
  * Utilities to help with networking
  */
 @SuppressWarnings("PMD.AvoidUsingHardCodedIP")
-@Service
 public class NetworkUtils {
     private static final Logger LOG = LoggerFactory.getLogger(NetworkUtils.class);
     public static final String DOCKER_MACHINE_IP = "docker-machine ip";

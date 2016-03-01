@@ -1,6 +1,7 @@
 package org.apache.mesos.logstash.scheduler;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.mesos.logstash.common.network.NetworkUtils;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosStateZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.MesosZKFormatter;
 import org.apache.mesos.logstash.common.zookeeper.formatter.ZKFormatter;
@@ -30,28 +31,7 @@ public class Application {
     FrameworkConfig frameworkConfig;
 
     public static void main(String[] args) throws IOException {
-        Application app = new Application();
-        app.run(args);
-    }
-
-    private void run(String[] args) {
-//        checkSystemProperties(zkUrl);
-
-        SpringApplication app = new SpringApplication(Application.class);
-        app.setShowBanner(false);
-        app.run(args);
-    }
-
-    private void checkSystemProperties(String zkUrl) {
-        if (StringUtils.isEmpty(zkUrl)) {
-            System.out.println(
-                    "No zookeeper configuration given. Please provide \"mesos.zk\" system property.");
-            System.exit(2);
-        }
-
-        // will throw an IllegalArgumentException if the URI is not parseable
-        getMesosZKURL(zkUrl);
-        getMesosStateZKURL(zkUrl);
+        new SpringApplication(Application.class).run(args);
     }
 
     private String getMesosStateZKURL(String zkUrl) {
@@ -59,22 +39,9 @@ public class Application {
         return mesosStateZKFormatter.format(zkUrl);
     }
 
-    private static String getMesosZKURL(String zkUrl) {
-        ZKFormatter mesosZKFormatter = new MesosZKFormatter(new ZKAddressParser());
-        return mesosZKFormatter.format(zkUrl);
-    }
-
     @Bean
-    public State zkState(FrameworkConfig frameworkConfig) {
-        String frameworkName = frameworkConfig.getFrameworkName();
-        if (!frameworkName.startsWith("/")) {
-            frameworkName = "/" + frameworkName; // znode must start with a slash
-        }
-        return new ZooKeeperState(
-                getMesosStateZKURL(frameworkConfig.getZkUrl()),
-                frameworkConfig.getZkTimeout(),
-                TimeUnit.MILLISECONDS,
-                frameworkName);
-
+    public NetworkUtils networkUtils() {
+        return new NetworkUtils();
     }
+
 }
