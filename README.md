@@ -77,7 +77,7 @@ like this:
     --mesos-role='*' \
     --mesos-user=root \
     --logstash.heap-size=64 \
-    --logstash.elasticsearch-url=http://elasticsearch.service.consul:1234 \
+    --logstash.elasticsearch-host=elasticsearch.service.consul:1234 \
     --logstash.executor-image=mesos/logstash-executor \
     --logstash.executor-version=latest \
     --logstash.syslog-port=514 \
@@ -118,7 +118,7 @@ Here is the full list of configuration options:
 | `--mesos-role=R`                 | `MESOS_ROLE=R`                 | `logstash`                | The Logstash framework role will register with Mesos with framework role `R`                                               |
 | `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`                    | Logstash tasks will be launched with Unix user `U`                                                                         |
 | `--logstash.heap-size=H`         | `LOGSTASH_HEAP_SIZE=H`         | `32`                      | The memory allocation pool for the Logstash process will be limited to `H` megabytes                                       |
-| `--logstash.elasticsearch-url=U` | `LOGSTASH_ELASTICSEARCH_URL=U` | Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance at `U`                                             |
+| `--logstash.elasticsearch-host=H`| `LOGSTASH_ELASTICSEARCH_HOST=H`| Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance `H`, which must be in the format of`host:port`     |
 | `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The Logstash framework will use the Docker image with name `S` as the executor on new Mesos Agents                         | 
 | `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The Logstash framework will use version `S` of the Docker image on new Mesos Agents                                        |
 | `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Every Mesos agent will listen for syslog messages on port `I`. Must be enabled with `--enable.syslog=true`                 |

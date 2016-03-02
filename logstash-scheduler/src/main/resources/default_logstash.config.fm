@@ -1,12 +1,12 @@
 input {
     <#if syslog??>
     syslog {
-        port => ${syslog.port}
+        port => ${syslog.port?c}
     }
     </#if>
     <#if collectd??>
     udp {
-        port => ${collectd.port}
+        port => ${collectd.port?c}
         buffer_size => 1452
         codec => collectd { }
     }
