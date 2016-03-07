@@ -101,7 +101,7 @@ This means the following two `docker` commands are equivalent:
 docker run mesos/logstash-scheduler --mesos.zookeeper.server=123.0.0.12:5181 --mesos.master=123.0.0.11:5050
 
 # Using environment variables
-docker run -e MESOS_ZOOKEEPER>SERVER=123.0.0.12:5181 -e MESOS_MASTER=123.0.0.11:5050 mesos/logstash-scheduler
+docker run -e MESOS_ZOOKEEPER_SERVER=123.0.0.12:5181 -e MESOS_MASTER=123.0.0.11:5050 mesos/logstash-scheduler
 ```
 
 Note that command-line arguments take precedence:
@@ -119,7 +119,7 @@ Here is the full list of configuration options:
 | `--mesos-user=U`                 | `MESOS_USER=U`                 | `root`                    | Logstash tasks will be launched with Unix user `U`                                                                         |
 | `--logstash.heap-size=H`         | `LOGSTASH_HEAP_SIZE=H`         | `32`                      | The memory allocation pool for the Logstash process will be limited to `H` megabytes                                       |
 | `--logstash.elasticsearch-host=H`| `LOGSTASH_ELASTICSEARCH_HOST=H`| Absent                    | If present, Logstash will forward its logs to an Elasticsearch instance `H`, which must be in the format of`host:port`     |
-| `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The Logstash framework will use the Docker image with name `S` as the executor on new Mesos Agents                         | 
+| `--logstash.executor-image=S`    | `LOGSTASH_EXECUTOR_IMAGE=S`    | `mesos/logstash-executor` | The Logstash framework will use the Docker image with name `S` as the executor on new Mesos Agents                         |
 | `--logstash.executor-version=S`  | `LOGSTASH_EXECUTOR_VERSION=S`  | `latest`                  | The Logstash framework will use version `S` of the Docker image on new Mesos Agents                                        |
 | `--logstash.syslog-port=I`       | `LOGSTASH_SYSLOG_PORT=I`       | `514`                     | Every Mesos agent will listen for syslog messages on port `I`. Must be enabled with `--enable.syslog=true`                 |
 | `--logstash.collectd-port=I`     | `LOGSTASH_COLLECTD_PORT=I`     | `25826`                   | Every Mesos agent will listen for collectd messages on port `I`. Must be enabled with `--enable.collectd=true`             |
@@ -169,9 +169,9 @@ You can use the `"env"` map to configure the framework with environment variable
   }
 }
 ```
- 
-Please keep in mind that if you start the Logstash app as a Marathon app that this will start a 
-scheduler on one arbitrary agent. The scheduler itself will try to start one (only one) executor 
+
+Please keep in mind that if you start the Logstash app as a Marathon app that this will start a
+scheduler on one arbitrary agent. The scheduler itself will try to start one (only one) executor
 on each node. To scale the application from within Marathon makes no sense because only one scheduler
 per framework is allowed to run and the framework scales itself to all agents.  
 
@@ -193,7 +193,7 @@ To build the images, first install these dependencies:
 - A Docker daemon. This can be either
 
   - locally, or
-  
+
   - remotely, e.g. using [Docker-Machine](https://docs.docker.com/machine/) or boot2docker.
 
     If choosing this option, you need to do two things before running the tests:
@@ -201,7 +201,7 @@ To build the images, first install these dependencies:
     - tell your Docker client where your remote Docker daemon is.
       For example, if you are using `docker-machine`, and your machine is called `dev`,
       you can run in bash:
-      
+
       ```bash
       eval $(docker-machine env dev)
       ```
@@ -211,11 +211,11 @@ To build the images, first install these dependencies:
       communicate with the rest of the cluster inside docker.
 
       This command:
-      
+
       ```bash
       sudo route -n add 172.17.0.0/16 $(docker-machine ip dev)
       ```
-      
+
       sets up a route that allows packets to be routed from your scheduler (running locally on your
       computer) to any machine inside the subnet `172.17.0.0/16`, using your docker host as gateway.
 
@@ -272,7 +272,7 @@ but we cannot guarantee full allocation.
 
 There is no mechanism which ensures that the Logstash output might overlap with other
 Logstash configurations. In other words: Logstash might observe one framework
-and output to the same destination it's using for another framework. 
+and output to the same destination it's using for another framework.
 
 
 # Sponsors
