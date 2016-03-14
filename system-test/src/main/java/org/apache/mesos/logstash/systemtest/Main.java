@@ -18,7 +18,7 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
         DockerClient dockerClient = DockerClientFactory.build();
 
-        MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(1, zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper)).withMaster().build());
+        MesosCluster cluster = new MesosCluster(ClusterUtil.withAgent(1, zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper)).withMaster().build());
 
         cluster.start();
 

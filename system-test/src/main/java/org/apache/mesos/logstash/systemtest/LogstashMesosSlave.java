@@ -1,12 +1,12 @@
 package org.apache.mesos.logstash.systemtest;
 
-import com.containersol.minimesos.mesos.MesosSlave;
+import com.containersol.minimesos.mesos.MesosAgent;
 import com.containersol.minimesos.mesos.ZooKeeper;
 import com.github.dockerjava.api.DockerClient;
 
 import java.util.TreeMap;
 
-public class LogstashMesosSlave extends MesosSlave {
+public class LogstashMesosSlave extends MesosAgent {
     public LogstashMesosSlave(DockerClient dockerClient, ZooKeeper zooKeeper) {
         super(dockerClient, zooKeeper);
     }

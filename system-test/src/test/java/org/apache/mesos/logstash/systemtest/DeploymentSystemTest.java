@@ -50,7 +50,7 @@ public class DeploymentSystemTest {
     private MesosCluster cluster = new MesosCluster(new ClusterArchitecture.Builder()
             .withZooKeeper()
             .withMaster(zooKeeper -> new LogstashMesosMaster(dockerClient, zooKeeper))
-            .withSlave(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
+            .withAgent(zooKeeper -> new LogstashMesosSlave(dockerClient, zooKeeper))
             .build());
 
     Optional<LogstashSchedulerContainer> scheduler = Optional.empty();
@@ -163,7 +163,7 @@ public class DeploymentSystemTest {
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
-        final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getSlaves()[0].getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new AssertionError("Unable to find logstash container"));
+        final String logstashSlave = dockerClient.listContainersCmd().withSince(cluster.getAgents().get(0).getContainerId()).exec().stream().filter(container -> container.getImage().endsWith("/logstash-executor:latest")).findFirst().map(Container::getId).orElseThrow(() -> new AssertionError("Unable to find logstash container"));
 
         assertTrue("logstash slave is expected to be running", dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
@@ -213,7 +213,7 @@ public class DeploymentSystemTest {
         final String randomLogLine = "Hello " + RandomStringUtils.randomAlphanumeric(32);
 
         dockerClient.pullImageCmd("ubuntu:15.10").exec(new PullImageResultCallback()).awaitSuccess();
-        final String logstashSlave = cluster.getSlaves()[0].getContainerId();
+        final String logstashSlave = cluster.getAgents().get(0).getContainerId();
 
         assertTrue(dockerClient.inspectContainerCmd(logstashSlave).exec().getState().isRunning());
 
@@ -282,12 +282,12 @@ public class DeploymentSystemTest {
                 .filter(container -> container.getImage().endsWith("/logstash-executor:latest"));
 
         await().atMost(1, TimeUnit.MINUTES).pollDelay(1, SECONDS).until(() -> {
-            long count = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).count();
-            LOGGER.info("There are " + count + " executors since " + cluster.getSlaves()[0].getContainerId());
+            long count = getLogstashExecutorsSince.apply(cluster.getAgents().get(0).getContainerId()).count();
+            LOGGER.info("There are " + count + " executors since " + cluster.getAgents().get(0).getContainerId());
             assertEquals(1, count);
         });
 
-        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getSlaves()[0].getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
+        final String slaveToKillContainerId = getLogstashExecutorsSince.apply(cluster.getAgents().get(0).getContainerId()).findFirst().map(Container::getId).orElseThrow(() -> new RuntimeException("Unable to find logstash container"));
 
         dockerClient.killContainerCmd(slaveToKillContainerId).exec();
 

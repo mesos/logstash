@@ -1,11 +1,7 @@
 package org.apache.mesos.logstash.systemtest;
 import com.containersol.minimesos.container.AbstractContainer;
-import com.containersol.minimesos.docker.ResponseCollector;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-
-import java.io.InputStream;
 
 public class DummyFrameworkContainer extends AbstractContainer {
 

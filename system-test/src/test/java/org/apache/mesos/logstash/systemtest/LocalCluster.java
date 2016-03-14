@@ -1,9 +1,10 @@
 package org.apache.mesos.logstash.systemtest;
 
 import com.containersol.minimesos.cluster.MesosCluster;
+import com.containersol.minimesos.config.ClusterConfig;
 import com.containersol.minimesos.mesos.ClusterUtil;
 import com.containersol.minimesos.mesos.MesosMaster;
-import com.containersol.minimesos.mesos.MesosSlave;
+import com.containersol.minimesos.mesos.MesosAgent;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -16,7 +17,7 @@ import java.util.TreeMap;
 public class LocalCluster {
 
     private static final String DOCKER_PORT = "2376";
-    public final MesosCluster cluster = new MesosCluster(ClusterUtil.withSlaves(3, zooKeeper -> new MesosSlave(null, zooKeeper) {
+    public final MesosCluster cluster = new MesosCluster(ClusterUtil.withAgent(3, zooKeeper -> new MesosAgent(null, zooKeeper) {
         @Override
         public TreeMap<String, String> getDefaultEnvVars() {
             final TreeMap<String, String> envVars = super.getDefaultEnvVars();
@@ -44,7 +45,7 @@ public class LocalCluster {
 
         DummyFrameworkContainer dummyFrameworkContainer = new DummyFrameworkContainer(
             clusterDockerClient, "dummy-framework");
-        dummyFrameworkContainer.start(MesosCluster.DEFAULT_TIMEOUT_SECS);
+        dummyFrameworkContainer.start(ClusterConfig.DEFAULT_TIMEOUT_SECS);
 
         String mesosZk = master.getFormattedZKAddress();
 
