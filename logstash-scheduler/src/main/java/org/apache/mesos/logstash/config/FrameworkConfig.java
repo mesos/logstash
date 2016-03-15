@@ -1,7 +1,10 @@
 package org.apache.mesos.logstash.config;
 
 import org.apache.mesos.logstash.common.network.NetworkUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.embedded.EmbeddedServletContainerInitializedEvent;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
@@ -10,8 +13,7 @@ import javax.inject.Inject;
 
 @Component
 @ConfigurationProperties
-public class FrameworkConfig {
-
+public class FrameworkConfig implements ApplicationListener<EmbeddedServletContainerInitializedEvent> {
     private static final String LOGSTASH_EXECUTOR_JAR   = "logstash-mesos-executor.jar";
 
     private static final String LOGSTASH_TARBALL = "logstash.tar.gz";
@@ -20,6 +22,13 @@ public class FrameworkConfig {
 
     @Inject
     private NetworkUtils networkUtils;
+
+    int httpPort;
+
+    @Override
+    public void onApplicationEvent(EmbeddedServletContainerInitializedEvent event) {
+        httpPort = event.getEmbeddedServletContainer().getPort();
+    }
 
     public String getJavaHome() {
         if (!javaHome.isEmpty()) {
@@ -34,7 +43,7 @@ public class FrameworkConfig {
     }
 
     public String getFrameworkFileServerAddress() {
-        return networkUtils.addressToString(networkUtils.hostSocket(8080), true);
+        return networkUtils.addressToString(networkUtils.hostSocket(httpPort), true);
     }
 
     public String getLogstashTarballUri() {
